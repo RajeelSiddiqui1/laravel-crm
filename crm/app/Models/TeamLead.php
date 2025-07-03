@@ -5,32 +5,27 @@ namespace App\Models;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class ProjectManager extends Authenticatable
+class TeamLead extends Authenticatable
 {
     use Notifiable;
 
-    protected $table = "project_managers";
+    protected $table = 'team_leads';
 
     protected $fillable = [
         'name',
         'email',
         'phone',
         'password',
-        'department_id',
         'image',
+        'department_id',
     ];
 
     protected $hidden = [
         'password'
     ];
 
-    function department()
+    public function department()
     {
-        return $this->belongsTo(Department::class,);
-    }
-
-    public function departments()
-    {
-        return $this->belongsToMany(Department::class);
+        return $this->belongsTo(Department::class);
     }
 }

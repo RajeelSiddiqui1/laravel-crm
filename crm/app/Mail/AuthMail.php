@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -14,18 +13,14 @@ class AuthMail extends Mailable
     use Queueable, SerializesModels;
 
     public $user;
+    public $loginlink;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct($user)
+    public function __construct($user, $loginLink)
     {
         $this->user = $user;
+        $this->loginlink = $loginLink;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
@@ -33,9 +28,6 @@ class AuthMail extends Mailable
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
     public function content(): Content
     {
         return new Content(
@@ -43,11 +35,6 @@ class AuthMail extends Mailable
         );
     }
 
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
     public function attachments(): array
     {
         return [];

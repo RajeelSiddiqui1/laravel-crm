@@ -5,9 +5,11 @@
     <title>Welcome Email</title>
 </head>
 <body>
-    <h2>Welcome, {{ $user->name }}!</h2>
-    <p>Thank you for registering as a Project Manager.</p>
-    <p>You can login here:</p>
-    <a href="{{ url('project_manager.login') }}">Click here to Login</a>
+    <p>Hello {{ $user->name }},</p>
+    <p>Click the button below to login to your account:</p>
+    <a href="{{ $loginlink }}" style="display:inline-block;padding:10px 20px;background:#28a745;color:#fff;text-decoration:none;border-radius:4px;">
+        Login Now
+    </a>
+    <p>This link is valid for 30 minutes and will expire after it's used.</p>
 </body>
 </html>

@@ -73,9 +73,9 @@
                 <div class="col-lg-6">
                     <div class="card">
                         <div class="card-body">
-                            <div class="card-title text-center">Project Manager Login</div>
+                            <div class="card-title text-center">Project Onwer Login</div>
                             <hr>
-                            <form method="POST" action="{{ route('project_manager.login.post') }}"
+                            <form method="POST" action="{{ route('project_owner.login.post') }}"
                                 enctype="multipart/form-data">
                                 @csrf
 
@@ -117,9 +117,7 @@
                                         login</button>
                                 </div>
 
-                                   <div class="form-group">
-                                <p>Do you don't have an acount? <a href="{{url('/project-manager/register')}}">register</a></p>
-                            </div>
+                                  
                             </form>
                         </div>
                     </div>
