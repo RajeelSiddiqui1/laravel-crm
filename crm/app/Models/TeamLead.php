@@ -10,6 +10,7 @@ class TeamLead extends Authenticatable
     use Notifiable;
 
     protected $table = 'team_leads';
+      protected $guarded = [];
 
     protected $fillable = [
         'name',

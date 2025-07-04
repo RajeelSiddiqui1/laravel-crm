@@ -10,6 +10,7 @@ class ProjectManager extends Authenticatable
     use Notifiable;
 
     protected $table = "project_managers";
+      protected $guarded = [];
 
     protected $fillable = [
         'name',

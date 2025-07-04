@@ -11,20 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('team_leads', function (Blueprint $table) {
-            $table->bigIncrements('id');
-              $table->string('name');
-            $table->string('email')->unique();
-            $table->string('phone');
+        Schema::create('employs', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique('email');
             $table->string('password');
+            $table->string('phone')->nullable();
             $table->string('image')->nullable();
-            $table->unsignedBigInteger('department_id');
+            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
             $table->timestamps();
-
-            $table->foreign('department_id')
-                ->references('id')
-                ->on('departments')
-                ->onDelete('cascade');
         });
     }
 
@@ -33,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-         Schema::dropIfExists('team_leads');
+        Schema::dropIfExists('employs');
     }
 };

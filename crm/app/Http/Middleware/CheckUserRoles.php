@@ -12,7 +12,9 @@ class CheckUserRoles
         if (
             Auth::guard('web')->check() ||             // Admin
             Auth::guard('team_lead')->check() ||       // Team Lead
-            Auth::guard('project_owner')->check()      // Project Owner
+            Auth::guard('project_owner')->check() ||
+            Auth::guard('project_manager')->check() ||
+            Auth::guard('employee')     // Project Owner
         ) {
             return $next($request);
         }

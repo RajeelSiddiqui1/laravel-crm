@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\Employee;
 use App\Models\ProjectManager;
 use App\Models\ProjectOwner;
 use App\Models\TeamLead;
@@ -55,6 +56,12 @@ class ProjectOnwer extends Controller
     {
         $managers = ProjectManager::with('department')->get();
         return view('project_owner.project_managers', ['managers' => $managers]);
+    }
+
+    function employee_view()
+    {
+        $employees = Employee::with('department')->get();
+        return view('project_owner.employees', ['employees' => $employees]);
     }
 
     public function teamLeadsView()

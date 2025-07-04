@@ -122,4 +122,44 @@ class TeamLead extends Controller
     {
         return view('team_lead.home');
     }
+
+    function profile_view()
+    {
+        $manager = Auth::guard('team_lead')->user();
+        return view('team_lead.profile', compact('manager'));
+
+    }
+
+
+      function updateProfile(Request $request){
+        /** @var \App\Models\TeamLead $employee */
+        $employee = Auth::guard('team_lead')->user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:team_leads,email,' . $employee->id,
+            'password' => 'nullable|string|min:6|confirmed',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+        ]);
+
+        $employee->name = $request->name;
+        $employee->email = $request->email;
+
+
+        if ($request->hasFile('image')) {
+            $oldImage = public_path('images/team_leads/' . $employee->image);
+
+            if ($employee->image && file_exists($oldImage)) {
+                @unlink($oldImage);
+            }
+
+            $imageName = time() . '.' . $request->image->getClientOriginalExtension();
+            $request->image->move(public_path('images/team_leads'), $imageName);
+            $employee->image = $imageName;
+        }
+
+        $employee->save();
+
+        return back()->with('success', 'Profile updated successfully!');
+    }
 }

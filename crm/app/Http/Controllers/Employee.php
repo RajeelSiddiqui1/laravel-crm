@@ -2,32 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
-use App\Models\ProjectManager as ModelsProjectManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
+use App\Models\Employee as ModelsEmployee;
+use App\Models\Department;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
-class ProjectManager extends Controller
+class Employee extends Controller
 {
     function resgisterview()
     {
-        $departments = Department::all();
-        return view('project_manager.register', compact('departments'));
+        $departments = Department::all(); // ✅ Fix: Get departments from correct model
+        return view('employee.register', compact('departments'));
     }
 
     function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:project_managers',
+            'email' => 'required|email|max:255|unique:employees',
             'phone' => 'required|string|max:15',
             'password' => 'required|string|min:3|confirmed',
-            'department_ids' => 'required|array',
-            'department_ids.*' => 'exists:departments,id',
+            'department_id' => 'required|exists:departments,id', // ✅ single department
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -35,46 +35,47 @@ class ProjectManager extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $manager = new ModelsProjectManager();
+        $manager = new  ModelsEmployee();
         $manager->name = $request->name;
         $manager->email = $request->email;
         $manager->phone = $request->phone;
         $manager->password = bcrypt($request->password);
+        $manager->department_id = $request->department_id; // ✅ assign single department
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('images/project_managers'), $imageName);
+            $image->move(public_path('images/employees'), $imageName);
             $manager->image = $imageName;
         } else {
             $randomId = rand(1, 30);
             $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
             if ($imageContent !== false) {
                 $imageName = time() . '_auto.jpg';
-                file_put_contents(public_path("images/project_managers/$imageName"), $imageContent);
+                file_put_contents(public_path("images/employees/$imageName"), $imageContent);
                 $manager->image = $imageName;
             }
         }
 
         if ($manager->save()) {
-            $manager->departments()->attach($request->department_ids);
             $token = Str::random(64);
             $manager->login_token = $token;
             $manager->save();
 
-            $loginLink = route('project_manager.token.login', ['token' => $token]);
+            $loginLink = route('employee.token.login', ['token' => $token]);
             Mail::to($manager->email)->send(new AuthMail($manager, $loginLink));
 
-            session()->flash('success', 'Project Manager registered successfully.');
+            session()->flash('success', 'Team Lead registered successfully.');
             return redirect()->route('welcome');
         }
-        session()->flash('error', 'Failed to register Project Manager.');
+
+        session()->flash('error', 'Failed to register Team Lead.');
         return redirect()->back()->withInput();
     }
 
     function loginview()
     {
-        return view('project_manager.login');
+        return view('employee.login');
     }
 
     function login(Request $request)
@@ -90,8 +91,8 @@ class ProjectManager extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        if (Auth::guard('project_manager')->attempt($credentials)) {
-            return redirect()->route('project_manager.home')->with('success', 'Login successful');
+        if (Auth::guard('employee')->attempt($credentials)) {
+            return redirect()->route('employee.home')->with('success', 'Login successful');
         }
 
         return redirect()->back()->with('error', 'Invalid login credentials');
@@ -99,45 +100,44 @@ class ProjectManager extends Controller
 
     function tokenLogin($token)
     {
-        $manager = ModelsProjectManager::where('login_token', $token)->first();
+        $employee = ModelsEmployee::where('login_token', $token)->first();
 
-        if (!$manager) {
-            return redirect()->route('project_manager.login')->with('error', 'Invalid or expired login token.');
+        if (!$employee) {
+            return redirect()->route('employee.login')->with('error', 'Invalid or expired login token.');
         }
 
-        Auth::guard('project_manager')->login($manager);
-        $manager->login_token = null;
-        $manager->save();
+        Auth::guard('employee')->login($employee);
+        $employee->login_token = null;
+        $employee->save();
 
-        return redirect()->route('project_manager.home')->with('success', 'Logged in successfully via token.');
+        return redirect()->route('employee.home')->with('success', 'Logged in successfully via token.');
     }
-
 
     function logout()
     {
-        Auth::guard('project_manager')->logout();
-        return redirect()->route('project_manager.login')->with('success', 'Logged out successfully');
+        Auth::guard('employee')->logout();
+        return redirect()->route('employee.login')->with('success', 'Logged out successfully');
     }
 
     function home()
     {
-        return view('project_manager.home');
+        return view('employee.home');
     }
 
     function profile_view()
     {
-        $manager = Auth::guard('project_manager')->user();
-        return view('project_manager.profile', compact('manager'));
+        $employee = Auth::guard('employee')->user();
+        return view('employee.profile', compact('employee'));
     }
 
-     public function updateProfile(Request $request)
+    public function updateProfile(Request $request)
     {
-        /** @var \App\Models\ProjectManager $employee */
-        $employee = Auth::guard('project_manager')->user();
+        /** @var \App\Models\Employee $employee */
+        $employee = Auth::guard('employee')->user();
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:project_managers,email,' . $employee->id,
+            'email' => 'required|email|unique:employees,email,' . $employee->id,
             'password' => 'nullable|string|min:6|confirmed',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
         ]);
@@ -147,14 +147,14 @@ class ProjectManager extends Controller
 
 
         if ($request->hasFile('image')) {
-            $oldImage = public_path('images/project_managers/' . $employee->image);
+            $oldImage = public_path('images/employees/' . $employee->image);
 
             if ($employee->image && file_exists($oldImage)) {
                 @unlink($oldImage);
             }
 
             $imageName = time() . '.' . $request->image->getClientOriginalExtension();
-            $request->image->move(public_path('images/project_managers'), $imageName);
+            $request->image->move(public_path('images/employees'), $imageName);
             $employee->image = $imageName;
         }
 

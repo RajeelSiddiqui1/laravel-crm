@@ -40,8 +40,8 @@
                     @endif
                     <div class="card shadow rounded" >
                         <div class="card-body p-4">
-                            <div class="card-title text-center text-white mb-3">Project Manager Register</div>
-                            <form method="POST" action="{{ route('project_manager.register.post') }}" enctype="multipart/form-data">
+                            <div class="card-title text-center text-white mb-3">Employee Register</div>
+                            <form method="POST" action="{{ route('employee.register.post') }}" enctype="multipart/form-data">
                                 @csrf
                                 <div class="form-group">
                                     <label class="text-white">Name</label>
@@ -86,32 +86,24 @@
                                     @enderror
                                 </div>
                                   <div class="form-group">
-                                        <label>Select Departments</label>
-                                        <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
-                                            <div class="row">
-                                                @foreach ($departments as $dept)
-                                                    <div class="col-md-6">
-                                                        <div class="custom-control custom-checkbox mb-2">
-                                                            <input type="checkbox" class="custom-control-input"
-                                                                id="dept{{ $dept->id }}" name="department_ids[]"
-                                                                value="{{ $dept->id }}"
-                                                                {{ in_array($dept->id, old('department_ids', [])) ? 'checked' : '' }}>
-                                                            <label class="custom-control-label"
-                                                                for="dept{{ $dept->id }}">{{ $dept->name }}</label>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                        @error('department_ids')
-                                            <span class="text-danger">{{ $message }}</span>
-                                        @enderror
-                                    </div>
+                                    <label for="departmentSelect" class="text-white">Select Department</label>
+                                    <select class="form-control" id="departmentSelect" name="department_id">
+                                        <option value="" disabled selected>Select a department</option>
+                                        @foreach ($departments as $dept)
+                                            <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
+                                                {{ $dept->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('department_id')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
                                 <div class="form-group text-center mt-4">
                                     <button type="submit" class="btn btn-light px-5">Register</button>
                                 </div>
                                 <div class="form-group text-center mt-2">
-                                    <p class="text-white">Already have an account? <a href="{{ url('/project-manager/login') }}">Login</a></p>
+                                    <p class="text-white">Already have an account? <a href="{{ url('/employee/login') }}">Login</a></p>
                                 </div>
                             </form>
                         </div>
