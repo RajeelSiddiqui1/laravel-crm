@@ -18,4 +18,10 @@ class ProjectOwner extends Authenticatable
     protected $hidden = [
         'password'
     ];
+
+    public function projectManager()
+{
+    return $this->belongsTo(ProjectManager::class, 'project_manager_id');
+}
+
 }

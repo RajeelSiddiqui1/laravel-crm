@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\EditTask;
+use App\Mail\TaskAssignedMail;
+use App\Mail\TaskDeletedMail;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\OnwerTask;
 use App\Models\ProjectManager;
 use App\Models\ProjectOwner;
 use App\Models\TeamLead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use SebastianBergmann\CodeCoverage\Report\Xml\Project;
 
@@ -137,5 +142,121 @@ class ProjectOnwer extends Controller
         } else {
             return redirect()->route('project_owner.departments')->with('error', 'Department not found');
         }
+    }
+
+    function task_view()
+    {
+        $tasks = OnwerTask::with(['department', 'projectManager'])->get();
+        return view('project_owner.tasks', ['tasks' => $tasks]);
+    }
+
+    function task_detail($id)
+    {
+        $task = OnwerTask::with(['department', 'projectManager'])->find($id);
+        if ($task) {
+            return view('project_owner.task_detail', ['task' => $task]);
+        } else {
+            return redirect()->route('project_owner.task_detail')->with('error', 'Task not found');
+        }
+    }
+
+    function tasks_createview()
+    {
+        $departments = Department::with('projectManagers')->get();
+        return view('project_owner.tasks_create', compact('departments'));;
+    }
+
+    function tasks_create(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'client_name' => 'required',
+            'description' => 'required',
+            'client_email' => 'required|email',
+            'client_contact' => 'required',
+            'project_manager_id' => 'required|exists:project_managers,id',
+            'start_date' => 'required|date',
+            'deadline' => 'required|date|after_or_equal:start_date',
+            'priority' => 'required|in:Low,Medium,High',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $task = new OnwerTask();
+        $task->name = $request->name;
+        $task->client_name = $request->client_name;
+        $task->description = $request->description;
+        $task->client_email = $request->client_email;
+        $task->client_contact = $request->client_contact;
+        $task->department_id = $request->department_id;
+        $task->project_manager_id = $request->project_manager_id;
+        $task->manager_email = ProjectManager::find($request->project_manager_id)->email;
+        $task->start_date = $request->start_date;
+        $task->deadline = $request->deadline;
+        $task->priority = $request->priority;
+     
+        if ($task->save()) {
+
+            Mail::to($task->manager_email)->send(new TaskAssignedMail($task));
+
+            return redirect()->route('project_owner.task')->with('success', 'Task created successfully');
+        } else {
+            return redirect()->route('project_owner.task')->with('error', 'Failed to create task');
+        }
+    }
+
+    public function edit($id)
+    {
+        $task = OnwerTask::findOrFail($id);
+        $departments = Department::with('projectManagers')->get();
+        return view('project_owner.task_edit', compact('task', 'departments'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name'               => 'required|string|max:255',
+            'client_name'        => 'required|string|max:255',
+            'description'        => 'required|string',
+            'client_email'       => 'required|email',
+            'client_contact'     => 'required|string|max:20',
+            'project_manager_id' => 'required|exists:project_managers,id',
+            'manager_email'      => 'required|email',
+            'start_date'         => 'required|date',
+            'deadline'           => 'required|date|after_or_equal:start_date',
+            'priority'           => 'required|in:Low,Medium,High',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $task = OnwerTask::findOrFail($id);
+
+        $task->update([
+            'name'               => $request->name,
+            'client_name'        => $request->client_name,
+            'description'        => $request->description,
+            'client_email'       => $request->client_email,
+            'client_contact'     => $request->client_contact,
+            'project_manager_id' => $request->project_manager_id,
+            'manager_email'      => $request->manager_email,
+            'start_date'         => $request->start_date,
+            'deadline'           => $request->deadline,
+            'priority'           => $request->priority,
+        ]);
+
+        Mail::to($task->manager_email)->send(new EditTask($task));
+        return redirect()->route('project_owner.task', $id)->with('success', 'Task updated successfully.');
+    }
+
+     function destroy($id)
+    {
+        $task = OnwerTask::findOrFail($id);
+        $task->delete();
+        Mail::to($task->manager_email)->send(new TaskDeletedMail($task));
+        return redirect()->route('project_owner.task')->with('success', 'Task deleted successfully.');
     }
 }

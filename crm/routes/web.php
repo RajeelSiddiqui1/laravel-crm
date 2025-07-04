@@ -17,13 +17,13 @@ Route::controller(ProjectManager::class)->group(function () {
     Route::post('/project-manager/register', 'register')->name('project_manager.register.post');
     Route::get('/project-manager/login', 'loginview')->name('project_manager.login');
     Route::post('/project-manager/login', 'login')->name('project_manager.login.post');
-     Route::get('/project-manager/token-login/{token}', 'tokenLogin')->name('project_manager.token.login');
+    Route::get('/project-manager/token-login/{token}', 'tokenLogin')->name('project_manager.token.login');
     Route::get('/project-manager/logout', 'logout')->name('project_manager.logout');
     Route::middleware('check.roles')->group(
         function () {
-           Route::get('/project-manager/home', 'home')->name('project_manager.home');
-           Route::get('/project-manager/profile', 'profile_view')->name('project_manager.profile');
-        Route::put('/project-manager/profile', action: 'updateProfile')->name('project_manager.profile.update');
+            Route::get('/project-manager/home', 'home')->name('project_manager.home');
+            Route::get('/project-manager/profile', 'profile_view')->name('project_manager.profile');
+            Route::put('/project-manager/profile', action: 'updateProfile')->name('project_manager.profile.update');
         }
     );
 
@@ -48,6 +48,13 @@ Route::controller(ProjectOnwer::class)->group(function () {
         Route::get('/project-owner/department/edit/{id}', 'department_edit_view')->name('department.edit');
         Route::post('/project-owner/department/edit/{id}', 'department_update')->name('department.edit.post');
         Route::delete('/project-owner/department/delete/{id}', 'department_delete')->name('department.delete');
+        Route::get('/project-owner/task', 'task_view')->name('project_owner.task');
+        Route::get('/project-owner/task_detail/{id}', 'task_detail')->name('project_owner.task_detail');
+        Route::get('/project-owner/create', 'tasks_createview')->name('project_owner.tasks.createview');
+        Route::post('/project-owner/tasks/create', 'tasks_create')->name('project_manager.tasks.post');
+        Route::get('/project-manager/tasks/{id}/edit',  'edit')->name('project_manager.tasks.edit');
+        Route::put('/project-manager/tasks/{id}/update',  'update')->name('project_manager.tasks.update');
+        Route::delete('/project-manager/tasks/{id}/delete', 'destroy')->name('project_manager.tasks.delete');
     });
 });
 
@@ -61,7 +68,7 @@ Route::controller(TeamLead::class)->group(function () {
 
     Route::middleware('check.roles')->group(function () {
         Route::get('/team-lead/home', 'home')->name('team_lead.home');
-         Route::get('/team-lead/profile', 'profile_view')->name('team_lead.profile');
+        Route::get('/team-lead/profile', 'profile_view')->name('team_lead.profile');
         Route::put('/team-lead/profile', action: 'updateProfile')->name('team_lead.profile.update');
     });
 });
