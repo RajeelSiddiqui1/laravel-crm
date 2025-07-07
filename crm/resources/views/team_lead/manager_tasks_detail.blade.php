@@ -391,7 +391,7 @@
                         <!-- Action Buttons -->
                         <div class="task-actions">
                             <button class="btn btn-primary" id="export-pdf">Export as PDF</button>
-                            <a href="{{ route('project_owner.task') }}" class="btn btn-secondary">Back to Tasks</a>
+                            <a href="{{ route('team_lead.manager_tasks') }}" class="btn btn-secondary">Back to Tasks</a>
                         </div>
                     </div>
                 </div>

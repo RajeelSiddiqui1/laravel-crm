@@ -130,6 +130,11 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('project_manager.tasks') }}">
+                            <i class="zmdi zmdi-city mr-2"></i> <span>Owner Tasks</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('project_manager.logout') }}">
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>
@@ -150,24 +155,7 @@
                             </form>
                         </li>
                     </ul>
-                    <ul class="navbar-nav align-items-center right-nav-link">
-                        <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
-                                data-toggle="dropdown" href="javascript:void();"><i
-                                        class="fa fa-envelope-open-o"></i></a></li>
-                        <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
-                                data-toggle="dropdown" href="javascript:void();"><i class="fa fa-bell-o"></i></a></li>
-                        <li class="nav-item language">
-                            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
-                                href="javascript:void();"><i class="fa fa-flag"></i></a>
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-gb mr-2"></i> English</li>
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-fr mr-2"></i> French</li>
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-cn mr-2"></i> Chinese</li>
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-de mr-2"></i> German</li>
-                            </ul>
-                        </li>
-                        {{-- Removed the user dropdown from here --}}
-                    </ul>
+                    
                 </nav>
             </header>
         @endif
@@ -303,6 +291,11 @@
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('team_lead.manager_tasks') }}">
+                            <i class="icon-power mr-2"></i> <span>Manager Tasks</span>
+                        </a>
+                    </li>
                     {{-- Add other Team Lead specific links here --}}
                 </ul>
             </div>
@@ -321,24 +314,7 @@
                             </form>
                         </li>
                     </ul>
-                    <ul class="navbar-nav align-items-center right-nav-link">
-                        <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
-                                data-toggle="dropdown" href="javascript:void();"><i
-                                        class="fa fa-envelope-open-o"></i></a></li>
-                        <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
-                                data-toggle="dropdown" href="javascript:void();"><i class="fa fa-bell-o"></i></a></li>
-                        <li class="nav-item language">
-                            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
-                                href="javascript:void();"><i class="fa fa-flag"></i></a>
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-gb mr-2"></i> English</li>
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-fr mr-2"></i> French</li>
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-cn mr-2"></i> Chinese</li>
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-de mr-2"></i> German</li>
-                            </ul>
-                        </li>
-                        {{-- Removed the user dropdown from here --}}
-                    </ul>
+                  
                 </nav>
             </header>
         @endif

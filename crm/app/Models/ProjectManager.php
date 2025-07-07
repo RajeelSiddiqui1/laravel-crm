@@ -10,7 +10,7 @@ class ProjectManager extends Authenticatable
     use Notifiable;
 
     protected $table = "project_managers";
-      protected $guarded = [];
+    protected $guarded = [];
 
     protected $fillable = [
         'name',
@@ -30,8 +30,9 @@ class ProjectManager extends Authenticatable
         return $this->belongsTo(Department::class, 'department_id');
     }
 
-     public function departments()
+    // ProjectManager.php
+    public function departments()
     {
-        return $this->belongsToMany(Department::class, 'department_project_manager', 'project_manager_id', 'department_id');
+        return $this->belongsToMany(Department::class, 'department_project_manager');
     }
 }

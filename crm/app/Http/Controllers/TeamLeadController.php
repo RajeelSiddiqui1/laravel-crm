@@ -2,20 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OnwerTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
-use App\Models\TeamLead as ModelsTeamLead;
+use App\Models\TeamLead; // Corrected: Renamed alias to direct import (assuming Controller is renamed)
 use App\Models\Department;
+use App\Models\Employee; // Ensure Employee model is imported for clarity and consistency
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
-class TeamLead extends Controller
+class TeamLeadController extends Controller // Corrected: Changed class name to TeamLeadController
 {
     function resgisterview()
     {
-        $departments = Department::all(); // ✅ Fix: Get departments from correct model
+        $departments = Department::all();
         return view('team_lead.register', compact('departments'));
     }
 
@@ -26,7 +28,7 @@ class TeamLead extends Controller
             'email' => 'required|email|max:255|unique:team_leads',
             'phone' => 'required|string|max:15',
             'password' => 'required|string|min:3|confirmed',
-            'department_id' => 'required|exists:departments,id', // ✅ single department
+            'department_id' => 'required|exists:departments,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -34,12 +36,12 @@ class TeamLead extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $manager = new ModelsTeamLead();
+        $manager = new TeamLead(); // Corrected: Using the direct TeamLead model name
         $manager->name = $request->name;
         $manager->email = $request->email;
         $manager->phone = $request->phone;
         $manager->password = bcrypt($request->password);
-        $manager->department_id = $request->department_id; // ✅ assign single department
+        $manager->department_id = $request->department_id;
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -48,7 +50,7 @@ class TeamLead extends Controller
             $manager->image = $imageName;
         } else {
             $randomId = rand(1, 30);
-            $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
+            $imageContent = @file_get_contents("https://avatar.iran.liara.run/public/$randomId"); // Suppress warning if URL fails
             if ($imageContent !== false) {
                 $imageName = time() . '_auto.jpg';
                 file_put_contents(public_path("images/team_leads/$imageName"), $imageContent);
@@ -99,7 +101,7 @@ class TeamLead extends Controller
 
     function tokenLogin($token)
     {
-        $team_lead = ModelsTeamLead::where('login_token', $token)->first();
+        $team_lead = TeamLead::where('login_token', $token)->first(); // Corrected: Using direct TeamLead model name
 
         if (!$team_lead) {
             return redirect()->route('team_lead.login')->with('error', 'Invalid or expired login token.');
@@ -127,11 +129,10 @@ class TeamLead extends Controller
     {
         $manager = Auth::guard('team_lead')->user();
         return view('team_lead.profile', compact('manager'));
-
     }
 
-
-      function updateProfile(Request $request){
+    function updateProfile(Request $request)
+    {
         /** @var \App\Models\TeamLead $employee */
         $employee = Auth::guard('team_lead')->user();
 
@@ -144,7 +145,6 @@ class TeamLead extends Controller
 
         $employee->name = $request->name;
         $employee->email = $request->email;
-
 
         if ($request->hasFile('image')) {
             $oldImage = public_path('images/team_leads/' . $employee->image);
@@ -161,5 +161,83 @@ class TeamLead extends Controller
         $employee->save();
 
         return back()->with('success', 'Profile updated successfully!');
+    }
+    public function manager_tasks()
+    {
+        $teamLead = Auth::guard('team_lead')->user();
+
+        // Get department_id of the logged-in team lead
+        $departmentId = $teamLead->department_id;
+
+        // Fetch employees from the same department
+        $employees = Employee::where('department_id', $departmentId)->get();
+
+        // Fetch tasks if needed
+        $tasks = OnwerTask::with(['teamLead', 'department'])
+            ->where('team_lead_id', $teamLead->id)
+            ->get();
+
+        return view('team_lead.manager_tasks', compact('tasks', 'employees'));
+    }
+
+
+
+
+
+    public function assignEmployees(Request $request, OnwerTask $task)
+    {
+        $request->validate([
+            'employee_id' => 'nullable|array',
+            'employee_id.*' => 'exists:employees,id',
+        ]);
+
+        $teamLead = Auth::guard('team_lead')->user();
+
+        if ($task->team_lead_id !== $teamLead->id) {
+            abort(403, 'Unauthorized action. This task is not assigned to you.');
+        }
+
+        if ($request->has('employee_id')) {
+            foreach ($request->employee_id as $employeeId) {
+                $employee = Employee::find($employeeId);
+                if (!$employee || $employee->department_id !== $teamLead->department_id) {
+                    return back()->with('error', 'You can only assign employees from your own department.');
+                }
+            }
+        }
+
+        // Save as comma-separated string
+        $task->employee_id = implode(',', $request->input('employee_id', []));
+        $task->save();
+
+        return back()->with('success', 'Employees assigned successfully!');
+    }
+
+
+    function updateStatus(Request $request, OnwerTask $task)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,in_progress,completed,cancelled',
+        ]);
+
+        $teamLead = Auth::guard('team_lead')->user();
+
+        if ($task->team_lead_id !== $teamLead->id) {
+            abort(403, 'Unauthorized action. This task is not assigned to you.');
+        }
+
+        $task->status = $request->status;
+        $task->save();
+
+        return back()->with('success', 'Task status updated successfully!');
+    }
+
+
+
+
+    function manager_tasks_detail($id)
+    {
+        $task = OnwerTask::findOrFail($id);
+        return view('team_lead.manager_tasks_detail', compact('task'));
     }
 }

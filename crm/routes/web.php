@@ -4,9 +4,7 @@ use App\Http\Controllers\Employee;
 use App\Http\Controllers\ProjectOnwer;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectManager;
-use App\Http\Controllers\TeamLead;
-
-
+use App\Http\Controllers\TeamLeadController;
 use App\Http\Middleware\CheckUserRoles;
 
 Route::view('/',  'welcome')->name('welcome');
@@ -24,6 +22,13 @@ Route::controller(ProjectManager::class)->group(function () {
             Route::get('/project-manager/home', 'home')->name('project_manager.home');
             Route::get('/project-manager/profile', 'profile_view')->name('project_manager.profile');
             Route::put('/project-manager/profile', action: 'updateProfile')->name('project_manager.profile.update');
+            Route::get('/project-manager/owner-tasks', 'onwertask')->name('project_manager.tasks');
+            Route::post(
+                '/project-manager/tasks/{task}/assign-team-lead',
+                'assignTeamLead'
+            )
+                ->name('project_manager.tasks.assign_team_lead');
+            Route::get('project-manager/owner-tasks/{id}/detail', 'onwertask_detail')->name('project_manager.tasks.detail');
         }
     );
 
@@ -58,7 +63,7 @@ Route::controller(ProjectOnwer::class)->group(function () {
     });
 });
 
-Route::controller(TeamLead::class)->group(function () {
+Route::controller(TeamLeadController::class)->group(function () {
     Route::get('/team-lead/register', 'resgisterview')->name('team_lead.register');
     Route::post('/team-lead/register', 'register')->name('team_lead.register.post');
     Route::get('/team-lead/login', 'loginView')->name('team_lead.login');
@@ -70,6 +75,10 @@ Route::controller(TeamLead::class)->group(function () {
         Route::get('/team-lead/home', 'home')->name('team_lead.home');
         Route::get('/team-lead/profile', 'profile_view')->name('team_lead.profile');
         Route::put('/team-lead/profile', action: 'updateProfile')->name('team_lead.profile.update');
+        Route::get('/team-lead/manager-tasks', 'manager_tasks')->name('team_lead.manager_tasks');
+        Route::post('/team-lead/tasks/{task}/assign-employees', 'assignEmployees')->name('team_lead.tasks.assign_employees');
+        Route::post('/team-lead/tasks/{task}/update-status', 'updateStatus')->name('team_lead.tasks.update_status');
+        Route::get('/team-lead/tasks/{id}/detail', 'task_detail')->name('team_lead.task_detail');
     });
 });
 

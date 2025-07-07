@@ -2,33 +2,38 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable; // Or just Model if not an authenticatable user
 
-class Employee extends Authenticatable
+class Employee extends Authenticatable // Or extends Model
 {
-    use Notifiable;
-
-    protected $table = "employees";
-
-    protected $guarded = [];
+    use HasFactory;
 
     protected $fillable = [
         'name',
         'email',
-        'phone',
-        'password',
         'department_id',
-        'image',
+        'password', // if employees log in
     ];
 
     protected $hidden = [
         'password',
     ];
 
-    // ✅ Use belongsTo because employees have one department
-    public function department()
+    /**
+     * An Employee belongs to one Department.
+     */
+   public function department()
+{
+    return $this->belongsTo(Department::class);
+}
+
+
+    /**
+     * An Employee can be assigned to many Owner Tasks.
+     */
+    public function onwerTasks()
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsToMany(OnwerTask::class, 'owner_task_employee', 'employee_id', 'owner_task_id');
     }
 }

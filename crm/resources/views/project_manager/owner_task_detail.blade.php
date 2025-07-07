@@ -344,18 +344,7 @@
                                 <strong>Department:</strong> {{ $task->department->name ?? 'N/A' }}
                             </div>
                         </div>
-                        <div class="task-detail" data-tooltip="Project manager's name">
-                            <i class="bi bi-person-fill"></i>
-                            <div>
-                                <strong>Task Manager:</strong> {{ $task->projectManager->name ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Manager's email address">
-                            <i class="bi bi-envelope-at-fill"></i>
-                            <div>
-                                <strong>Manager Email:</strong> {{ $task->manager_email }}
-                            </div>
-                        </div>
+                      
                         <div class="task-detail" data-tooltip="Task start date">
                             <i class="bi bi-calendar-fill"></i>
                             <div>
@@ -391,7 +380,7 @@
                         <!-- Action Buttons -->
                         <div class="task-actions">
                             <button class="btn btn-primary" id="export-pdf">Export as PDF</button>
-                            <a href="{{ route('project_owner.task') }}" class="btn btn-secondary">Back to Tasks</a>
+                            <a href="{{ route('project_manager.tasks') }}" class="btn btn-secondary">Back to Tasks</a>
                         </div>
                     </div>
                 </div>

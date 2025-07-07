@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\OnwerTask;
 use App\Models\ProjectManager as ModelsProjectManager;
+use App\Models\ProjectOwner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
+use App\Models\TeamLead;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -162,4 +165,55 @@ class ProjectManager extends Controller
 
         return back()->with('success', 'Profile updated successfully!');
     }
+
+      public function onwertask()
+    {
+        $pm = Auth::guard('project_manager')->user();
+
+        $departmentIds = $pm->departments->pluck('id')->toArray();
+
+        $teamLeads = TeamLead::whereIn('department_id', $departmentIds)->get();
+
+        $tasks = OnwerTask::with(['teamLead', 'department'])
+                          ->where('project_manager_id', $pm->id)
+                          ->get();
+
+        if ($teamLeads->isEmpty()) {
+            session()->flash('error', 'Team Lead data not fetched.');
+        }
+
+        return view('project_manager.owner_tasks', compact('tasks', 'teamLeads'));
+    }
+
+    public function assignTeamLead(Request $request, OnwerTask $task)
+    {
+        $request->validate(['team_lead_id' => 'required|exists:team_leads,id']);
+
+        $pm = Auth::guard('project_manager')->user();
+        $teamLead = TeamLead::find($request->team_lead_id);
+
+        if ($task->project_manager_id !== $pm->id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if ($teamLead->department_id !== $task->department_id) {
+            abort(403, 'The selected team lead does not belong to the same department as the task.');
+        }
+
+        if (!$pm->departments->contains('id', $teamLead->department_id)) {
+            abort(403, 'You cannot assign a team lead from a department you are not associated with.');
+        }
+
+        $task->team_lead_id = $teamLead->id;
+        $task->save();
+
+        return back()->with('success', 'Team Lead assigned successfully!');
+    }
+    function onwertask_detail($id)
+    {
+        $task = OnwerTask::findOrFail($id);
+        return view('project_manager.owner_task_detail', compact('task'));
+    }
+
 }
+

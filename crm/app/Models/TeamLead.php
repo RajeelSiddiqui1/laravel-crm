@@ -25,8 +25,12 @@ class TeamLead extends Authenticatable
         'password'
     ];
 
-    public function department()
-    {
-        return $this->belongsTo(Department::class);
-    }
+public function department()
+{
+    return $this->belongsTo(Department::class);
+}
+
+
+
+
 }
