@@ -13,6 +13,8 @@ use App\Models\TeamLead;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Notifications\DatabaseNotification;
+
 
 class ProjectManager extends Controller
 {
@@ -214,6 +216,33 @@ class ProjectManager extends Controller
         $task = OnwerTask::findOrFail($id);
         return view('project_manager.owner_task_detail', compact('task'));
     }
+
+
+  
+ 
+
+public function notifications()
+{
+    $manager = Auth::guard('project_manager')->user();
+    $notifications = $manager->notifications()->latest()->get();
+    return view('project_manager.notifications', compact('notifications'));
+}
+
+public function viewNotification($id)
+{
+    $notification = DatabaseNotification::findOrFail($id);
+
+    if ($notification->notifiable_id !== Auth::guard('project_manager')->id()) {
+        abort(403);
+    }
+
+    if ($notification->unread()) {
+        $notification->markAsRead();
+    }
+
+    return redirect()->route('project_manager.tasks');
+}
+
 
 }
 

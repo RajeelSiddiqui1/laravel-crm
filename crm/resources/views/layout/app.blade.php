@@ -15,12 +15,12 @@
     <link href="{{ asset('assets/plugins/vectormap/jquery-jvectormap-2.0.2.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/plugins/simplebar/css/simplebar.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/css/bootstrap.min.css') }}" rel="stylesheet" />
-    <link href="{{ asset('assets/css/animate.css') }}" rel="stylesheet" type="text/css" />
-    <link href="{{ asset('assets/css/icons.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('assets/css/animate.css') }}" rel="stylesheet" />
+    <link href="{{ asset('assets/css/icons.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/css/sidebar-menu.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/css/app-style.css') }}" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-
+    @yield('styles')
     <style>
         :root {
             --primary-color: #3b82f6;
@@ -28,6 +28,16 @@
             --gradient: linear-gradient(135deg, #3b82f6, #a855f7, #ec4899);
             --glass-bg: rgba(255, 255, 255, 0.1);
             --text-color: #1f2937;
+        }
+
+        #sidebar-wrapper.sidebar-collapsed {
+            width: 0 !important;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        #sidebar-wrapper {
+            transition: all 0.3s ease;
         }
 
         body {
@@ -47,20 +57,28 @@
             z-index: -1;
         }
 
-        #wrapper, .content-wrapper, .topbar-nav, .sidebar-wrapper {
+        #wrapper,
+        .content-wrapper,
+        .topbar-nav,
+        .sidebar-wrapper {
             position: relative;
             z-index: 1;
         }
-
-        /* Removed dropdown-menu specific styling as it's no longer present in topbar */
 
         .fade-in {
             animation: fadeIn 0.8s ease-in-out;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .user-profile-sidebar {
@@ -96,6 +114,7 @@
             font-size: 0.85rem;
         }
     </style>
+
 </head>
 
 <body class="bg-theme bg-theme1">
@@ -139,7 +158,6 @@
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>
                     </li>
-                    {{-- Add other Project Manager specific links here --}}
                 </ul>
             </div>
 
@@ -147,7 +165,7 @@
                 <nav class="navbar navbar-expand fixed-top">
                     <ul class="navbar-nav mr-auto align-items-center">
                         <li class="nav-item"><a class="nav-link toggle-menu" href="javascript:void();"><i
-                                        class="icon-menu menu-icon"></i></a></li>
+                                    class="icon-menu menu-icon"></i></a></li>
                         <li class="nav-item">
                             <form class="search-bar">
                                 <input type="text" class="form-control" placeholder="Enter keywords">
@@ -155,7 +173,7 @@
                             </form>
                         </li>
                     </ul>
-                    
+
                 </nav>
             </header>
         @endif
@@ -228,7 +246,7 @@
                 <nav class="navbar navbar-expand fixed-top">
                     <ul class="navbar-nav mr-auto align-items-center">
                         <li class="nav-item"><a class="nav-link toggle-menu" href="javascript:void();"><i
-                                        class="icon-menu menu-icon"></i></a></li>
+                                    class="icon-menu menu-icon"></i></a></li>
                         <li class="nav-item">
                             <form class="search-bar">
                                 <input type="text" class="form-control" placeholder="Enter keywords">
@@ -239,9 +257,10 @@
                     <ul class="navbar-nav align-items-center right-nav-link">
                         <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
                                 data-toggle="dropdown" href="javascript:void();"><i
-                                        class="fa fa-envelope-open-o"></i></a></li>
+                                    class="fa fa-envelope-open-o"></i></a></li>
                         <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
-                                data-toggle="dropdown" href="javascript:void();"><i class="fa fa-bell-o"></i></a></li>
+                                data-toggle="dropdown" href="javascript:void();"><i class="fa fa-bell-o"></i></a>
+                        </li>
                         <li class="nav-item language">
                             <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
                                 href="javascript:void();"><i class="fa fa-flag"></i></a>
@@ -252,7 +271,6 @@
                                 <li class="dropdown-item"><i class="flag-icon flag-icon-de mr-2"></i> German</li>
                             </ul>
                         </li>
-                        {{-- Removed the user dropdown from here --}}
                     </ul>
                 </nav>
             </header>
@@ -296,7 +314,6 @@
                             <i class="icon-power mr-2"></i> <span>Manager Tasks</span>
                         </a>
                     </li>
-                    {{-- Add other Team Lead specific links here --}}
                 </ul>
             </div>
 
@@ -305,7 +322,7 @@
                     <ul class="navbar-nav mr-auto align-items-center">
                         <li class="nav-item">
                             <a class="nav-link toggle-menu" href="javascript:void();"><i
-                                        class="icon-menu menu-icon"></i></a>
+                                    class="icon-menu menu-icon"></i></a>
                         </li>
                         <li class="nav-item">
                             <form class="search-bar">
@@ -314,7 +331,7 @@
                             </form>
                         </li>
                     </ul>
-                  
+
                 </nav>
             </header>
         @endif
@@ -334,10 +351,8 @@
                                 class="img-circle" alt="user avatar">
                         </div>
                         <div class="media-body">
-                            <h6 class="mt-2 user-title">
-                                {{ Auth::guard('employee')->user()->name }}</h6>
-                            <p class="user-subtitle">{{ Auth::guard('employee')->user()->email }}
-                            </p>
+                            <h6 class="mt-2 user-title">{{ Auth::guard('employee')->user()->name }}</h6>
+                            <p class="user-subtitle">{{ Auth::guard('employee')->user()->email }}</p>
                         </div>
                     </li>
                     <li class="sidebar-header">MAIN NAVIGATION</li>
@@ -351,7 +366,6 @@
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>
                     </li>
-                    {{-- Add other Employee specific links here --}}
                 </ul>
             </div>
 
@@ -360,7 +374,7 @@
                     <ul class="navbar-nav mr-auto align-items-center">
                         <li class="nav-item">
                             <a class="nav-link toggle-menu" href="javascript:void();"><i
-                                        class="icon-menu menu-icon"></i></a>
+                                    class="icon-menu menu-icon"></i></a>
                         </li>
                         <li class="nav-item">
                             <form class="search-bar">
@@ -370,11 +384,14 @@
                         </li>
                     </ul>
                     <ul class="navbar-nav align-items-center right-nav-link">
-                        <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
-                                data-toggle="dropdown" href="javascript:void();"><i
-                                        class="fa fa-envelope-open-o"></i></a></li>
-                        <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
-                                data-toggle="dropdown" href="javascript:void();"><i class="fa fa-bell-o"></i></a></li>
+                        <li class="nav-item dropdown-lg">
+                            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
+                                href="javascript:void();"><i class="fa fa-envelope-open-o"></i></a>
+                        </li>
+                        <li class="nav-item dropdown-lg">
+                            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
+                                href="javascript:void();"><i class="fa fa-bell-o"></i></a>
+                        </li>
                         <li class="nav-item language">
                             <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
                                 href="javascript:void();"><i class="fa fa-flag"></i></a>
@@ -385,7 +402,6 @@
                                 <li class="dropdown-item"><i class="flag-icon flag-icon-de mr-2"></i> German</li>
                             </ul>
                         </li>
-                        {{-- Removed the user dropdown from here --}}
                     </ul>
                 </nav>
             </header>
@@ -437,34 +453,98 @@
     <script src="{{ asset('assets/js/app-script.js') }}"></script>
     <script src="{{ asset('assets/plugins/Chart.js/Chart.min.js') }}"></script>
     <script src="{{ asset('assets/js/index.js') }}"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.7.2/dist/vanilla-tilt.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.7.2/dist/vanilla-tilt.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script>
-        particlesJS('particles-js', {
-            particles: {
-                number: { value: 80, density: { enable: true, value_area: 800 } },
-                color: { value: '#ffffff' },
-                shape: { type: 'circle' },
-                opacity: { value: 0.5, random: true },
-                size: { value: 3, random: true },
-                line_linked: { enable: true, distance: 150, color: '#ffffff', opacity: 0.4, width: 1 },
-                move: { enable: true, speed: 6, direction: 'none', random: false, straight: false }
-            },
-            interactivity: {
-                detect_on: 'canvas',
-                events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
-                modes: { repulse: { distance: 100 }, push: { particles_nb: 4 } }
-            },
-            retina_detect: true
-        });
-
-        $(document).ready(function () {
-            // No need for dropdown initialization here if no dropdowns are present in the topbar
-            // If you still have other dropdowns (like language), keep this line:
-            $('.dropdown-toggle').dropdown();
-        });
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous">
     </script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js"
+        integrity="sha384-7qAoOXltbVP82dhxHAUje59V5r2YsVfBafyUDxEdApLPmcdhBPg1DKg1ERo0BZlK" crossorigin="anonymous">
+    </script>
+    @section('scripts')
+        <script>
+            particlesJS('particles-js', {
+                particles: {
+                    number: {
+                        value: 80,
+                        density: {
+                            enable: true,
+                            value_area: 800
+                        }
+                    },
+                    color: {
+                        value: '#ffffff'
+                    },
+                    shape: {
+                        type: 'circle'
+                    },
+                    opacity: {
+                        value: 0.5,
+                        random: true
+                    },
+                    size: {
+                        value: 3,
+                        random: true
+                    },
+                    line_linked: {
+                        enable: true,
+                        distance: 150,
+                        color: '#ffffff',
+                        opacity: 0.4,
+                        width: 1
+                    },
+                    move: {
+                        enable: true,
+                        speed: 6,
+                        direction: 'none',
+                        random: false,
+                        straight: false
+                    }
+                },
+                interactivity: {
+                    detect_on: 'canvas',
+                    events: {
+                        onhover: {
+                            enable: true,
+                            mode: 'repulse'
+                        },
+                        onclick: {
+                            enable: true,
+                            mode: 'push'
+                        }
+                    },
+                    modes: {
+                        repulse: {
+                            distance: 100
+                        },
+                        push: {
+                            particles_nb: 4
+                        }
+                    }
+                },
+                retina_detect: true
+            });
 
-</html>
+            $(document).ready(function() {
+                $('.dropdown-toggle').dropdown();
+                $('.toggle-menu').on('click', function() {
+                    $('#wrapper').toggleClass('toggled');
+                });
+            });
+
+            document.addEventListener("DOMContentLoaded", function() {
+                const toggleButton = document.querySelectorAll('.toggle-menu');
+                const sidebar = document.getElementById('sidebar-wrapper');
+
+                toggleButton.forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        sidebar.classList.toggle('sidebar-collapsed');
+                    });
+                });
+            });
+        </script>
+
+    </body>
+
+    </html>

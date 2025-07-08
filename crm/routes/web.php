@@ -29,6 +29,8 @@ Route::controller(ProjectManager::class)->group(function () {
             )
                 ->name('project_manager.tasks.assign_team_lead');
             Route::get('project-manager/owner-tasks/{id}/detail', 'onwertask_detail')->name('project_manager.tasks.detail');
+            Route::get('project-manager/notifications',  'notifications')->name('project_manager.notifications');
+            Route::get('project-manager/notifications/{id}',  'viewNotification')->name('project_manager.notifications.view');
         }
     );
 
@@ -77,8 +79,10 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::put('/team-lead/profile', action: 'updateProfile')->name('team_lead.profile.update');
         Route::get('/team-lead/manager-tasks', 'manager_tasks')->name('team_lead.manager_tasks');
         Route::post('/team-lead/tasks/{task}/assign-employees', 'assignEmployees')->name('team_lead.tasks.assign_employees');
-        Route::post('/team-lead/tasks/{task}/update-status', 'updateStatus')->name('team_lead.tasks.update_status');
-        Route::get('/team-lead/tasks/{id}/detail', 'task_detail')->name('team_lead.task_detail');
+        Route::put('/team-lead/tasks/{task}/update-status', 'updateStatus')->name('team_lead.tasks.update_status');
+        Route::get('/team-lead/tasks/{id}/detail', 'manager_tasks_detail')->name('team_lead.task_detail');
+        Route::post('/team-lead/subtasks/store/',  'storeSubtask'    )->name('team_lead.subtasks.store');
+
     });
 });
 
@@ -94,6 +98,8 @@ Route::controller(Employee::class)->group(function () {
     Route::middleware('check.roles')->group(function () {
         Route::get('/employee/home', 'home')->name('employee.home');
         Route::get('/employee/profile', 'profile_view')->name('employee.profile');
-        Route::put('/employee/profile', action: 'updateProfile')->name('employee.profile.update');
+        Route::put('/employee/profile', 'updateProfile')->name('employee.profile.update');
+        Route::get('/employee/teamlead-tasks','team_task_view')->name('employee.teamlead_task');
+        Route::get('/employee/task-detail/{id}', 'teamlead_task_detail')->name('employee.task_detail');
     });
 });

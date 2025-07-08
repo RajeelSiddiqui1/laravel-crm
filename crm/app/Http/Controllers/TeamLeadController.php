@@ -3,17 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\OnwerTask;
+use App\Models\Subtask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
-use App\Models\TeamLead; // Corrected: Renamed alias to direct import (assuming Controller is renamed)
+use App\Models\TeamLead;
 use App\Models\Department;
-use App\Models\Employee; // Ensure Employee model is imported for clarity and consistency
+use App\Models\Employee;
+use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
-class TeamLeadController extends Controller // Corrected: Changed class name to TeamLeadController
+class TeamLeadController extends Controller
 {
     function resgisterview()
     {
@@ -33,10 +35,11 @@ class TeamLeadController extends Controller // Corrected: Changed class name to 
         ]);
 
         if ($validator->fails()) {
+            ToastMagic::error('Validation failed. Please check your input.');
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $manager = new TeamLead(); // Corrected: Using the direct TeamLead model name
+        $manager = new TeamLead();
         $manager->name = $request->name;
         $manager->email = $request->email;
         $manager->phone = $request->phone;
@@ -50,7 +53,7 @@ class TeamLeadController extends Controller // Corrected: Changed class name to 
             $manager->image = $imageName;
         } else {
             $randomId = rand(1, 30);
-            $imageContent = @file_get_contents("https://avatar.iran.liara.run/public/$randomId"); // Suppress warning if URL fails
+            $imageContent = @file_get_contents("https://avatar.iran.liara.run/public/$randomId");
             if ($imageContent !== false) {
                 $imageName = time() . '_auto.jpg';
                 file_put_contents(public_path("images/team_leads/$imageName"), $imageContent);
@@ -66,11 +69,11 @@ class TeamLeadController extends Controller // Corrected: Changed class name to 
             $loginLink = route('team_lead.token.login', ['token' => $token]);
             Mail::to($manager->email)->send(new AuthMail($manager, $loginLink));
 
-            session()->flash('success', 'Team Lead registered successfully.');
+            ToastMagic::success('Team Lead registered successfully. Check your email for login link.');
             return redirect()->route('welcome');
         }
 
-        session()->flash('error', 'Failed to register Team Lead.');
+        ToastMagic::error('Failed to register Team Lead.');
         return redirect()->back()->withInput();
     }
 
@@ -87,42 +90,54 @@ class TeamLeadController extends Controller // Corrected: Changed class name to 
         ]);
 
         if ($validator->fails()) {
+            ToastMagic::error('Validation failed. Please check your input.');
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $credentials = $request->only('email', 'password');
 
         if (Auth::guard('team_lead')->attempt($credentials)) {
-            return redirect()->route('team_lead.home')->with('success', 'Login successful');
+            ToastMagic::success('Login successful!');
+            return redirect()->route('team_lead.home');
         }
 
-        return redirect()->back()->with('error', 'Invalid login credentials');
+        ToastMagic::error('Invalid login credentials.');
+        return redirect()->back()->withInput();
     }
 
     function tokenLogin($token)
     {
-        $team_lead = TeamLead::where('login_token', $token)->first(); // Corrected: Using direct TeamLead model name
+        $team_lead = TeamLead::where('login_token', $token)->first();
 
         if (!$team_lead) {
-            return redirect()->route('team_lead.login')->with('error', 'Invalid or expired login token.');
+            ToastMagic::error('Invalid or expired login token.');
+            return redirect()->route('team_lead.login');
         }
 
         Auth::guard('team_lead')->login($team_lead);
         $team_lead->login_token = null;
         $team_lead->save();
 
-        return redirect()->route('team_lead.home')->with('success', 'Logged in successfully via token.');
+        ToastMagic::success('Logged in successfully via token!');
+        return redirect()->route('team_lead.home');
     }
 
     function logout()
     {
         Auth::guard('team_lead')->logout();
-        return redirect()->route('team_lead.login')->with('success', 'Logged out successfully');
+        ToastMagic::success('Logged out successfully!');
+        return redirect()->route('team_lead.login');
     }
 
     function home()
     {
-        return view('team_lead.home');
+        $teamLead = Auth::guard('team_lead')->user();
+        $departmentId = $teamLead->department_id;
+        $employees = Employee::where('department_id', $departmentId)->get();
+        $tasks = OnwerTask::with(['teamLead', 'department'])
+            ->where('team_lead_id', $teamLead->id)
+            ->get();
+        return view('team_lead.home', compact('tasks', 'employees'));
     }
 
     function profile_view()
@@ -131,58 +146,57 @@ class TeamLeadController extends Controller // Corrected: Changed class name to 
         return view('team_lead.profile', compact('manager'));
     }
 
-    function updateProfile(Request $request)
-    {
-        /** @var \App\Models\TeamLead $employee */
-        $employee = Auth::guard('team_lead')->user();
+ function updateProfile(Request $request)
+{
+    /** @var \App\Models\TeamLead $employee */
+    $employee = Auth::guard('team_lead')->user();
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:team_leads,email,' . $employee->id,
-            'password' => 'nullable|string|min:6|confirmed',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
-        ]);
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:team_leads,email,' . $employee->id,
+        'password' => 'nullable|string|min:6|confirmed',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+    ]);
 
-        $employee->name = $request->name;
-        $employee->email = $request->email;
+    $employee->name = $request->name;
+    $employee->email = $request->email;
 
-        if ($request->hasFile('image')) {
-            $oldImage = public_path('images/team_leads/' . $employee->image);
+    if ($request->hasFile('image')) {
+        $oldImage = public_path('images/team_leads/' . $employee->image);
 
-            if ($employee->image && file_exists($oldImage)) {
-                @unlink($oldImage);
-            }
-
-            $imageName = time() . '.' . $request->image->getClientOriginalExtension();
-            $request->image->move(public_path('images/team_leads'), $imageName);
-            $employee->image = $imageName;
+        if ($employee->image && file_exists($oldImage)) {
+            @unlink($oldImage);
         }
 
-        $employee->save();
-
-        return back()->with('success', 'Profile updated successfully!');
+        $imageName = time() . '.' . $request->image->getClientOriginalExtension();
+        $request->image->move(public_path('images/team_leads'), $imageName);
+        $employee->image = $imageName;
     }
+
+    if ($request->filled('password')) {
+        $employee->password = bcrypt($request->password);
+    }
+
+    $employee->save();
+
+    ToastMagic::success('Profile updated successfully!');
+    return back();
+}
+
     public function manager_tasks()
     {
         $teamLead = Auth::guard('team_lead')->user();
 
-        // Get department_id of the logged-in team lead
         $departmentId = $teamLead->department_id;
 
-        // Fetch employees from the same department
         $employees = Employee::where('department_id', $departmentId)->get();
 
-        // Fetch tasks if needed
         $tasks = OnwerTask::with(['teamLead', 'department'])
             ->where('team_lead_id', $teamLead->id)
             ->get();
 
         return view('team_lead.manager_tasks', compact('tasks', 'employees'));
     }
-
-
-
-
 
     public function assignEmployees(Request $request, OnwerTask $task)
     {
@@ -194,50 +208,94 @@ class TeamLeadController extends Controller // Corrected: Changed class name to 
         $teamLead = Auth::guard('team_lead')->user();
 
         if ($task->team_lead_id !== $teamLead->id) {
+            ToastMagic::error('Unauthorized action. This task is not assigned to you.');
             abort(403, 'Unauthorized action. This task is not assigned to you.');
         }
 
-        if ($request->has('employee_id')) {
-            foreach ($request->employee_id as $employeeId) {
-                $employee = Employee::find($employeeId);
-                if (!$employee || $employee->department_id !== $teamLead->department_id) {
-                    return back()->with('error', 'You can only assign employees from your own department.');
-                }
+        $newIds = $request->input('employee_id', []);
+
+        $existingIds = $task->employee_id ? explode(',', $task->employee_id) : [];
+
+        $mergedIds = array_unique(array_merge($existingIds, $newIds));
+
+        foreach ($mergedIds as $employeeId) {
+            $employee = Employee::find($employeeId);
+            if (!$employee || $employee->department_id !== $teamLead->department_id) {
+                ToastMagic::error('You can only assign employees from your own department.');
+                return back()->with('error', 'You can only assign employees from your own department.');
             }
         }
 
-        // Save as comma-separated string
-        $task->employee_id = implode(',', $request->input('employee_id', []));
+        $task->employee_id = implode(',', $mergedIds);
         $task->save();
 
-        return back()->with('success', 'Employees assigned successfully!');
+        ToastMagic::success('Employees assigned successfully!');
+        return back();
     }
 
+   public function updateStatus(Request $request, OnwerTask $task)
+{
+    $request->validate([
+        'status' => 'required|in:pending,in_progress,completed,cancelled',
+    ]);
 
-    function updateStatus(Request $request, OnwerTask $task)
-    {
-        $request->validate([
-            'status' => 'required|in:pending,in_progress,completed,cancelled',
-        ]);
+    $teamLead = Auth::guard('team_lead')->user();
 
-        $teamLead = Auth::guard('team_lead')->user();
-
-        if ($task->team_lead_id !== $teamLead->id) {
-            abort(403, 'Unauthorized action. This task is not assigned to you.');
-        }
-
-        $task->status = $request->status;
-        $task->save();
-
-        return back()->with('success', 'Task status updated successfully!');
+    if ($task->team_lead_id !== $teamLead->id) {
+        ToastMagic::error('Unauthorized action. This task is not assigned to you.');
+        return redirect()->back()->withInput();
     }
 
+    $task->status = $request->status;
+    $task->save();
 
+    ToastMagic::success('Task status updated successfully!');
 
+    return redirect("/team-lead/manager-tasks");
+}
 
     function manager_tasks_detail($id)
     {
         $task = OnwerTask::findOrFail($id);
         return view('team_lead.manager_tasks_detail', compact('task'));
     }
+
+
+    public function storeSubtask(Request $request)
+{
+    $request->validate([
+        'owner_task_id' => 'required|exists:owner_tasks,id',
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+        'assigned_employee_id' => 'required|exists:employees,id',
+    ]);
+
+    $teamLead = Auth::guard('team_lead')->user();
+
+    $task = OnwerTask::findOrFail($request->owner_task_id);
+
+    // Authorization
+    if ($task->team_lead_id !== $teamLead->id) {
+        return back()->with('error', 'You are not authorized to add subtasks to this task.');
+    }
+
+    $employee = Employee::findOrFail($request->assigned_employee_id);
+    if ($employee->department_id !== $teamLead->department_id) {
+        return back()->with('error', 'Employee must belong to your department.');
+    }
+
+    // Create subtask
+    $subtask = Subtask::create([
+        'title' => $request->title,
+        'description' => $request->description,
+        'assigned_employee_id' => $employee->id,
+        'owner_task_id' => $task->id,
+    ]);
+
+    // Optionally update owner task to track latest subtask
+    $task->subtask_id = $subtask->id;
+    $task->save();
+
+    return back()->with('success', 'Subtask created successfully.');
+}
 }

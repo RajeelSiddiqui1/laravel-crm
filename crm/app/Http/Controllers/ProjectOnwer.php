@@ -11,6 +11,8 @@ use App\Models\OnwerTask;
 use App\Models\ProjectManager;
 use App\Models\ProjectOwner;
 use App\Models\TeamLead;
+use App\Notifications\OwnerTaskAssign;
+use App\Notifications\OwnerTaskEdit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -166,6 +168,8 @@ class ProjectOnwer extends Controller
         return view('project_owner.tasks_create', compact('departments'));;
     }
 
+
+
     function tasks_create(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -174,6 +178,7 @@ class ProjectOnwer extends Controller
             'description' => 'required',
             'client_email' => 'required|email',
             'client_contact' => 'required',
+            'department_id' => 'required|exists:departments,id',
             'project_manager_id' => 'required|exists:project_managers,id',
             'start_date' => 'required|date',
             'deadline' => 'required|date|after_or_equal:start_date',
@@ -183,7 +188,6 @@ class ProjectOnwer extends Controller
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-
         $task = new OnwerTask();
         $task->name = $request->name;
         $task->client_name = $request->client_name;
@@ -196,15 +200,15 @@ class ProjectOnwer extends Controller
         $task->start_date = $request->start_date;
         $task->deadline = $request->deadline;
         $task->priority = $request->priority;
-     
+
         if ($task->save()) {
-
-            Mail::to($task->manager_email)->send(new TaskAssignedMail($task));
-
-            return redirect()->route('project_owner.task')->with('success', 'Task created successfully');
-        } else {
-            return redirect()->route('project_owner.task')->with('error', 'Failed to create task');
+            $manager = ProjectManager::find($task->project_manager_id);
+            Mail::to($manager->email)->send(new TaskAssignedMail($task));
+            $manager->notify(new OwnerTaskAssign($task));
+            return redirect()->route('project_owner.task')->with('success', 'Task created.');
         }
+
+        return redirect()->route('project_owner.task')->with('error', 'Failed.');
     }
 
     public function edit($id)
@@ -223,6 +227,7 @@ class ProjectOnwer extends Controller
             'client_email'       => 'required|email',
             'client_contact'     => 'required|string|max:20',
             'project_manager_id' => 'required|exists:project_managers,id',
+            'department_id'      => 'required|exists:departments,id',
             'manager_email'      => 'required|email',
             'start_date'         => 'required|date',
             'deadline'           => 'required|date|after_or_equal:start_date',
@@ -242,6 +247,7 @@ class ProjectOnwer extends Controller
             'client_email'       => $request->client_email,
             'client_contact'     => $request->client_contact,
             'project_manager_id' => $request->project_manager_id,
+            'department_id'      => $request->department_id,
             'manager_email'      => $request->manager_email,
             'start_date'         => $request->start_date,
             'deadline'           => $request->deadline,
@@ -249,14 +255,18 @@ class ProjectOnwer extends Controller
         ]);
 
         Mail::to($task->manager_email)->send(new EditTask($task));
+        $manager = ProjectManager::find($task->project_manager_id);
+        $manager->notify(new OwnerTaskEdit($task));
         return redirect()->route('project_owner.task', $id)->with('success', 'Task updated successfully.');
     }
 
-     function destroy($id)
+    function destroy($id)
     {
         $task = OnwerTask::findOrFail($id);
         $task->delete();
         Mail::to($task->manager_email)->send(new TaskDeletedMail($task));
+        $manager = ProjectManager::find($task->project_manager_id);
+        $manager->notify(new OwnerTaskAssign($task));
         return redirect()->route('project_owner.task')->with('success', 'Task deleted successfully.');
     }
 }

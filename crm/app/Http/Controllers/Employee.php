@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Models\OnwerTask;
 
 class Employee extends Controller
 {
@@ -161,5 +162,20 @@ class Employee extends Controller
         $employee->save();
 
         return back()->with('success', 'Profile updated successfully!');
+    }
+
+    function team_task_view(){
+        $employee = Auth::guard('employee')->user();
+
+        $tasks = OnwerTask::with(['employee','department'])
+        ->where('employee_id', $employee->id)
+        ->get();
+
+        return view('employee.teamlead_task', compact('tasks'));
+    }
+
+    function teamlead_task_detail($id){
+        $task = OnwerTask::findOrFail($id);
+        return view('employee.teamlead_task_detail', compact('task'));
     }
 }
