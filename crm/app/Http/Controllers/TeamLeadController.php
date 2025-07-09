@@ -146,42 +146,42 @@ class TeamLeadController extends Controller
         return view('team_lead.profile', compact('manager'));
     }
 
- function updateProfile(Request $request)
-{
-    /** @var \App\Models\TeamLead $employee */
-    $employee = Auth::guard('team_lead')->user();
+    function updateProfile(Request $request)
+    {
+        /** @var \App\Models\TeamLead $employee */
+        $employee = Auth::guard('team_lead')->user();
 
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:team_leads,email,' . $employee->id,
-        'password' => 'nullable|string|min:6|confirmed',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
-    ]);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:team_leads,email,' . $employee->id,
+            'password' => 'nullable|string|min:6|confirmed',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+        ]);
 
-    $employee->name = $request->name;
-    $employee->email = $request->email;
+        $employee->name = $request->name;
+        $employee->email = $request->email;
 
-    if ($request->hasFile('image')) {
-        $oldImage = public_path('images/team_leads/' . $employee->image);
+        if ($request->hasFile('image')) {
+            $oldImage = public_path('images/team_leads/' . $employee->image);
 
-        if ($employee->image && file_exists($oldImage)) {
-            @unlink($oldImage);
+            if ($employee->image && file_exists($oldImage)) {
+                @unlink($oldImage);
+            }
+
+            $imageName = time() . '.' . $request->image->getClientOriginalExtension();
+            $request->image->move(public_path('images/team_leads'), $imageName);
+            $employee->image = $imageName;
         }
 
-        $imageName = time() . '.' . $request->image->getClientOriginalExtension();
-        $request->image->move(public_path('images/team_leads'), $imageName);
-        $employee->image = $imageName;
+        if ($request->filled('password')) {
+            $employee->password = bcrypt($request->password);
+        }
+
+        $employee->save();
+
+        ToastMagic::success('Profile updated successfully!');
+        return back();
     }
-
-    if ($request->filled('password')) {
-        $employee->password = bcrypt($request->password);
-    }
-
-    $employee->save();
-
-    ToastMagic::success('Profile updated successfully!');
-    return back();
-}
 
     public function manager_tasks()
     {
@@ -233,26 +233,26 @@ class TeamLeadController extends Controller
         return back();
     }
 
-   public function updateStatus(Request $request, OnwerTask $task)
-{
-    $request->validate([
-        'status' => 'required|in:pending,in_progress,completed,cancelled',
-    ]);
+    public function updateStatus(Request $request, OnwerTask $task)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,in_progress,completed,cancelled',
+        ]);
 
-    $teamLead = Auth::guard('team_lead')->user();
+        $teamLead = Auth::guard('team_lead')->user();
 
-    if ($task->team_lead_id !== $teamLead->id) {
-        ToastMagic::error('Unauthorized action. This task is not assigned to you.');
-        return redirect()->back()->withInput();
+        if ($task->team_lead_id !== $teamLead->id) {
+            ToastMagic::error('Unauthorized action. This task is not assigned to you.');
+            return redirect()->back()->withInput();
+        }
+
+        $task->status = $request->status;
+        $task->save();
+
+        ToastMagic::success('Task status updated successfully!');
+
+        return redirect("/team-lead/manager-tasks");
     }
-
-    $task->status = $request->status;
-    $task->save();
-
-    ToastMagic::success('Task status updated successfully!');
-
-    return redirect("/team-lead/manager-tasks");
-}
 
     function manager_tasks_detail($id)
     {
@@ -261,41 +261,117 @@ class TeamLeadController extends Controller
     }
 
 
-    public function storeSubtask(Request $request)
-{
-    $request->validate([
-        'owner_task_id' => 'required|exists:owner_tasks,id',
-        'title' => 'required|string|max:255',
-        'description' => 'required|string',
-        'assigned_employee_id' => 'required|exists:employees,id',
-    ]);
-
-    $teamLead = Auth::guard('team_lead')->user();
-
-    $task = OnwerTask::findOrFail($request->owner_task_id);
-
-    // Authorization
-    if ($task->team_lead_id !== $teamLead->id) {
-        return back()->with('error', 'You are not authorized to add subtasks to this task.');
+    public function subtask_view($id)
+    {
+        $subtask = Subtask::with('employee', 'task')->findOrFail($id);
+        return view('team_lead.subtask_view', compact('subtask'));
     }
 
-    $employee = Employee::findOrFail($request->assigned_employee_id);
-    if ($employee->department_id !== $teamLead->department_id) {
-        return back()->with('error', 'Employee must belong to your department.');
+    public function subtask_edit($id)
+    {
+        $subtask = Subtask::findOrFail($id);
+        return view('team_lead.subtask_edit', compact('subtask'));
     }
 
-    // Create subtask
-    $subtask = Subtask::create([
-        'title' => $request->title,
-        'description' => $request->description,
-        'assigned_employee_id' => $employee->id,
-        'owner_task_id' => $task->id,
-    ]);
 
-    // Optionally update owner task to track latest subtask
-    $task->subtask_id = $subtask->id;
-    $task->save();
 
-    return back()->with('success', 'Subtask created successfully.');
-}
+
+    public function subtask_create($taskId)
+    {
+        $task = OnwerTask::findOrFail($taskId);
+        $teamLead = Auth::guard('team_lead')->user();
+
+        $assignedEmployees = Employee::whereIn('id', explode(',', $task->employee_id))
+            ->where('department_id', $teamLead->department_id)
+            ->get();
+
+        return view('team_lead.create_subtask', compact('task', 'assignedEmployees'));
+    }
+
+    public function subtask_store(Request $request)
+    {
+        $request->validate([
+            'owner_task_id' => 'required|exists:owner_tasks,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'assigned_employee_id' => 'required|exists:employees,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i',
+        ]);
+
+        $teamLead = Auth::guard('team_lead')->user();
+        $task = OnwerTask::findOrFail($request->owner_task_id);
+
+        if ($task->team_lead_id !== $teamLead->id) {
+            return back()->with('error', 'Unauthorized.');
+        }
+
+        $employee = Employee::findOrFail($request->assigned_employee_id);
+        if ($employee->department_id !== $teamLead->department_id) {
+            return back()->with('error', 'Invalid employee department.');
+        }
+
+        Subtask::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'assigned_employee_id' => $employee->id,
+            'owner_task_id' => $task->id,
+            'start_date' => $request->start_date,
+            'start_time' => $request->start_time,
+            'end_date' => $request->end_date,
+            'end_time' => $request->end_time,
+        ]);
+
+        return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask created');
+    }
+
+
+    public function subtask_update(Request $request, $id)
+    {
+        $request->validate([
+            'owner_task_id' => 'required|exists:owner_tasks,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'assigned_employee_id' => 'required|exists:employees,id',
+            'start_date' => 'nullable|date|date_format:Y-m-d',
+            'end_date' => 'nullable|date|date_format:Y-m-d|after_or_equal:start_date',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
+        ]);
+
+        $teamLead = Auth::guard('team_lead')->user();
+        $task = OnwerTask::findOrFail($request->owner_task_id);
+
+        if ($task->team_lead_id !== $teamLead->id) {
+            return back()->with('error', 'Unauthorized.');
+        }
+
+        $employee = Employee::findOrFail($request->assigned_employee_id);
+        if ($employee->department_id !== $teamLead->department_id) {
+            return back()->with('error', 'Invalid employee department.');
+        }
+
+        $subtask = Subtask::findOrFail($id);
+
+        $subtask->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'assigned_employee_id' => $employee->id,
+            'owner_task_id' => $task->id,
+            'start_date' => $request->start_date,
+            'start_time' => $request->start_time,
+            'end_date' => $request->end_date,
+            'end_time' => $request->end_time,
+        ]);
+
+        return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask updated');
+    }
+
+    public function subtask_list($id)
+    {
+        $task = OnwerTask::with('subtasks.employee')->findOrFail($id);
+        return view('team_lead.subtask_list', compact('task'));
+    }
 }

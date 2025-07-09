@@ -6,17 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Subtask extends Model
 {
-    protected $fillable = [
-        'owner_task_id',
-        'title',
-        'description',
-        'assigned_employee_id',
-    ];
+   protected $fillable = [
+    'owner_task_id', 'title', 'description', 'assigned_employee_id',
+    'comment', 'status', 'attachment'
+];
 
-    public function ownerTask()
+
+    public function task()
     {
         return $this->belongsTo(OnwerTask::class, 'owner_task_id');
     }
+
 
     public function employee()
     {

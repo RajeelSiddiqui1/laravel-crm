@@ -1,8 +1,5 @@
 @extends('layout.app')
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
 @section('styles')
     <style>
         .checkbox-wrapper {
@@ -99,6 +96,14 @@
             background-color: #0d6efd;
             border-radius: 4px;
         }
+
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+
+        .modal {
+            z-index: 1050 !important;
+        }
     </style>
 @endsection
 
@@ -194,9 +199,7 @@
                                                                 name="employee_id[]" value="{{ $employee->id }}"
                                                                 id="emp-{{ $task->id }}-{{ $employee->id }}">
                                                             <label class="form-check-label"
-                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">
-                                                                {{ $employee->name }}
-                                                            </label>
+                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
                                                         </div>
                                                     </li>
                                                 @endforeach
@@ -215,51 +218,12 @@
                                     class="btn btn-sm btn-primary">View</a>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-warning mb-1" data-bs-toggle="modal"
-                                    data-bs-target="#subtaskModal-{{ $task->id }}">
-                                    Subtask
-                                </button>
-
-                               <div class="modal fade" id="subtaskModal-{{ $task->id }}" tabindex="-1" aria-labelledby="subtaskLabel-{{ $task->id }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <form method="POST" action="{{ route('team_lead.subtasks.store') }}">
-            @csrf
-            <input type="hidden" name="owner_task_id" value="{{ $task->id }}">
-            <div class="modal-content bg-white text-dark">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="subtaskLabel-{{ $task->id }}">
-                        Create Subtask for {{ $task->client_name }}
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Subtask Title</label>
-                        <input type="text" name="title" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea name="description" class="form-control" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Assign to Employee</label>
-                        <select name="assigned_employee_id" class="form-select" required>
-                            <option value="">Select Employee</option>
-                            @foreach ($employees->where('department_id', $task->department_id) as $employee)
-                                <option value="{{ $employee->id }}">{{ $employee->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Create Subtask</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
+                                <a href="{{ route('team_lead.subtask.create', $task->id) }}"
+                                    class="btn btn-sm btn-warning mb-1">Subtask</a>
+                                <a href="{{ route('team_lead.subtask.list', $task->id) }}"
+                                    class="btn btn-sm btn-info">Subtask Assign</a>
                             </td>
+
                         </tr>
                     @empty
                         <tr>

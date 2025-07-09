@@ -27,36 +27,34 @@ class OnwerTask extends Model
     protected $casts = [
         'start_date' => 'datetime',
         'deadline' => 'datetime',
-         'employee_ids' => 'array',
+        'employee_ids' => 'array',
     ];
 
 
 
-   public function projectManager()
-{
-    return $this->belongsTo(ProjectManager::class);
-}
+    public function projectManager()
+    {
+        return $this->belongsTo(ProjectManager::class);
+    }
 
-public function department()
-{
-    return $this->belongsTo(Department::class);
-}
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 
-public function employee()
-{
-    return $this->belongsTo(Employee::class, 'employee_id');
-}
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
 
-public function subtask()
-{
-    return $this->belongsTo(Subtask::class, 'subtask_id');
-}
-
-
-public function teamLead()
-{
-    return $this->belongsTo(TeamLead::class, 'team_lead_id');
-}
+    public function subtasks()
+    {
+        return $this->hasMany(Subtask::class, 'owner_task_id');
+    }
 
 
+    public function teamLead()
+    {
+        return $this->belongsTo(TeamLead::class, 'team_lead_id');
+    }
 }

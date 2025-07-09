@@ -362,6 +362,17 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ url('/employee/teamlead-tasks') }}">
+                            <i class="icon-wallet mr-2"></i> <span>Teamlead Tasks</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url('/employee/subtasks') }}">
+                            <i class="icon-wallet mr-2"></i> <span>Subtask</span>
+                        </a>
+                    </li>
+
+                    <li>
                         <a href="{{ route('employee.logout') }}">
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>

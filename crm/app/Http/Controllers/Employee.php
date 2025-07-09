@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Subtask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
@@ -12,12 +13,15 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\OnwerTask;
+use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Illuminate\Support\Facades\Log;
 
 class Employee extends Controller
 {
     function resgisterview()
     {
-        $departments = Department::all(); // ✅ Fix: Get departments from correct model
+        $departments = Department::all();
         return view('employee.register', compact('departments'));
     }
 
@@ -28,7 +32,7 @@ class Employee extends Controller
             'email' => 'required|email|max:255|unique:employees',
             'phone' => 'required|string|max:15',
             'password' => 'required|string|min:3|confirmed',
-            'department_id' => 'required|exists:departments,id', // ✅ single department
+            'department_id' => 'required|exists:departments,id',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
@@ -36,12 +40,12 @@ class Employee extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $manager = new  ModelsEmployee();
+        $manager = new ModelsEmployee();
         $manager->name = $request->name;
         $manager->email = $request->email;
         $manager->phone = $request->phone;
         $manager->password = bcrypt($request->password);
-        $manager->department_id = $request->department_id; // ✅ assign single department
+        $manager->department_id = $request->department_id;
 
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -164,18 +168,97 @@ class Employee extends Controller
         return back()->with('success', 'Profile updated successfully!');
     }
 
-    function team_task_view(){
+
+    function team_task_view()
+    {
         $employee = Auth::guard('employee')->user();
 
-        $tasks = OnwerTask::with(['employee','department'])
-        ->where('employee_id', $employee->id)
-        ->get();
+        $tasks = OnwerTask::with(['employee', 'department'])
+            ->where('employee_id', $employee->id)
+            ->get();
 
         return view('employee.teamlead_task', compact('tasks'));
     }
 
-    function teamlead_task_detail($id){
+    function teamlead_task_detail($id)
+    {
         $task = OnwerTask::findOrFail($id);
         return view('employee.teamlead_task_detail', compact('task'));
     }
+
+    function subtasks_list()
+    {
+        $employee = Auth::guard('employee')->user();
+
+        $subtasks = Subtask::with('task')
+            ->where('assigned_employee_id', $employee->id)
+            ->get();
+
+        return view('employee.subtasks_list', compact('subtasks'));
+    }
+
+    public function edit_subtask($id)
+    {
+        $subtask = Subtask::findOrFail($id);
+        return view('employee.subtasks_update', compact('subtask'));
+    }
+
+ 
+
+public function update_subtask(Request $request, $id)
+{
+    $request->validate([
+        'comment' => 'nullable|string',
+        'status' => 'required|in:pending,in_progress,completed',
+        'attachment' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mp3,wav,pdf,doc,docx,xls,xlsx,txt|max:102400',
+    ]);
+
+    $subtask = Subtask::findOrFail($id);
+    $subtask->comment = $request->comment;
+    $subtask->status = $request->status;
+
+    if ($request->hasFile('attachment')) {
+        try {
+            $file = $request->file('attachment');
+
+            $publicId = "subtask_attachments/subtask_" . $subtask->id;
+
+            $uploaded = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::uploadApi()->upload(
+                $file->getRealPath(),
+                [
+                    'public_id' => $publicId,
+                    'overwrite' => true,
+                    'resource_type' => 'auto'
+                ]
+            );
+
+            $subtask->attachment = $uploaded['secure_url'];
+        } catch (\Exception $e) {
+            Log::error('Upload failed: ' . $e->getMessage());
+            return redirect()->route('employee.subtasks')->with('error', 'Attachment upload failed.');
+        }
+    }
+
+    $subtask->save();
+
+    return redirect()->route('employee.subtasks')->with('success', 'Subtask updated successfully.');
+}
+
+
+
+
+protected function getCloudinaryPublicId($url)
+{
+    $parts = explode('/', $url);
+    $uploadIndex = array_search('upload', $parts);
+    if ($uploadIndex !== false && isset($parts[$uploadIndex + 2])) {
+        $folderParts = array_slice($parts, $uploadIndex + 2);
+        return implode('/', array_map(function ($part) {
+            return pathinfo($part, PATHINFO_FILENAME);
+        }, $folderParts));
+    }
+    return null;
+}
+
+
 }
