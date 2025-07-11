@@ -8,11 +8,13 @@ use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
 use App\Models\Employee as ModelsEmployee;
 use App\Models\Department;
+use App\Models\Message;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\OnwerTask;
+use App\Models\TeamLead;
 use Illuminate\Support\Facades\Storage;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Log;
@@ -203,66 +205,123 @@ class Employee extends Controller
         return view('employee.subtasks_update', compact('subtask'));
     }
 
- 
 
 
-public function update_subtask(Request $request, $id)
-{
-    $request->validate([
-        'comment' => 'nullable|string',
-        'status' => 'required|in:pending,in_progress,completed',
-        'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
-    ]);
 
-    $subtask = Subtask::findOrFail($id);
-    $subtask->comment = $request->comment;
-    $subtask->status = $request->status;
+    public function update_subtask(Request $request, $id)
+    {
+        $request->validate([
+            'comment' => 'nullable|string',
+            'status' => 'required|in:pending,in_progress,completed',
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
+        ]);
 
-    $existingAttachments = $subtask->attachments ?? [];
+        $subtask = Subtask::findOrFail($id);
+        $subtask->comment = $request->comment;
+        $subtask->status = $request->status;
 
-    if ($request->hasFile('attachments')) {
-        foreach ($request->file('attachments') as $file) {
-            try {
-                $publicId = 'subtask_attachments/' . uniqid() . '_' . $file->getClientOriginalName();
+        $existingAttachments = $subtask->attachments ?? [];
 
-                $uploaded = Cloudinary::uploadApi()->upload(
-                    $file->getRealPath(),
-                    [
-                        'public_id' => $publicId,
-                        'resource_type' => 'auto',
-                        'overwrite' => false
-                    ]
-                );
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                try {
+                    $publicId = 'subtask_attachments/' . uniqid() . '_' . $file->getClientOriginalName();
 
-                $existingAttachments[] = $uploaded['secure_url'];
+                    $uploaded = Cloudinary::uploadApi()->upload(
+                        $file->getRealPath(),
+                        [
+                            'public_id' => $publicId,
+                            'resource_type' => 'auto',
+                            'overwrite' => false
+                        ]
+                    );
 
-            } catch (\Exception $e) {
-                Log::error('Upload failed: ' . $e->getMessage());
-                return redirect()->route('employee.subtasks')->with('error', 'Attachment upload failed.');
+                    $existingAttachments[] = $uploaded['secure_url'];
+                } catch (\Exception $e) {
+                    Log::error('Upload failed: ' . $e->getMessage());
+                    return redirect()->route('employee.subtasks')->with('error', 'Attachment upload failed.');
+                }
             }
         }
+
+        $subtask->attachments = $existingAttachments;
+        $subtask->save();
+
+        return redirect()->route('employee.subtasks')->with('success', 'Subtask updated successfully.');
     }
 
-    $subtask->attachments = $existingAttachments;
-    $subtask->save();
-
-    return redirect()->route('employee.subtasks')->with('success', 'Subtask updated successfully.');
-}   
 
 
-
-protected function getCloudinaryPublicId($url)
-{
-    $parts = explode('/', $url);
-    $uploadIndex = array_search('upload', $parts);
-    if ($uploadIndex !== false && isset($parts[$uploadIndex + 2])) {
-        $folderParts = array_slice($parts, $uploadIndex + 2);
-        return implode('/', array_map(function ($part) {
-            return pathinfo($part, PATHINFO_FILENAME);
-        }, $folderParts));
+    protected function getCloudinaryPublicId($url)
+    {
+        $parts = explode('/', $url);
+        $uploadIndex = array_search('upload', $parts);
+        if ($uploadIndex !== false && isset($parts[$uploadIndex + 2])) {
+            $folderParts = array_slice($parts, $uploadIndex + 2);
+            return implode('/', array_map(function ($part) {
+                return pathinfo($part, PATHINFO_FILENAME);
+            }, $folderParts));
+        }
+        return null;
     }
-    return null;
-}
 
 
+
+    #message
+    function fetch_team_leads()
+    {
+        $employee = Auth::guard('employee')->user();
+
+        $teamLeads = TeamLead::where('department_id', $employee->department_id)
+            ->with('department')
+            ->get();
+
+        return view('employee.team_leads', compact('employee', 'teamLeads'));
+    }
+
+    function message_teamlead($id)
+    {
+        $teamlead = TeamLead::findOrFail($id);
+        $employeeId = Auth::guard('employee')->id();
+
+        $messages = Message::where(function ($query) use ($employeeId, $id) {
+            $query->where('sender_id', $employeeId)->where('receiver_id', $id);
+        })->orWhere(function ($query) use ($employeeId, $id) {
+            $query->where('sender_id', $id)->where('receiver_id', $employeeId);
+        })->orderBy('created_at')->get();
+
+        return view('employee.teamlead_message', compact('teamlead', 'messages'));
+    }
+
+
+
+    function send_message(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string',
+            'receiver_id' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->with('error', $validator->errors()->first());
+        }
+
+        $message = new Message();
+        $message->content = $request->content;
+        $message->receiver_id = $request->receiver_id;
+
+        if (Auth::guard('team_lead')->check()) {
+            $message->sender_id = Auth::guard('team_lead')->id();
+        } elseif (Auth::guard('employee')->check()) {
+            $message->sender_id = Auth::guard('employee')->id();
+        } else {
+            return back()->with('error', 'Unauthorized sender');
+        }
+
+        if ($message->save()) {
+            return back()->with('success', 'Message sent successfully');
+        } else {
+            return back()->with('error', 'Message not sent');
+        }
+    }
 }

@@ -87,8 +87,12 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::get('/team-lead/subtask/{id}/view',  'subtask_view')->name('team_lead.subtask.detail');
         Route::get('/team-lead/subtask/{id}/edit',  'subtask_edit')->name('team_lead.subtask.edit');
         Route::put('/team-lead/update/{id}/task', 'subtask_update')->name('employee.subtask.update');
-        Route::delete('team-lead/subtask/{id}/delete','subtask_delete')->name('team_lead.subtask.delete');
+        Route::delete('team-lead/subtask/{id}/delete', 'subtask_delete')->name('team_lead.subtask.delete');
         Route::patch('subtask/{id}/status', 'subtask_update_status')->name('team_lead.subtask.update_status');
+        Route::get('team-lead/employees/', 'fetch_employee')->name('team_lead.employees');
+        Route::get('team-lead/message/{id}/employee', 'message_employee')->name('team_lead.message.employee');
+        Route::post('team-lead/message/send',  'send_message')
+            ->name('team_lead.message.send');
     });
 });
 
@@ -110,8 +114,9 @@ Route::controller(Employee::class)->group(function () {
         Route::get('/employee/subtasks',  'subtasks_list')->name('employee.subtasks');
         Route::get('/employee/subtask/{id}/edit', 'edit_subtask')->name('employee.subtask.edit');
         Route::put('/employee/subtask/{id}/update', 'update_subtask')->name('employee.subtask.update');
-     
-
-
+        Route::get('employee/team-lead/', 'fetch_team_leads')->name('team_lead.teamleads');
+        Route::get('employee/message/{id}/team-lead', 'message_teamlead')->name('employee.message.teamlead');
+        Route::post('employee/message/send',  'send_message')
+            ->name('employee.message.send');
     });
 });

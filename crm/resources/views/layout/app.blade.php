@@ -20,9 +20,10 @@
     <link href="{{ asset('assets/css/sidebar-menu.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/css/app-style.css') }}" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+
     @yield('styles')
     <style>
-       
         body {
             background: url('https://source.unsplash.com/random/1920x1080/?abstract') no-repeat center center fixed;
             background-size: cover;
@@ -40,7 +41,7 @@
             z-index: -1;
         }
 
-       
+
 
         .user-profile-sidebar {
             display: flex;
@@ -259,24 +260,34 @@
                             </p>
                         </div>
                     </li>
+
                     <li class="sidebar-header">MAIN NAVIGATION</li>
+
                     <li>
                         <a href="{{ url('/team-lead/profile') }}">
-                            <i class="icon-wallet mr-2"></i> <span>Profile</span>
+                            <i class="fas fa-user-circle mr-2"></i> <span>Profile</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('team_lead.logout') }}">
-                            <i class="icon-power mr-2"></i> <span>Logout</span>
-                        </a>
-                    </li>
+
                     <li>
                         <a href="{{ route('team_lead.manager_tasks') }}">
-                            <i class="icon-power mr-2"></i> <span>Manager Tasks</span>
+                            <i class="fas fa-tasks mr-2"></i> <span>Manager Tasks</span>
                         </a>
                     </li>
-                    
+
+                    <li>
+                        <a href="{{ route('team_lead.employees') }}">
+                            <i class="fas fa-users mr-2"></i> <span>Employees</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('team_lead.logout') }}">
+                            <i class="fas fa-sign-out-alt mr-2"></i> <span>Logout</span>
+                        </a>
+                    </li>
                 </ul>
+
             </div>
 
             <header class="topbar-nav">
@@ -331,6 +342,11 @@
                     <li>
                         <a href="{{ url('/employee/subtasks') }}">
                             <i class="icon-wallet mr-2"></i> <span>Subtask</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('team_lead.teamleads') }}">
+                            <i class="fas fa-users mr-2"></i> <span>TeamLeads</span>
                         </a>
                     </li>
 

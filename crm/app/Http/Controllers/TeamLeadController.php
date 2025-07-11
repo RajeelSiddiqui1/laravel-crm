@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Message;
 use App\Models\OnwerTask;
 use App\Models\Subtask;
 use Illuminate\Http\Request;
@@ -10,6 +11,7 @@ use App\Mail\AuthMail;
 use App\Models\TeamLead;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\User;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -289,77 +291,77 @@ class TeamLeadController extends Controller
     }
 
 
-public function subtask_store(Request $request)
-{
-    $request->validate([
-        'owner_task_id' => 'required|exists:owner_tasks,id',
-        'title' => 'required|string|max:255',
-        'description' => 'required|string',
-        'assigned_employee_id' => 'required|exists:employees,id',
-        'start_date' => 'nullable|date',
-        'end_date' => 'nullable|date|after_or_equal:start_date',
-        'start_time' => 'nullable|date_format:H:i',
-        'end_time' => 'nullable|date_format:H:i',
-    ]);
+    public function subtask_store(Request $request)
+    {
+        $request->validate([
+            'owner_task_id' => 'required|exists:owner_tasks,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'assigned_employee_id' => 'required|exists:employees,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i',
+        ]);
 
-    // Same-day time validation
-    if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
-        if ($request->filled('start_time') && $request->filled('end_time')) {
-            if (strtotime($request->end_time) <= strtotime($request->start_time)) {
-                return back()->withErrors(['end_time' => 'End time must be after start time on the same day.']);
+        // Same-day time validation
+        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
+            if ($request->filled('start_time') && $request->filled('end_time')) {
+                if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+                    return back()->withErrors(['end_time' => 'End time must be after start time on the same day.']);
+                }
             }
         }
+
+        $teamLead = Auth::guard('team_lead')->user();
+        $task = OnwerTask::findOrFail($request->owner_task_id);
+
+        if ($task->team_lead_id !== $teamLead->id) {
+            return back()->with('error', 'Unauthorized.');
+        }
+
+        $employee = Employee::findOrFail($request->assigned_employee_id);
+        if ($employee->department_id !== $teamLead->department_id) {
+            return back()->with('error', 'Invalid employee department.');
+        }
+
+        // Prepare data for creation
+        $data = [
+            'title' => $request->title,
+            'description' => $request->description,
+            'assigned_employee_id' => $employee->id,
+            'owner_task_id' => $task->id,
+            'start_date' => $request->filled('start_date') ? $request->start_date : null,
+            'end_date' => $request->filled('end_date') ? $request->end_date : null,
+            'start_time' => $request->filled('start_time') ? $request->start_time : null,
+            'end_time' => $request->filled('end_time') ? $request->end_time : null,
+        ];
+
+        Subtask::create($data);
+
+        return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask created successfully.');
     }
 
-    $teamLead = Auth::guard('team_lead')->user();
-    $task = OnwerTask::findOrFail($request->owner_task_id);
+    public function subtask_update_status(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,in_progress,completed,rejected,late',
+        ]);
 
-    if ($task->team_lead_id !== $teamLead->id) {
-        return back()->with('error', 'Unauthorized.');
+        $teamLead = Auth::guard('team_lead')->user();
+        $subtask = Subtask::findOrFail($id);
+        $task = OnwerTask::findOrFail($subtask->owner_task_id); // Corrected typo: OnwerTask -> OwnerTask
+
+        if ($task->team_lead_id !== $teamLead->id) {
+            return back()->with('error', 'Unauthorized.');
+        }
+
+        $subtask->update([
+            'status' => $request->status,
+        ]);
+
+        return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask status updated');
     }
-
-    $employee = Employee::findOrFail($request->assigned_employee_id);
-    if ($employee->department_id !== $teamLead->department_id) {
-        return back()->with('error', 'Invalid employee department.');
-    }
-
-    // Prepare data for creation
-    $data = [
-        'title' => $request->title,
-        'description' => $request->description,
-        'assigned_employee_id' => $employee->id,
-        'owner_task_id' => $task->id,
-        'start_date' => $request->filled('start_date') ? $request->start_date : null,
-        'end_date' => $request->filled('end_date') ? $request->end_date : null,
-        'start_time' => $request->filled('start_time') ? $request->start_time : null,
-        'end_time' => $request->filled('end_time') ? $request->end_time : null,
-    ];
-
-    Subtask::create($data);
-
-    return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask created successfully.');
-}
-
-public function subtask_update_status(Request $request, $id)
-{
-    $request->validate([
-        'status' => 'required|in:pending,in_progress,completed,rejected,late',
-    ]);
-
-    $teamLead = Auth::guard('team_lead')->user();
-    $subtask = Subtask::findOrFail($id);
-    $task = OnwerTask::findOrFail($subtask->owner_task_id); // Corrected typo: OnwerTask -> OwnerTask
-
-    if ($task->team_lead_id !== $teamLead->id) {
-        return back()->with('error', 'Unauthorized.');
-    }
-
-    $subtask->update([
-        'status' => $request->status,
-    ]);
-
-    return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask status updated');
-}
 
     public function subtask_delete($id)
     {
@@ -379,5 +381,55 @@ public function subtask_update_status(Request $request, $id)
     {
         $task = OnwerTask::with('subtasks.employee')->findOrFail($id);
         return view('team_lead.subtask_list', compact('task'));
+    }
+
+
+    function fetch_employee()
+    {
+        $teamLead   =  Auth::guard('team_lead')->user();
+        $employees = Employee::where('department_id', $teamLead->department_id)
+            ->with('department')
+            ->get();
+
+        return view('team_lead.employees', compact('employees'));
+    }
+
+    function message_employee($id)
+    {
+        $employee = Employee::findOrFail($id);
+        $teamLeadId = Auth::guard('team_lead')->id();
+
+        // Fetch conversation between this team lead and employee
+        $messages = Message::where(function ($query) use ($teamLeadId, $id) {
+            $query->where('sender_id', $teamLeadId)->where('receiver_id', $id);
+        })->orWhere(function ($query) use ($teamLeadId, $id) {
+            $query->where('sender_id', $id)->where('receiver_id', $teamLeadId);
+        })->orderBy('created_at')->get();
+
+        return view('team_lead.message_employees', compact('employee', 'messages'));
+    }
+
+
+    function send_message(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string',
+            'receiver_id' => 'required|exists:employees,id',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->with('error', $validator->errors()->first());
+        }
+
+        $message = new Message();
+        $message->content = $request->content;
+        $message->receiver_id = $request->receiver_id;
+        $message->sender_id = Auth::guard('team_lead')->id();
+
+        if ($message->save()) {
+            return back()->with('success', 'Message sent successfully');
+        } else {
+            return back()->with('error', 'Message not sent');
+        }
     }
 }
