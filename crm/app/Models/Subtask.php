@@ -5,10 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class Subtask extends Model
-{
-   protected $fillable = [
-    'owner_task_id', 'title', 'description', 'assigned_employee_id',
-    'comment', 'status', 'attachment'
+{protected $fillable = [
+    'title',
+    'description',
+    'assigned_employee_id',
+    'owner_task_id',
+    'start_date',
+    'start_time',
+    'end_date',
+    'end_time',
+    'comment',
+    'status',
+    'attachment',
+    'attachment_type',
+];
+
+
+protected $casts = [
+    'attachments' => 'array',
 ];
 
 

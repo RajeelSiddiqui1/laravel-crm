@@ -288,87 +288,93 @@ class TeamLeadController extends Controller
         return view('team_lead.create_subtask', compact('task', 'assignedEmployees'));
     }
 
-    public function subtask_store(Request $request)
-    {
-        $request->validate([
-            'owner_task_id' => 'required|exists:owner_tasks,id',
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'assigned_employee_id' => 'required|exists:employees,id',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i',
-        ]);
 
-        $teamLead = Auth::guard('team_lead')->user();
-        $task = OnwerTask::findOrFail($request->owner_task_id);
+public function subtask_store(Request $request)
+{
+    $request->validate([
+        'owner_task_id' => 'required|exists:owner_tasks,id',
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+        'assigned_employee_id' => 'required|exists:employees,id',
+        'start_date' => 'nullable|date',
+        'end_date' => 'nullable|date|after_or_equal:start_date',
+        'start_time' => 'nullable|date_format:H:i',
+        'end_time' => 'nullable|date_format:H:i',
+    ]);
 
-        if ($task->team_lead_id !== $teamLead->id) {
-            return back()->with('error', 'Unauthorized.');
+    // Same-day time validation
+    if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
+        if ($request->filled('start_time') && $request->filled('end_time')) {
+            if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+                return back()->withErrors(['end_time' => 'End time must be after start time on the same day.']);
+            }
         }
-
-        $employee = Employee::findOrFail($request->assigned_employee_id);
-        if ($employee->department_id !== $teamLead->department_id) {
-            return back()->with('error', 'Invalid employee department.');
-        }
-
-        Subtask::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'assigned_employee_id' => $employee->id,
-            'owner_task_id' => $task->id,
-            'start_date' => $request->start_date,
-            'start_time' => $request->start_time,
-            'end_date' => $request->end_date,
-            'end_time' => $request->end_time,
-        ]);
-
-        return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask created');
     }
 
+    $teamLead = Auth::guard('team_lead')->user();
+    $task = OnwerTask::findOrFail($request->owner_task_id);
 
-    public function subtask_update(Request $request, $id)
+    if ($task->team_lead_id !== $teamLead->id) {
+        return back()->with('error', 'Unauthorized.');
+    }
+
+    $employee = Employee::findOrFail($request->assigned_employee_id);
+    if ($employee->department_id !== $teamLead->department_id) {
+        return back()->with('error', 'Invalid employee department.');
+    }
+
+    // Prepare data for creation
+    $data = [
+        'title' => $request->title,
+        'description' => $request->description,
+        'assigned_employee_id' => $employee->id,
+        'owner_task_id' => $task->id,
+        'start_date' => $request->filled('start_date') ? $request->start_date : null,
+        'end_date' => $request->filled('end_date') ? $request->end_date : null,
+        'start_time' => $request->filled('start_time') ? $request->start_time : null,
+        'end_time' => $request->filled('end_time') ? $request->end_time : null,
+    ];
+
+    Subtask::create($data);
+
+    return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask created successfully.');
+}
+
+public function subtask_update_status(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|in:pending,in_progress,completed,rejected,late',
+    ]);
+
+    $teamLead = Auth::guard('team_lead')->user();
+    $subtask = Subtask::findOrFail($id);
+    $task = OnwerTask::findOrFail($subtask->owner_task_id); // Corrected typo: OnwerTask -> OwnerTask
+
+    if ($task->team_lead_id !== $teamLead->id) {
+        return back()->with('error', 'Unauthorized.');
+    }
+
+    $subtask->update([
+        'status' => $request->status,
+    ]);
+
+    return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask status updated');
+}
+
+    public function subtask_delete($id)
     {
-        $request->validate([
-            'owner_task_id' => 'required|exists:owner_tasks,id',
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'assigned_employee_id' => 'required|exists:employees,id',
-            'start_date' => 'nullable|date|date_format:Y-m-d',
-            'end_date' => 'nullable|date|date_format:Y-m-d|after_or_equal:start_date',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i|after_or_equal:start_time',
-        ]);
-
         $teamLead = Auth::guard('team_lead')->user();
-        $task = OnwerTask::findOrFail($request->owner_task_id);
-
-        if ($task->team_lead_id !== $teamLead->id) {
-            return back()->with('error', 'Unauthorized.');
-        }
-
-        $employee = Employee::findOrFail($request->assigned_employee_id);
-        if ($employee->department_id !== $teamLead->department_id) {
-            return back()->with('error', 'Invalid employee department.');
-        }
-
         $subtask = Subtask::findOrFail($id);
+        $task = OnwerTask::findOrFail($subtask->owner_task_id);
 
-        $subtask->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'assigned_employee_id' => $employee->id,
-            'owner_task_id' => $task->id,
-            'start_date' => $request->start_date,
-            'start_time' => $request->start_time,
-            'end_date' => $request->end_date,
-            'end_time' => $request->end_time,
-        ]);
+        if ($task->team_lead_id !== $teamLead->id) {
+            return back()->with('error', 'Unauthorized.');
+        }
 
-        return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask updated');
+        $subtask->delete();
+
+        return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask deleted');
     }
-
     public function subtask_list($id)
     {
         $task = OnwerTask::with('subtasks.employee')->findOrFail($id);

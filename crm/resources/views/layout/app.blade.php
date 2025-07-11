@@ -22,24 +22,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
     @yield('styles')
     <style>
-        :root {
-            --primary-color: #3b82f6;
-            --secondary-color: #6b7280;
-            --gradient: linear-gradient(135deg, #3b82f6, #a855f7, #ec4899);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --text-color: #1f2937;
-        }
-
-        #sidebar-wrapper.sidebar-collapsed {
-            width: 0 !important;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        #sidebar-wrapper {
-            transition: all 0.3s ease;
-        }
-
+       
         body {
             background: url('https://source.unsplash.com/random/1920x1080/?abstract') no-repeat center center fixed;
             background-size: cover;
@@ -57,29 +40,7 @@
             z-index: -1;
         }
 
-        #wrapper,
-        .content-wrapper,
-        .topbar-nav,
-        .sidebar-wrapper {
-            position: relative;
-            z-index: 1;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.8s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+       
 
         .user-profile-sidebar {
             display: flex;
@@ -314,6 +275,7 @@
                             <i class="icon-power mr-2"></i> <span>Manager Tasks</span>
                         </a>
                     </li>
+                    
                 </ul>
             </div>
 

@@ -82,11 +82,13 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::put('/team-lead/tasks/{task}/update-status', 'updateStatus')->name('team_lead.tasks.update_status');
         Route::get('/team-lead/tasks/{id}/detail', 'manager_tasks_detail')->name('team_lead.task_detail');
         Route::get('/team-lead/task/{task}/subtask/create', 'subtask_create')->name('team_lead.subtask.create');
-        Route::get('team-lead/subtask/{id}/list','subtask_list')->name('team_lead.subtask.list');
+        Route::get('team-lead/subtask/{id}/list', 'subtask_list')->name('team_lead.subtask.list');
         Route::post('/team-lead/subtask/store', 'subtask_store')->name('team_lead.subtask.store');
-        Route::get('/team-lead/subtask/{id}/view',  'subtask_view')->name('teamlead.subtask.detail');
-        Route::get('/team-lead/subtask/{id}/edit',  'subtask_edit')->name('teamlead.subtask.edit');
-        Route::put('/team-lead/update/{id}/task','subtask_update')->name('employee.subtask.update');
+        Route::get('/team-lead/subtask/{id}/view',  'subtask_view')->name('team_lead.subtask.detail');
+        Route::get('/team-lead/subtask/{id}/edit',  'subtask_edit')->name('team_lead.subtask.edit');
+        Route::put('/team-lead/update/{id}/task', 'subtask_update')->name('employee.subtask.update');
+        Route::delete('team-lead/subtask/{id}/delete','subtask_delete')->name('team_lead.subtask.delete');
+        Route::patch('subtask/{id}/status', 'subtask_update_status')->name('team_lead.subtask.update_status');
     });
 });
 
@@ -108,5 +110,8 @@ Route::controller(Employee::class)->group(function () {
         Route::get('/employee/subtasks',  'subtasks_list')->name('employee.subtasks');
         Route::get('/employee/subtask/{id}/edit', 'edit_subtask')->name('employee.subtask.edit');
         Route::put('/employee/subtask/{id}/update', 'update_subtask')->name('employee.subtask.update');
+     
+
+
     });
 });

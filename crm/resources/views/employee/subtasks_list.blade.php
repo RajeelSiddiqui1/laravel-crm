@@ -12,7 +12,6 @@
                         <th>Description</th>
                         <th>Status</th>
                         <th>Comment</th>
-                        <th>Attachment</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -36,13 +35,7 @@
                             </td>
 
                             <td>{{ $subtask->comment ?? '—' }}</td>
-                            <td>
-                                @if ($subtask->attachment)
-                                    <a href="{{ asset( $subtask->attachment) }}" target="_blank">View</a>
-                                @else
-                                    —
-                                @endif
-                            </td>
+
                             <td>
                                 <a href="{{ route('employee.subtask.edit', $subtask->id) }}" class="btn btn-sm btn-primary">
                                     Info

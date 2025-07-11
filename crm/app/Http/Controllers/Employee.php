@@ -205,45 +205,49 @@ class Employee extends Controller
 
  
 
+
 public function update_subtask(Request $request, $id)
 {
     $request->validate([
         'comment' => 'nullable|string',
         'status' => 'required|in:pending,in_progress,completed',
-        'attachment' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mp3,wav,pdf,doc,docx,xls,xlsx,txt|max:102400',
+        'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
     ]);
 
     $subtask = Subtask::findOrFail($id);
     $subtask->comment = $request->comment;
     $subtask->status = $request->status;
 
-    if ($request->hasFile('attachment')) {
-        try {
-            $file = $request->file('attachment');
+    $existingAttachments = $subtask->attachments ?? [];
 
-            $publicId = "subtask_attachments/subtask_" . $subtask->id;
+    if ($request->hasFile('attachments')) {
+        foreach ($request->file('attachments') as $file) {
+            try {
+                $publicId = 'subtask_attachments/' . uniqid() . '_' . $file->getClientOriginalName();
 
-            $uploaded = \CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary::uploadApi()->upload(
-                $file->getRealPath(),
-                [
-                    'public_id' => $publicId,
-                    'overwrite' => true,
-                    'resource_type' => 'auto'
-                ]
-            );
+                $uploaded = Cloudinary::uploadApi()->upload(
+                    $file->getRealPath(),
+                    [
+                        'public_id' => $publicId,
+                        'resource_type' => 'auto',
+                        'overwrite' => false
+                    ]
+                );
 
-            $subtask->attachment = $uploaded['secure_url'];
-        } catch (\Exception $e) {
-            Log::error('Upload failed: ' . $e->getMessage());
-            return redirect()->route('employee.subtasks')->with('error', 'Attachment upload failed.');
+                $existingAttachments[] = $uploaded['secure_url'];
+
+            } catch (\Exception $e) {
+                Log::error('Upload failed: ' . $e->getMessage());
+                return redirect()->route('employee.subtasks')->with('error', 'Attachment upload failed.');
+            }
         }
     }
 
+    $subtask->attachments = $existingAttachments;
     $subtask->save();
 
     return redirect()->route('employee.subtasks')->with('success', 'Subtask updated successfully.');
-}
-
+}   
 
 
 

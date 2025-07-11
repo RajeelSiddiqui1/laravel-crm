@@ -131,6 +131,7 @@
                         <th>Assigned Employees</th>
                         <th>View</th>
                         <th>Subtask</th>
+                        <th>Assign Subtask</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -220,7 +221,11 @@
                             <td>
                                 <a href="{{ route('team_lead.subtask.create', $task->id) }}"
                                     class="btn btn-sm btn-warning mb-1">Subtask</a>
-                                <a href="{{ route('team_lead.subtask.list', $task->id) }}"
+                              
+                            </td>
+
+                            <td>
+                                  <a href="{{ route('team_lead.subtask.list', $task->id) }}"
                                     class="btn btn-sm btn-info">Subtask Assign</a>
                             </td>
 
