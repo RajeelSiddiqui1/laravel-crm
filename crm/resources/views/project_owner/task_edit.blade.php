@@ -27,7 +27,7 @@
                 <div class="card shadow rounded">
                     <div class="card-body">
                         <h2 class="card-title text-center text-white">Edit Task</h2>
-                        <form method="POST" action="{{ route('project_manager.tasks.update', $task->id) }}">
+                        <form method="POST" action="{{ route('project_owner.tasks.update', $task->id) }}">
                             @csrf
                             @method('PUT')
 

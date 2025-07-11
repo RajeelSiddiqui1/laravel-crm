@@ -12,7 +12,9 @@ use App\Models\TeamLead;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\User;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Devrabiul\ToastMagic\Facades\ToastMagic;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -394,6 +396,65 @@ class TeamLeadController extends Controller
         return view('team_lead.employees', compact('employees'));
     }
 
+
+    
+  
+
+
+  public function send_message(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'content' => 'nullable|string',
+            'receiver_id' => 'required|integer',
+            'attachments' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->with('error', $validator->errors()->first());
+        }
+
+        $message = new Message();
+        $message->content = $request->content;
+        $message->receiver_id = $request->receiver_id;
+
+        if (Auth::guard('team_lead')->check()) {
+            $message->sender_id = Auth::guard('team_lead')->id();
+        } elseif (Auth::guard('employee')->check()) {
+            $message->sender_id = Auth::guard('employee')->id();
+        } else {
+            return redirect()->back()->with('error', 'Unauthorized sender');
+        }
+
+        // Handle single file upload
+        if ($request->hasFile('attachments')) {
+            try {
+                $file = $request->file('attachments');
+                $publicId = 'chat_attachmentss/' . uniqid() . '_' . $file->getClientOriginalName();
+
+                $uploaded = Cloudinary::uploadApi()->upload(
+                    $file->getRealPath(),
+                    [
+                        'public_id' => $publicId,
+                        'resource_type' => 'auto',
+                        'overwrite' => false
+                    ]
+                );
+
+                $message->attachments = $uploaded['secure_url'];
+            } catch (\Exception $e) {
+                Log::error('attachments upload failed: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'attachments upload failed.');
+            }
+        }
+
+        if ($message->save()) {
+            return redirect()->back()->with('success', 'Message sent successfully.');
+        }
+
+        return redirect()->back()->with('error', 'Message not sent.');
+    }
+
+    // Assuming you have a method to fetch messages
     function message_employee($id)
     {
         $employee = Employee::findOrFail($id);
@@ -407,29 +468,5 @@ class TeamLeadController extends Controller
         })->orderBy('created_at')->get();
 
         return view('team_lead.message_employees', compact('employee', 'messages'));
-    }
-
-
-    function send_message(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'content' => 'required|string',
-            'receiver_id' => 'required|exists:employees,id',
-        ]);
-
-        if ($validator->fails()) {
-            return back()->with('error', $validator->errors()->first());
-        }
-
-        $message = new Message();
-        $message->content = $request->content;
-        $message->receiver_id = $request->receiver_id;
-        $message->sender_id = Auth::guard('team_lead')->id();
-
-        if ($message->save()) {
-            return back()->with('success', 'Message sent successfully');
-        } else {
-            return back()->with('error', 'Message not sent');
-        }
     }
 }

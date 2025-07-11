@@ -213,19 +213,19 @@ class Employee extends Controller
         $request->validate([
             'comment' => 'nullable|string',
             'status' => 'required|in:pending,in_progress,completed',
-            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
+            'attachmentss.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
         ]);
 
         $subtask = Subtask::findOrFail($id);
         $subtask->comment = $request->comment;
         $subtask->status = $request->status;
 
-        $existingAttachments = $subtask->attachments ?? [];
+        $existingattachmentss = $subtask->attachmentss ?? [];
 
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
+        if ($request->hasFile('attachmentss')) {
+            foreach ($request->file('attachmentss') as $file) {
                 try {
-                    $publicId = 'subtask_attachments/' . uniqid() . '_' . $file->getClientOriginalName();
+                    $publicId = 'subtask_attachmentss/' . uniqid() . '_' . $file->getClientOriginalName();
 
                     $uploaded = Cloudinary::uploadApi()->upload(
                         $file->getRealPath(),
@@ -236,15 +236,15 @@ class Employee extends Controller
                         ]
                     );
 
-                    $existingAttachments[] = $uploaded['secure_url'];
+                    $existingattachmentss[] = $uploaded['secure_url'];
                 } catch (\Exception $e) {
                     Log::error('Upload failed: ' . $e->getMessage());
-                    return redirect()->route('employee.subtasks')->with('error', 'Attachment upload failed.');
+                    return redirect()->route('employee.subtasks')->with('error', 'attachments upload failed.');
                 }
             }
         }
 
-        $subtask->attachments = $existingAttachments;
+        $subtask->attachmentss = $existingattachmentss;
         $subtask->save();
 
         return redirect()->route('employee.subtasks')->with('success', 'Subtask updated successfully.');
@@ -268,7 +268,7 @@ class Employee extends Controller
 
 
     #message
-    function fetch_team_leads()
+    public function fetch_team_leads()
     {
         $employee = Auth::guard('employee')->user();
 
@@ -279,7 +279,7 @@ class Employee extends Controller
         return view('employee.team_leads', compact('employee', 'teamLeads'));
     }
 
-    function message_teamlead($id)
+    public function message_teamlead($id)
     {
         $teamlead = TeamLead::findOrFail($id);
         $employeeId = Auth::guard('employee')->id();
@@ -293,17 +293,16 @@ class Employee extends Controller
         return view('employee.teamlead_message', compact('teamlead', 'messages'));
     }
 
-
-
-    function send_message(Request $request)
+    public function send_message(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'receiver_id' => 'required|integer',
+            'attachments' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
         ]);
 
         if ($validator->fails()) {
-            return back()->with('error', $validator->errors()->first());
+            return redirect()->back()->with('error', $validator->errors()->first());
         }
 
         $message = new Message();
@@ -315,13 +314,35 @@ class Employee extends Controller
         } elseif (Auth::guard('employee')->check()) {
             $message->sender_id = Auth::guard('employee')->id();
         } else {
-            return back()->with('error', 'Unauthorized sender');
+            return redirect()->back()->with('error', 'Unauthorized sender');
+        }
+
+        // Handle single file upload
+        if ($request->hasFile('attachments')) {
+            try {
+                $file = $request->file('attachments');
+                $publicId = 'chat_attachmentss/' . uniqid() . '_' . $file->getClientOriginalName();
+
+                $uploaded = Cloudinary::uploadApi()->upload(
+                    $file->getRealPath(),
+                    [
+                        'public_id' => $publicId,
+                        'resource_type' => 'auto',
+                        'overwrite' => false
+                    ]
+                );
+
+                $message->attachments = $uploaded['secure_url'];
+            } catch (\Exception $e) {
+                Log::error('attachments upload failed: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'attachments upload failed.');
+            }
         }
 
         if ($message->save()) {
-            return back()->with('success', 'Message sent successfully');
-        } else {
-            return back()->with('error', 'Message not sent');
+            return redirect()->back()->with('success', 'Message sent successfully.');
         }
+
+        return redirect()->back()->with('error', 'Message not sent.');
     }
 }

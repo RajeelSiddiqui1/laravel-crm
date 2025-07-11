@@ -102,7 +102,8 @@
             color: #a855f7;
         }
 
-        .badge-priority, .badge-status {
+        .badge-priority,
+        .badge-status {
             font-size: 0.9rem;
             padding: 0.6rem 1.2rem;
             border-radius: 50px;
@@ -111,19 +112,46 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .badge-priority:hover, .badge-status:hover {
+        .badge-priority:hover,
+        .badge-status:hover {
             transform: scale(1.1);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
-        .badge-priority.high { background: #ff6b6b; color: #ffffff; }
-        .badge-priority.medium { background: #facc15; color: #1f2937; }
-        .badge-priority.low { background: #22c55e; color: #ffffff; }
+        .badge-priority.high {
+            background: #ff6b6b;
+            color: #ffffff;
+        }
 
-        .badge-status.completed { background: #22c55e; color: #ffffff; }
-        .badge-status.in_progress { background: #3b82f6; color: #ffffff; }
-        .badge-status.pending { background: #facc15; color: #1f2937; }
-        .badge-status.failed { background: #ff6b6b; color: #ffffff; }
+        .badge-priority.medium {
+            background: #facc15;
+            color: #1f2937;
+        }
+
+        .badge-priority.low {
+            background: #22c55e;
+            color: #ffffff;
+        }
+
+        .badge-status.completed {
+            background: #22c55e;
+            color: #ffffff;
+        }
+
+        .badge-status.in_progress {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+
+        .badge-status.pending {
+            background: #facc15;
+            color: #1f2937;
+        }
+
+        .badge-status.failed {
+            background: #ff6b6b;
+            color: #ffffff;
+        }
 
         .alert-success {
             background: var(--glass-bg);
@@ -286,13 +314,27 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         /* Particle Background (Optional) */
@@ -318,7 +360,8 @@
 
         <div class="row justify-content-center">
             <div class="col-lg-6 col-md-8">
-                <div class="task-card fade-in" data-tilt data-tilt-max="10" data-tilt-speed="400" data-tilt-perspective="1000">
+                <div class="task-card fade-in" data-tilt data-tilt-max="10" data-tilt-speed="400"
+                    data-tilt-perspective="1000">
                     <!-- Task Header -->
                     <div class="task-header">
                         <h5 class="task-title">{{ $task->client_name }}</h5>
@@ -359,7 +402,8 @@
                         <div class="task-detail" data-tooltip="Task start date">
                             <i class="bi bi-calendar-fill"></i>
                             <div>
-                                <strong>Start Date:</strong> {{ \Carbon\Carbon::parse($task->start_date)->format('M d, Y') }}
+                                <strong>Start Date:</strong>
+                                {{ \Carbon\Carbon::parse($task->start_date)->format('M d, Y') }}
                             </div>
                         </div>
                         <div class="task-detail" data-tooltip="Task deadline">
@@ -368,6 +412,8 @@
                                 <strong>Deadline:</strong> {{ \Carbon\Carbon::parse($task->deadline)->format('M d, Y') }}
                             </div>
                         </div>
+
+
                         <div class="task-detail" data-tooltip="Task priority level">
                             <i class="bi bi-exclamation-circle-fill"></i>
                             <div>
@@ -387,12 +433,15 @@
                             </div>
                         </div>
                         <!-- Progress Timeline -->
-                        
+
                         <!-- Action Buttons -->
                         <div class="task-actions">
                             <button class="btn btn-primary" id="export-pdf">Export as PDF</button>
                             <a href="{{ route('project_owner.task') }}" class="btn btn-secondary">Back to Tasks</a>
+                            <a href="{{ route('project_owner.task.details', $task->id) }}" class="btn btn-primary">Full
+                                More Details</a>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -407,18 +456,62 @@
         // Initialize Particles.js for background effect
         particlesJS('particles-js', {
             particles: {
-                number: { value: 80, density: { enable: true, value_area: 800 } },
-                color: { value: '#ffffff' },
-                shape: { type: 'circle' },
-                opacity: { value: 0.5, random: true },
-                size: { value: 3, random: true },
-                line_linked: { enable: true, distance: 150, color: '#ffffff', opacity: 0.4, width: 1 },
-                move: { enable: true, speed: 6, direction: 'none', random: false, straight: false }
+                number: {
+                    value: 80,
+                    density: {
+                        enable: true,
+                        value_area: 800
+                    }
+                },
+                color: {
+                    value: '#ffffff'
+                },
+                shape: {
+                    type: 'circle'
+                },
+                opacity: {
+                    value: 0.5,
+                    random: true
+                },
+                size: {
+                    value: 3,
+                    random: true
+                },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: '#ffffff',
+                    opacity: 0.4,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 6,
+                    direction: 'none',
+                    random: false,
+                    straight: false
+                }
             },
             interactivity: {
                 detect_on: 'canvas',
-                events: { onhover: { enable: true, mode: 'repulse' }, onclick: { enable: true, mode: 'push' } },
-                modes: { repulse: { distance: 100 }, push: { particles_nb: 4 } }
+                events: {
+                    onhover: {
+                        enable: true,
+                        mode: 'repulse'
+                    },
+                    onclick: {
+                        enable: true,
+                        mode: 'push'
+                    }
+                },
+                modes: {
+                    repulse: {
+                        distance: 100
+                    },
+                    push: {
+                        particles_nb: 4
+                    }
+                }
             },
             retina_detect: true
         });
@@ -463,9 +556,18 @@
             const opt = {
                 margin: 1,
                 filename: `Task_${{ $task->client_name }}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                image: {
+                    type: 'jpeg',
+                    quality: 0.98
+                },
+                html2canvas: {
+                    scale: 2
+                },
+                jsPDF: {
+                    unit: 'in',
+                    format: 'letter',
+                    orientation: 'portrait'
+                }
             };
             html2pdf().from(element).set(opt).save();
         });
@@ -474,7 +576,9 @@
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', (e) => {
                 e.preventDefault();
-                document.querySelector(anchor.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+                document.querySelector(anchor.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
             });
         });
 

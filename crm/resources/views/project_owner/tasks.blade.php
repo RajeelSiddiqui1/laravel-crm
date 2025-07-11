@@ -49,10 +49,10 @@
                             </td>
 
                             <td>
-                                <a href="{{ route('project_manager.tasks.edit', $task->id) }}"
+                                <a href="{{ route('project_owner.tasks.edit', $task->id) }}"
                                     class="btn btn-sm btn-warning">Edit</a>
 
-                                <form action="{{ route('project_manager.tasks.delete', $task->id) }}" method="POST"
+                                <form action="{{ route('project_owner.tasks.delete', $task->id) }}" method="POST"
                                     style="display: inline-block;"
                                     onsubmit="return confirm('Are you sure you want to delete this task?');">
                                     @csrf

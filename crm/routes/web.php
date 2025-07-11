@@ -59,9 +59,11 @@ Route::controller(ProjectOnwer::class)->group(function () {
         Route::get('/project-owner/task_detail/{id}', 'task_detail')->name('project_owner.task_detail');
         Route::get('/project-owner/create', 'tasks_createview')->name('project_owner.tasks.createview');
         Route::post('/project-owner/tasks/create', 'tasks_create')->name('project_manager.tasks.post');
-        Route::get('/project-manager/tasks/{id}/edit',  'edit')->name('project_manager.tasks.edit');
-        Route::put('/project-manager/tasks/{id}/update',  'update')->name('project_manager.tasks.update');
-        Route::delete('/project-manager/tasks/{id}/delete', 'destroy')->name('project_manager.tasks.delete');
+        Route::get('/project-owner/tasks/{id}/edit',  'edit')->name('project_owner.tasks.edit');
+        Route::put('/project-owner/tasks/{id}/update',  'update')->name('project_owner.tasks.update');
+        Route::delete('/project-owner/tasks/{id}/delete', 'destroy')->name('project_owner.tasks.delete');
+        Route::get('project-owner/task/full-details/{id}', 'taskFullDetails')->name('project_owner.task.details');
+
     });
 });
 
@@ -93,6 +95,7 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::get('team-lead/message/{id}/employee', 'message_employee')->name('team_lead.message.employee');
         Route::post('team-lead/message/send',  'send_message')
             ->name('team_lead.message.send');
+            
     });
 });
 

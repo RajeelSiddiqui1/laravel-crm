@@ -269,4 +269,11 @@ class ProjectOnwer extends Controller
         $manager->notify(new OwnerTaskAssign($task));
         return redirect()->route('project_owner.task')->with('success', 'Task deleted successfully.');
     }
+
+    public function taskFullDetails($id)
+{
+    $task = OnwerTask::with(['teamLead', 'employee'])->findOrFail($id);
+    return view('project_owner.full_detail', compact('task'));
+}
+
 }
