@@ -151,7 +151,7 @@
                             <div class="form-group">
                                 <label class="text-white" for="manager_email">Manager Email</label>
                                 <input type="email" name="manager_email" id="manager_email" class="form-control"
-                                    value="{{ old('manager_email') }}">
+                                    value="{{ old('manager_email') }}" hidden>
                             </div>
 
                             <div class="form-group">

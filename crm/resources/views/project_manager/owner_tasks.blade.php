@@ -43,7 +43,8 @@
                             @if ($task->teamLead)
                                 {{ $task->teamLead->name }}
                             @else
-                                <form method="POST" action="{{ route('project_manager.tasks.assign_team_lead', $task->id) }}">
+                                <form method="POST"
+                                    action="{{ route('project_manager.tasks.assign_team_lead', $task->id) }}">
                                     @csrf
                                     <select name="team_lead_id" class="form-select form-select-sm"
                                         onchange="this.form.submit()">
@@ -60,6 +61,13 @@
                         <td>
                             <a href="{{ route('project_manager.tasks.detail', $task->id) }}"
                                 class="btn btn-sm btn-primary">View</a>
+                        </td>
+                        <td>
+                        <td>
+                            <a href="{{ route('chat.group', $task->id) }}" class="btn btn-outline-primary btn-sm">Group
+                                Chat</a>
+
+                        </td>
                         </td>
                     </tr>
                 @empty

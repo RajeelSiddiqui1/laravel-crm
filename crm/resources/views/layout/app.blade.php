@@ -86,7 +86,7 @@
         @if (Auth::guard('project_manager')->check())
             <div id="sidebar-wrapper" data-simplebar="" data-simplebar-auto-hide="true">
                 <div class="brand-logo">
-                    <a href="index.html">
+                    <a href="{{url(path: '/project-manager/home/')}}">
                         <img src="{{ asset('assets/images/logo-icon.png') }}" class="logo-icon" alt="logo icon">
                         <h5 class="logo-text">Project Manager</h5>
                     </a>
@@ -134,6 +134,20 @@
                                 <a href="javascript:void();"><i class="icon-magnifier"></i></a>
                             </form>
                         </li>
+                     <li class="nav-item">
+    <a class="nav-link position-relative d-flex align-items-center" href="{{ route('project_manager.notifications') }}" aria-label="View notifications">
+        <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
+
+        @if (isset($pmNotificationCount) && $pmNotificationCount > 0)
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
+                {{ $pmNotificationCount > 99 ? '99+' : $pmNotificationCount }}
+                <span class="visually-hidden">unread notifications</span>
+            </span>
+        @endif
+    </a>
+</li>
+
+
                     </ul>
 
                 </nav>

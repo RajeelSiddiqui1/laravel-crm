@@ -225,8 +225,12 @@ public function notifications()
 {
     $manager = Auth::guard('project_manager')->user();
     $notifications = $manager->notifications()->latest()->get();
+
+    $manager->unreadNotifications->markAsRead(); // mark all unread as read
+
     return view('project_manager.notifications', compact('notifications'));
 }
+
 
 public function viewNotification($id)
 {

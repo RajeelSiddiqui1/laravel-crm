@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mt-4">
-    <h4 class="text-white">All Notifications</h4>
+  <h4 class="text-white mb-4">🔔 All Notifications</h4>
 
     @forelse ($notifications as $notification)
         <div class="alert alert-secondary d-flex justify-content-between">

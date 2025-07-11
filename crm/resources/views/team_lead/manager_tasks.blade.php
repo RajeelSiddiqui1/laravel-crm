@@ -221,11 +221,15 @@
                             <td>
                                 <a href="{{ route('team_lead.subtask.create', $task->id) }}"
                                     class="btn btn-sm btn-warning mb-1">Subtask</a>
-                              
-                            </td>
 
+                            </td>
                             <td>
-                                  <a href="{{ route('team_lead.subtask.list', $task->id) }}"
+                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-outline-primary btn-sm">Group
+                                    Chat</a>
+
+                            </td>
+                            <td>
+                                <a href="{{ route('team_lead.subtask.list', $task->id) }}"
                                     class="btn btn-sm btn-info">Subtask Assign</a>
                             </td>
 

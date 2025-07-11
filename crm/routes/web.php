@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectManager;
 use App\Http\Controllers\TeamLeadController;
 use App\Http\Middleware\CheckUserRoles;
+use App\Http\Controllers\Chat\GroupChatController;
 
 Route::view('/',  'welcome')->name('welcome');
 
@@ -58,6 +59,7 @@ Route::controller(ProjectOnwer::class)->group(function () {
         Route::get('/project-owner/task', 'task_view')->name('project_owner.task');
         Route::get('/project-owner/task_detail/{id}', 'task_detail')->name('project_owner.task_detail');
         Route::get('/project-owner/create', 'tasks_createview')->name('project_owner.tasks.createview');
+        Route::get('/project_owner/get-managers/{id}', 'getManagersByDepartment');
         Route::post('/project-owner/tasks/create', 'tasks_create')->name('project_manager.tasks.post');
         Route::get('/project-owner/tasks/{id}/edit',  'edit')->name('project_owner.tasks.edit');
         Route::put('/project-owner/tasks/{id}/update',  'update')->name('project_owner.tasks.update');
@@ -123,3 +125,6 @@ Route::controller(Employee::class)->group(function () {
             ->name('employee.message.send');
     });
 });
+
+ Route::get('/chat/group/{ownerTaskId}', [GroupChatController::class, 'index'])->name('chat.group');
+    Route::post('/chat/group/send', [GroupChatController::class, 'send'])->name('chat.group.send');
