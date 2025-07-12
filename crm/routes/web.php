@@ -32,6 +32,7 @@ Route::controller(ProjectManager::class)->group(function () {
             Route::get('project-manager/owner-tasks/{id}/detail', 'onwertask_detail')->name('project_manager.tasks.detail');
             Route::get('project-manager/notifications',  'notifications')->name('project_manager.notifications');
             Route::get('project-manager/notifications/{id}',  'viewNotification')->name('project_manager.notifications.view');
+              Route::get('/project-manager/subtasks','subtask')->name('project_manager.subtask');
         }
     );
 
@@ -65,6 +66,7 @@ Route::controller(ProjectOnwer::class)->group(function () {
         Route::put('/project-owner/tasks/{id}/update',  'update')->name('project_owner.tasks.update');
         Route::delete('/project-owner/tasks/{id}/delete', 'destroy')->name('project_owner.tasks.delete');
         Route::get('project-owner/task/full-details/{id}', 'taskFullDetails')->name('project_owner.task.details');
+        Route::get('/project-owner/subtasks','subtask')->name('project_owner.subtask');
 
     });
 });

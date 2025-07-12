@@ -6,6 +6,7 @@ use App\Models\Department;
 use App\Models\OnwerTask;
 use App\Models\ProjectManager as ModelsProjectManager;
 use App\Models\ProjectOwner;
+use App\Models\Subtask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
@@ -246,6 +247,13 @@ public function viewNotification($id)
 
     return redirect()->route('project_manager.tasks');
 }
+
+function subtask()
+    {
+        
+        $subtasks = Subtask::with('employee')->get();
+        return view('project_manager.subtask', compact('subtasks'));
+    }
 
 
 }

@@ -21,6 +21,8 @@ use Illuminate\Support\Str;
 
 class TeamLeadController extends Controller
 {
+
+    
     function resgisterview()
     {
         $departments = Department::all();

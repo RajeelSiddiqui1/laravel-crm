@@ -132,6 +132,7 @@
                         <th>View</th>
                         <th>Subtask</th>
                         <th>Assign Subtask</th>
+                        <th>Group Chat</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -223,15 +224,16 @@
                                     class="btn btn-sm btn-warning mb-1">Subtask</a>
 
                             </td>
-                            <td>
-                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-outline-primary btn-sm">Group
-                                    Chat</a>
-
-                            </td>
+                           
                             <td>
                                 <a href="{{ route('team_lead.subtask.list', $task->id) }}"
                                     class="btn btn-sm btn-info">Subtask Assign</a>
-                            </td>
+                                </td>
+                                <td>
+                                    <a href="{{ route('chat.group', $task->id) }}" class="btn btn-outline-primary btn-sm">Group
+                                        Chat</a>
+    
+                                </td>
 
                         </tr>
                     @empty

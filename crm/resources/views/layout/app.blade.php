@@ -86,7 +86,7 @@
         @if (Auth::guard('project_manager')->check())
             <div id="sidebar-wrapper" data-simplebar="" data-simplebar-auto-hide="true">
                 <div class="brand-logo">
-                    <a href="{{url(path: '/project-manager/home/')}}">
+                    <a href="{{ url(path: '/project-manager/home/') }}">
                         <img src="{{ asset('assets/images/logo-icon.png') }}" class="logo-icon" alt="logo icon">
                         <h5 class="logo-text">Project Manager</h5>
                     </a>
@@ -120,6 +120,11 @@
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>
                     </li>
+                    {{-- <li>
+                        <a href="{{ route('project_manager.subtask') }}">
+                            <i class="icon-power mr-2"></i> <span>SubTask</span>
+                        </a>
+                    </li> --}}
                 </ul>
             </div>
 
@@ -134,18 +139,20 @@
                                 <a href="javascript:void();"><i class="icon-magnifier"></i></a>
                             </form>
                         </li>
-                     <li class="nav-item">
-    <a class="nav-link position-relative d-flex align-items-center" href="{{ route('project_manager.notifications') }}" aria-label="View notifications">
-        <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
+                        <li class="nav-item">
+                            <a class="nav-link position-relative d-flex align-items-center"
+                                href="{{ route('project_manager.notifications') }}" aria-label="View notifications">
+                                <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
 
-        @if (isset($pmNotificationCount) && $pmNotificationCount > 0)
-            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
-                {{ $pmNotificationCount > 99 ? '99+' : $pmNotificationCount }}
-                <span class="visually-hidden">unread notifications</span>
-            </span>
-        @endif
-    </a>
-</li>
+                                @if (isset($pmNotificationCount) && $pmNotificationCount > 0)
+                                    <span
+                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
+                                        {{ $pmNotificationCount > 99 ? '99+' : $pmNotificationCount }}
+                                        <span class="visually-hidden">unread notifications</span>
+                                    </span>
+                                @endif
+                            </a>
+                        </li>
 
 
                     </ul>
@@ -216,6 +223,12 @@
                             <span>Tasks</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ url('/project-owner/subtasks') }}">
+                            <i class="zmdi zmdi-city"></i>
+                            <span>Sub Tasks</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
             <header class="topbar-nav">
@@ -231,22 +244,7 @@
                         </li>
                     </ul>
                     <ul class="navbar-nav align-items-center right-nav-link">
-                        <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
-                                data-toggle="dropdown" href="javascript:void();"><i
-                                    class="fa fa-envelope-open-o"></i></a></li>
-                        <li class="nav-item dropdown-lg"><a class="nav-link dropdown-toggle waves-effect"
-                                data-toggle="dropdown" href="javascript:void();"><i class="fa fa-bell-o"></i></a>
-                        </li>
-                        <li class="nav-item language">
-                            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
-                                href="javascript:void();"><i class="fa fa-flag"></i></a>
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-gb mr-2"></i> English</li>
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-fr mr-2"></i> French</li>
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-cn mr-2"></i> Chinese</li>
-                                <li class="dropdown-item"><i class="flag-icon flag-icon-de mr-2"></i> German</li>
-                            </ul>
-                        </li>
+                     
                     </ul>
                 </nav>
             </header>

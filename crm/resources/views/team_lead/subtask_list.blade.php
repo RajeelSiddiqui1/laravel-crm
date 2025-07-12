@@ -1,6 +1,4 @@
-
 @php
-    // Define available statuses
     $statuses = ['pending', 'in_progress', 'completed', 'rejected', 'late'];
 @endphp
 
@@ -21,6 +19,20 @@
         @endif
 
         @if ($task->subtasks->count())
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <input type="text" id="employeeFilter" class="form-control" placeholder="Filter by employee name...">
+                </div>
+                <div class="col-md-6">
+                    <select id="statusFilter" class="form-control">
+                        <option value="">Filter by status...</option>
+                        @foreach ($statuses as $status)
+                            <option value="{{ $status }}">{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-bordered align-middle">
                     <thead class="table-dark text-white">
@@ -65,18 +77,13 @@
                                 <td>{{ $subtask->end_date ?? '-' }}</td>
                                 <td>{{ $subtask->end_time ?? '-' }}</td>
                                 <td>
-                                     <a href="{{ route('team_lead.subtask.detail', $subtask->id) }}"
-                                        class="btn btn-sm btn-info ">View</a>
+                                     <a href="{{ route('team_lead.subtask.detail', $subtask->id) }}" class="btn btn-sm btn-info">View</a>
                                 </td>
                                 <td>
-                                   
-                                    <a href="{{ route('team_lead.subtask.edit', $subtask->id) }}"
-                                        class="btn btn-sm btn-warning">Edit</a>
-                                  
+                                    <a href="{{ route('team_lead.subtask.edit', $subtask->id) }}" class="btn btn-sm btn-warning">Edit</a>
                                 </td>
                                 <td>
-                                      <form action="{{ route('team_lead.subtask.delete', $subtask->id) }}" method="POST"
-                                        onsubmit="return confirm('Are you sure you want to delete this subtask?');">
+                                    <form action="{{ route('team_lead.subtask.delete', $subtask->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this subtask?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
@@ -91,4 +98,31 @@
             <p class="text-muted">No subtasks created.</p>
         @endif
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const employeeInput = document.getElementById('employeeFilter');
+            const statusSelect = document.getElementById('statusFilter');
+            const rows = document.querySelectorAll('table tbody tr');
+
+            function filterTable() {
+                const employeeValue = employeeInput.value.toLowerCase();
+                const statusValue = statusSelect.value;
+
+                rows.forEach(row => {
+                    const employeeCell = row.cells[2]?.textContent.toLowerCase() || '';
+                    const statusSelectInRow = row.querySelector('select[name="status"]');
+                    const rowStatus = statusSelectInRow ? statusSelectInRow.value : '';
+
+                    const matchesEmployee = employeeCell.includes(employeeValue);
+                    const matchesStatus = !statusValue || rowStatus === statusValue;
+
+                    row.style.display = matchesEmployee && matchesStatus ? '' : 'none';
+                });
+            }
+
+            employeeInput.addEventListener('input', filterTable);
+            statusSelect.addEventListener('change', filterTable);
+        });
+    </script>
 @endsection

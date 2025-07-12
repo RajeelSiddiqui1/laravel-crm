@@ -25,6 +25,7 @@
                         <th>Department</th>
                         <th>View</th>
                         <th>Status</th>
+                        <th>Group Chats</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -47,7 +48,11 @@
                                 <a href="{{ route('project_owner.task_detail', $task->id) }}"
                                     class="btn btn-sm btn-primary">View</a>
                             </td>
+                            <td>
+                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-outline-primary btn-sm">Group
+                                    Chat</a>
 
+                            </td>
                             <td>
                                 <a href="{{ route('project_owner.tasks.edit', $task->id) }}"
                                     class="btn btn-sm btn-warning">Edit</a>

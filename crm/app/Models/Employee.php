@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable; // Or just Model if not an authenticatable user
-
+use Illuminate\Notifications\Notifiable;
 class Employee extends Authenticatable // Or extends Model
 {
     use HasFactory;
+      use Notifiable;
 
     protected $fillable = [
         'name',
