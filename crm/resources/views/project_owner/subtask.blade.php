@@ -5,7 +5,7 @@
     <h3 class="text-white mb-4">Subtasks Grouped by Employee</h3>
 
     @php
-        $grouped = $subtasks->groupBy(function($subtask) {
+        $grouped = $subtasks->groupBy(function ($subtask) {
             return $subtask->employee->name ?? 'Unknown';
         });
 
@@ -20,7 +20,7 @@
 
     <div class="mb-4 d-flex flex-wrap gap-2">
         <button class="btn btn-light filter-btn" data-employee="all">All Employees</button>
-        @foreach($grouped as $employeeName => $subtasks)
+        @foreach ($grouped as $employeeName => $subtasks)
             <button class="btn btn-light mx-1 filter-btn" data-employee="{{ Str::slug($employeeName) }}">
                 {{ $employeeName }}
             </button>
@@ -34,12 +34,12 @@
         @endphp
 
         <div class="card mb-4 employee-group" data-employee="{{ $employeeSlug }}">
-            <div class="card-header  text-white d-flex justify-content-between align-items-center">
+            <div class="card-header text-white d-flex justify-content-between align-items-center">
                 <span>{{ $employeeName }}</span>
                 <div>
                     <select class="form-control form-control-sm status-filter" data-employee="{{ $employeeSlug }}">
                         <option value="all">All Statuses</option>
-                        @foreach($statusColors as $status => $color)
+                        @foreach ($statusColors as $status => $color)
                             <option value="{{ $status }}">
                                 {{ ucfirst(str_replace('_', ' ', $status)) }} ({{ $statusCounts[$status] ?? 0 }})
                             </option>
@@ -48,48 +48,53 @@
                 </div>
             </div>
             <div class="card-body p-0">
-                <table class="table table-bordered m-0 table-dark">
-                    <thead>
-                        <tr>
-                            <th>Employee</th>
-                            <th>Subtask</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Start Time</th>
-                            <th>End Time</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($subtasks as $subtask)
-                            @php
-                                $rowClass = match($subtask->status) {
-                                    'pending' => 'table-warning',
-                                    'in_progress' => 'table-primary',
-                                    'completed' => 'table-success',
-                                    'rejected' => 'table-danger',
-                                    'late' => 'table-secondary',
-                                    default => ''
-                                };
-                            @endphp
-                            <tr class="subtask-row {{ $rowClass }}"
-                                data-status="{{ $subtask->status }}"
-                                data-employee="{{ $employeeSlug }}">
-                                <td>{{ $subtask->employee->name ?? 'Unknown' }}</td>
-                                <td>{{ $subtask->title }}</td>
-                                <td>{{ $subtask->start_date }}</td>
-                                <td>{{ $subtask->end_date }}</td>
-                                <td>{{ $subtask->start_time }}</td>
-                                <td>{{ $subtask->end_time }}</td>
-                                <td>
-                                    <span class="badge bg-{{ $statusColors[$subtask->status] ?? 'light' }}">
-                                        {{ ucfirst($subtask->status) }}
-                                    </span>
-                                </td>
+                <div class="table-responsive">
+                    <table class="table table-bordered m-0 table-dark">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Subtask</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Start Time</th>
+                                <th>End Time</th>
+                                <th>Status</th>
+                                <th>Detail</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach ($subtasks as $subtask)
+                                @php
+                                    $rowClass = match ($subtask->status) {
+                                        'pending' => 'table-warning',
+                                        'in_progress' => 'table-primary',
+                                        'completed' => 'table-success',
+                                        'rejected' => 'table-danger',
+                                        'late' => 'table-secondary',
+                                        default => '',
+                                    };
+                                @endphp
+                                <tr class="subtask-row {{ $rowClass }}" data-status="{{ $subtask->status }}" data-employee="{{ $employeeSlug }}">
+                                    <td>{{ $subtask->employee->name ?? 'Unknown' }}</td>
+                                    <td>{{ $subtask->title }}</td>
+                                    <td>{{ $subtask->start_date }}</td>
+                                    <td>{{ $subtask->end_date }}</td>
+                                    <td>{{ $subtask->start_time }}</td>
+                                    <td>{{ $subtask->end_time }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $statusColors[$subtask->status] ?? 'light' }}">
+                                            {{ ucfirst($subtask->status) }}
+                                        </span>
+                                    </td>
+                                   
+                                    <td>
+                                        <a href="{{ route('project_owner.detailsubtask', $subtask->id) }}" class="btn btn-primary">Detail</a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     @empty

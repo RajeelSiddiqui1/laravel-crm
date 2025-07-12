@@ -67,6 +67,7 @@ Route::controller(ProjectOnwer::class)->group(function () {
         Route::delete('/project-owner/tasks/{id}/delete', 'destroy')->name('project_owner.tasks.delete');
         Route::get('project-owner/task/full-details/{id}', 'taskFullDetails')->name('project_owner.task.details');
         Route::get('/project-owner/subtasks','subtask')->name('project_owner.subtask');
+        Route::get('/project-owner/{id}/detail-subtasks','detailsubtask')->name('project_owner.detailsubtask');
 
     });
 });

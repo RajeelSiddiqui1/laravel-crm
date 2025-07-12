@@ -213,19 +213,19 @@ class Employee extends Controller
         $request->validate([
             'comment' => 'nullable|string',
             'status' => 'required|in:pending,in_progress,completed',
-            'attachmentss.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
         ]);
 
         $subtask = Subtask::findOrFail($id);
         $subtask->comment = $request->comment;
         $subtask->status = $request->status;
 
-        $existingattachmentss = $subtask->attachmentss ?? [];
+        $existingattachments = $subtask->attachments ?? [];
 
-        if ($request->hasFile('attachmentss')) {
-            foreach ($request->file('attachmentss') as $file) {
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
                 try {
-                    $publicId = 'subtask_attachmentss/' . uniqid() . '_' . $file->getClientOriginalName();
+                    $publicId = 'subtask_attachments/' . uniqid() . '_' . $file->getClientOriginalName();
 
                     $uploaded = Cloudinary::uploadApi()->upload(
                         $file->getRealPath(),
@@ -236,7 +236,7 @@ class Employee extends Controller
                         ]
                     );
 
-                    $existingattachmentss[] = $uploaded['secure_url'];
+                    $existingattachments[] = $uploaded['secure_url'];
                 } catch (\Exception $e) {
                     Log::error('Upload failed: ' . $e->getMessage());
                     return redirect()->route('employee.subtasks')->with('error', 'attachments upload failed.');
@@ -244,7 +244,7 @@ class Employee extends Controller
             }
         }
 
-        $subtask->attachmentss = $existingattachmentss;
+        $subtask->attachments = $existingattachments;
         $subtask->save();
 
         return redirect()->route('employee.subtasks')->with('success', 'Subtask updated successfully.');
@@ -321,7 +321,7 @@ class Employee extends Controller
         if ($request->hasFile('attachments')) {
             try {
                 $file = $request->file('attachments');
-                $publicId = 'chat_attachmentss/' . uniqid() . '_' . $file->getClientOriginalName();
+                $publicId = 'chat_attachments/' . uniqid() . '_' . $file->getClientOriginalName();
 
                 $uploaded = Cloudinary::uploadApi()->upload(
                     $file->getRealPath(),

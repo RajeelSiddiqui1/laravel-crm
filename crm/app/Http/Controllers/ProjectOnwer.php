@@ -285,4 +285,20 @@ class ProjectOnwer extends Controller
         $subtasks = Subtask::with('employee')->get();
         return view('project_owner.subtask', compact('subtasks'));
     }
+
+public function detailsubtask($id)
+{
+    $subtask = Subtask::with('employee')->findOrFail($id);
+
+    $statusColors = [
+        'pending' => 'warning',
+        'in_progress' => 'primary',
+        'completed' => 'success',
+        'rejected' => 'danger',
+        'late' => 'secondary',
+    ];
+
+    return view('project_owner.subtask_detail', compact('subtask', 'statusColors'));
+}
+
 }
