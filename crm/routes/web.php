@@ -32,7 +32,7 @@ Route::controller(ProjectManager::class)->group(function () {
             Route::get('project-manager/owner-tasks/{id}/detail', 'onwertask_detail')->name('project_manager.tasks.detail');
             Route::get('project-manager/notifications',  'notifications')->name('project_manager.notifications');
             Route::get('project-manager/notifications/{id}',  'viewNotification')->name('project_manager.notifications.view');
-              Route::get('/project-manager/subtasks','subtask')->name('project_manager.subtask');
+            Route::get('/project-manager/subtasks', 'subtask')->name('project_manager.subtask');
         }
     );
 
@@ -66,8 +66,8 @@ Route::controller(ProjectOnwer::class)->group(function () {
         Route::put('/project-owner/tasks/{id}/update',  'update')->name('project_owner.tasks.update');
         Route::delete('/project-owner/tasks/{id}/delete', 'destroy')->name('project_owner.tasks.delete');
         Route::get('project-owner/task/full-details/{id}', 'taskFullDetails')->name('project_owner.task.details');
-        Route::get('/project-owner/subtasks','subtask')->name('project_owner.subtask');
-        Route::get('/project-owner/{id}/detail-subtasks','detailsubtask')->name('project_owner.detailsubtask');
+        Route::get('/project-owner/subtasks', 'subtask')->name('project_owner.subtask');
+        Route::get('/project-owner/subtask/detail/{id}', 'subtask_detail')->name('project_owner.subtask.detail');
 
     });
 });
@@ -86,21 +86,22 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::put('/team-lead/profile', action: 'updateProfile')->name('team_lead.profile.update');
         Route::get('/team-lead/manager-tasks', 'manager_tasks')->name('team_lead.manager_tasks');
         Route::post('/team-lead/tasks/{task}/assign-employees', 'assignEmployees')->name('team_lead.tasks.assign_employees');
+        Route::put('/team-lead/subtask-update/{id}', 'subtask_update')->name('team_lead.subtask.update');
         Route::put('/team-lead/tasks/{task}/update-status', 'updateStatus')->name('team_lead.tasks.update_status');
         Route::get('/team-lead/tasks/{id}/detail', 'manager_tasks_detail')->name('team_lead.task_detail');
         Route::get('/team-lead/task/{task}/subtask/create', 'subtask_create')->name('team_lead.subtask.create');
         Route::get('team-lead/subtask/{id}/list', 'subtask_list')->name('team_lead.subtask.list');
         Route::post('/team-lead/subtask/store', 'subtask_store')->name('team_lead.subtask.store');
-        Route::get('/team-lead/subtask/{id}/view',  'subtask_view')->name('team_lead.subtask.detail');
+        Route::get('/team-lead/subtask/{id}/view',  'subtask_view')->name('');
+        Route::get('/team-lead/subtask/detail/{id}',  'subtask_detail')->name('team_lead.subtask.detail');
+
         Route::get('/team-lead/subtask/{id}/edit',  'subtask_edit')->name('team_lead.subtask.edit');
-        Route::put('/team-lead/update/{id}/task', 'subtask_update')->name('employee.subtask.update');
         Route::delete('team-lead/subtask/{id}/delete', 'subtask_delete')->name('team_lead.subtask.delete');
         Route::patch('subtask/{id}/status', 'subtask_update_status')->name('team_lead.subtask.update_status');
         Route::get('team-lead/employees/', 'fetch_employee')->name('team_lead.employees');
         Route::get('team-lead/message/{id}/employee', 'message_employee')->name('team_lead.message.employee');
         Route::post('team-lead/message/send',  'send_message')
             ->name('team_lead.message.send');
-            
     });
 });
 
@@ -120,8 +121,9 @@ Route::controller(Employee::class)->group(function () {
         Route::get('/employee/teamlead-tasks', 'team_task_view')->name('employee.teamlead_task');
         Route::get('/employee/task-detail/{id}', 'teamlead_task_detail')->name('employee.task_detail');
         Route::get('/employee/subtasks',  'subtasks_list')->name('employee.subtasks');
+        Route::patch('/employee/subtask-update/{id}', 'subtask_status_update')->name('employee.subtask.update_status');
         Route::get('/employee/subtask/{id}/edit', 'edit_subtask')->name('employee.subtask.edit');
-        Route::put('/employee/subtask/{id}/update', 'update_subtask')->name('employee.subtask.update');
+        Route::put('/employee/subtask/update/{id}', 'update_subtask')->name('employee.subtask.update');
         Route::get('employee/team-lead/', 'fetch_team_leads')->name('team_lead.teamleads');
         Route::get('employee/message/{id}/team-lead', 'message_teamlead')->name('employee.message.teamlead');
         Route::post('employee/message/send',  'send_message')
@@ -129,5 +131,5 @@ Route::controller(Employee::class)->group(function () {
     });
 });
 
- Route::get('/chat/group/{ownerTaskId}', [GroupChatController::class, 'index'])->name('chat.group');
-    Route::post('/chat/group/send', [GroupChatController::class, 'send'])->name('chat.group.send');
+Route::get('/chat/group/{ownerTaskId}', [GroupChatController::class, 'index'])->name('chat.group');
+Route::post('/chat/group/send', [GroupChatController::class, 'send'])->name('chat.group.send');

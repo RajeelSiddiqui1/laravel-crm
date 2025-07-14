@@ -34,10 +34,26 @@
                                 </span>
                             </td>
 
-                            <td>{{ $subtask->comment ?? '—' }}</td>
+                            <td>
+                                <form action="{{ route('employee.subtask.update_status', $subtask->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+
+                                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                        <option value="pending" {{ $subtask->status == 'pending' ? 'selected' : '' }}>
+                                            Pending</option>
+                                        <option value="in_progress"
+                                            {{ $subtask->status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                        <option value="completed" {{ $subtask->status == 'completed' ? 'selected' : '' }}>
+                                            Completed</option>
+                                    </select>
+                                </form>
+
+                            </td>
 
                             <td>
-                                <a href="{{ route('employee.subtask.edit', $subtask->id) }}" class="btn btn-sm btn-primary">
+                                <a href="{{ route('employee.subtask.edit', $subtask->id) }}"
+                                    class="btn btn-sm btn-primary">
                                     Info
                                 </a>
                             </td>

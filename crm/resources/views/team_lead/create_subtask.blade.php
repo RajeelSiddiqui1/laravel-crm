@@ -2,6 +2,24 @@
 
 @section('content')
     <div class="container">
+        @if (session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
+
+        @if (session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <h3 class="text-white mb-4">Create Subtask for {{ $task->client_name }}</h3>
 
         <form method="POST" action="{{ route('team_lead.subtask.store') }}">
@@ -16,6 +34,11 @@
             <div class="mb-3">
                 <label class="form-label text-white">Description</label>
                 <textarea class="form-control" name="description" rows="4" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label text-white">Leads(Optional)</label>
+                <input type="number" min='0' name='lead' class="form-control">
             </div>
 
             <div class="mb-3">

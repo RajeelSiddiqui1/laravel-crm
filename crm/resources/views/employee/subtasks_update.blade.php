@@ -1,132 +1,117 @@
 @extends('layout.app')
+
 <style>
     .blur-bg {
         backdrop-filter: blur(10px);
-        background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white */
+        background-color: rgba(255, 255, 255, 0.1);
     }
-</style>    
+</style>
+
 @section('content')
-<div class="container mt-4">
-    <h3 class="text-white mb-4">Update Subtask</h3>
+    <div class="container mt-4">
+        <h3 class="text-white mb-4">Update Subtask by Lead</h3>
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form action="{{ route('employee.subtask.update', $subtask->id) }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        @method('PUT')
-
-
-         <div class="mb-3">
-            <label class="form-label text-white">Title</label>
-            <input name="comment" class="form-control" value="{{  $subtask->title }}" readonly>
-        </div>
-         <div class="mb-3">
-            <label class="form-label text-white">Description</label>
-            <textarea name="comment" class="form-control" rows="4" readonly>{{  $subtask->description }}</textarea>
-        </div>
-       
-        <div class="mb-3">
-            <label class="form-label text-white">Comment</label>
-            <textarea name="comment" class="form-control" rows="4">{{ old('comment', $subtask->comment) }}</textarea>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label text-white">Status</label>
-            <select name="status" class="form-select">
-                <option value="pending" {{ $subtask->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                <option value="in_progress" {{ $subtask->status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                <option value="completed" {{ $subtask->status == 'completed' ? 'selected' : '' }}>Completed</option>
-            </select>
-        </div>
-
-        @if ($subtask->attachments && is_array($subtask->attachments))
-        <div class="mb-4 text-white">
-            <label class="form-label">Uploaded Attachments</label>
-            <div class="row g-4">
-                @foreach ($subtask->attachments as $url)
-                    @php
-                        $ext = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION);
-                        $isImage = in_array(strtolower($ext), ['jpg','jpeg','png','gif','webp']);
-                        $isVideo = in_array(strtolower($ext), ['mp4','mov','avi','webm']);
-                        $isAudio = in_array(strtolower($ext), ['mp3','wav','ogg']);
-                        $isDoc   = in_array(strtolower($ext), ['pdf','docx','doc','txt','xlsx','xls']);
-                    @endphp
-                    <div class="col-md-4 mt-3">
-                        <div class="border border-white rounded p-3  h-100 d-flex flex-column justify-content-between">
-                            <div class="text-center mb-2">
-                                @if($isImage)
-                                    <img src="{{ $url }}" class="img-fluid rounded" style="height: 200px; object-fit: contain;">
-                                @elseif($isVideo)
-                                    <video controls style="width: 100%; height: 200px; object-fit: contain;" class="rounded">
-                                        <source src="{{ $url }}">
-                                    </video>
-                                @elseif($isAudio)
-                                    <audio controls class="w-100 mt-4">
-                                        <source src="{{ $url }}">
-                                    </audio>
-                                @elseif($isDoc)
-                                    <a href="{{ $url }}" target="_blank" class="btn btn-info btn-sm w-100">View Document</a>
-                                @else
-                                    <a href="{{ $url }}" target="_blank" class="btn btn-light btn-sm w-100">View File</a>
-                                @endif
-                            </div>
-
-                            <button type="button" class="btn btn-success btn-sm w-100 mb-2" onclick="triggerDownload('{{ $url }}')">Download</button>
-
-                          
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
+        @if (session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <div class="mb-4">
-            <label for="attachments" class="form-label text-white">Upload Attachments</label>
-            <input type="file" name="attachments[]" id="attachments" class="form-control" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt">
-        </div>
+        @if (session('error'))
+            <div class="alert alert-danger">{{ session('error') }}</div>
+        @endif
 
-        <button type="submit" class="btn btn-primary">Update Subtask</button>
-    </form>
-</div>
+        @foreach ($leadValues as $lead)
+            @php
+                $index = $lead - 1;
+                $empSubtask = $employeeSubtask;
+                $commentVal = old('comment', $empSubtask->comments[$index] ?? '');
+                $statusVal = $empSubtask->statuses[$index] ?? 'pending';
+                $attachmentUrls = $empSubtask->attachments[$index] ?? [];
+            @endphp
 
-<script>
-    function triggerDownload(url) {
-        fetch(url, { mode: 'cors' })
-            .then(response => {
-                if (!response.ok) throw new Error('Download failed.');
-                return response.blob();
-            })
-            .then(blob => {
-                const blobUrl = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = url.split('/').pop().split('?')[0];
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(blobUrl);
-            })
-            .catch(err => {
-                alert("Download failed.");
-                console.error(err);
-            });
-    }
-</script>
+            <h4 class="text-warning mt-4">Lead {{ $lead }}</h4>
+
+            <form action="{{ route('employee.subtask.update', ['id' => $subtask->id]) }}" method="POST"
+                enctype="multipart/form-data" class="mb-5 p-4 border rounded blur-bg">
+                @csrf
+                @method('PUT')
+
+                <input type="hidden" name="lead" value="{{ $lead }}">
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Title</label>
+                    <input class="form-control" value="{{ $subtask->title }}" readonly>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Description</label>
+                    <textarea class="form-control" readonly rows="2">{{ $subtask->description }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Comment</label>
+                    <textarea name="comment" class="form-control">{{ $commentVal }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Status</label>
+                    <select name="status" class="form-control">
+                        <option value="pending" {{ $statusVal == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="in_progress" {{ $statusVal == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                        <option value="completed" {{ $statusVal == 'completed' ? 'selected' : '' }}>Completed</option>
+                    </select>
+                </div>
+
+                @if (count($attachmentUrls))
+                    <div class="mb-3 text-white">
+                        <label class="form-label">Attachments</label>
+                        <div class="row g-2">
+                            @foreach ($attachmentUrls as $url)
+                                @php
+                                    $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
+                                    $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                    $isVideo = in_array($ext, ['mp4', 'mov', 'avi', 'webm']);
+                                    $isAudio = in_array($ext, ['mp3', 'wav', 'ogg']);
+                                    $isDoc = in_array($ext, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt']);
+                                @endphp
+                                <div class="col-md-4">
+                                    <div class="p-2 border border-light rounded">
+                                        @if ($isImage)
+                                            <img src="{{ $url }}" class="img-fluid rounded"
+                                                style="height: 180px; object-fit: contain;">
+                                        @elseif($isVideo)
+                                            <video controls class="w-100 rounded"
+                                                style="height: 180px; object-fit: contain;">
+                                                <source src="{{ $url }}">
+                                            </video>
+                                        @elseif($isAudio)
+                                            <audio controls class="w-100 mt-2">
+                                                <source src="{{ $url }}">
+                                            </audio>
+                                        @elseif($isDoc)
+                                            <a href="{{ $url }}" target="_blank"
+                                                class="btn btn-info btn-sm w-100 mt-2">View Document</a>
+                                        @else
+                                            <a href="{{ $url }}" target="_blank"
+                                                class="btn btn-secondary btn-sm w-100 mt-2">Download File</a>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Upload New Attachments</label>
+                    <input type="file" name="attachments[]" multiple class="form-control">
+                </div>
+
+          
+
+                <button type="submit" class="btn btn-primary">Update Lead {{ $lead }}</button>
+            </form>
+        @endforeach
+
+    </div>
 @endsection

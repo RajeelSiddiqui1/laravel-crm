@@ -18,11 +18,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Models\EmployeeSubtask;
+use Carbon\Carbon;
 
 class TeamLeadController extends Controller
 {
 
-    
+
     function resgisterview()
     {
         $departments = Department::all();
@@ -267,19 +269,6 @@ class TeamLeadController extends Controller
     }
 
 
-    public function subtask_view($id)
-    {
-        $subtask = Subtask::with('employee', 'task')->findOrFail($id);
-        return view('team_lead.subtask_view', compact('subtask'));
-    }
-
-    public function subtask_edit($id)
-    {
-        $subtask = Subtask::findOrFail($id);
-        return view('team_lead.subtask_edit', compact('subtask'));
-    }
-
-
 
 
     public function subtask_create($taskId)
@@ -306,9 +295,9 @@ class TeamLeadController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'start_time' => 'nullable|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i',
+            'lead' => 'nullable|numeric',
         ]);
 
-        // Same-day time validation
         if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
             if ($request->filled('start_time') && $request->filled('end_time')) {
                 if (strtotime($request->end_time) <= strtotime($request->start_time)) {
@@ -321,29 +310,114 @@ class TeamLeadController extends Controller
         $task = OnwerTask::findOrFail($request->owner_task_id);
 
         if ($task->team_lead_id !== $teamLead->id) {
-            return back()->with('error', 'Unauthorized.');
+            return back()->with('error', 'Unauthorized access to this task.');
+        }
+
+        if (!$teamLead->department_id) {
+            return back()->with('error', 'Team Lead does not belong to any department.');
         }
 
         $employee = Employee::findOrFail($request->assigned_employee_id);
+
         if ($employee->department_id !== $teamLead->department_id) {
-            return back()->with('error', 'Invalid employee department.');
+            return back()->with('error', 'Selected employee is not from your department.');
         }
 
-        // Prepare data for creation
+        if (!$request->lead) {
+            return back()->with('error', 'Lead number is required.');
+        }
+
         $data = [
             'title' => $request->title,
             'description' => $request->description,
             'assigned_employee_id' => $employee->id,
             'owner_task_id' => $task->id,
-            'start_date' => $request->filled('start_date') ? $request->start_date : null,
-            'end_date' => $request->filled('end_date') ? $request->end_date : null,
-            'start_time' => $request->filled('start_time') ? $request->start_time : null,
-            'end_time' => $request->filled('end_time') ? $request->end_time : null,
+            'start_date' => $request->start_date ?? null,
+            'end_date' => $request->end_date ?? null,
+            'start_time' => $request->start_time ?? null,
+            'end_time' => $request->end_time ?? null,
+            'department_id' => $teamLead->department_id,
+            'lead' => $request->lead,
         ];
 
-        Subtask::create($data);
+        // 🔥 1. Create Subtask
+        $subtask = Subtask::create($data);
+
+        // 🔥 2. Create empty EmployeeSubtask with default structure
+        EmployeeSubtask::create([
+            'subtask_id' => $subtask->id,
+            'comments' => [],
+            'statuses' => [],
+            'attachments' => [],
+        ]);
 
         return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask created successfully.');
+    }
+
+
+    public function subtask_edit($id)
+    {
+        $subtask = Subtask::with('employee')->findOrFail($id);
+
+        $teamLead = Auth::guard('team_lead')->user();
+        $assignedEmployees = Employee::where('department_id', $teamLead->department_id)->get();
+
+        // Format start_date and end_date with Carbon for input type="date"
+        $subtask->start_date = $subtask->start_date ? Carbon::parse($subtask->start_date)->format('Y-m-d') : null;
+        $subtask->end_date = $subtask->end_date ? Carbon::parse($subtask->end_date)->format('Y-m-d') : null;
+
+        // Format start_time and end_time with Carbon for input type="time"
+        $subtask->start_time = $subtask->start_time ? Carbon::parse($subtask->start_time)->format('H:i') : null;
+        $subtask->end_time = $subtask->end_time ? Carbon::parse($subtask->end_time)->format('H:i') : null;
+
+        return view('team_lead.subtask_edit', compact('subtask', 'assignedEmployees'));
+    }
+
+
+    public function subtask_update(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i',
+            'lead' => 'required|numeric|min:1',
+            'assigned_employee_id' => 'required|exists:employees,id',
+        ]);
+
+        if (
+            $request->filled('start_date') &&
+            $request->filled('end_date') &&
+            $request->start_date === $request->end_date &&
+            $request->filled('start_time') &&
+            $request->filled('end_time') &&
+            strtotime($request->end_time) <= strtotime($request->start_time)
+        ) {
+            return back()->withErrors(['end_time' => 'End time must be after start time on the same day.']);
+        }
+
+        $teamLead = Auth::guard('team_lead')->user();
+        $subtask = Subtask::findOrFail($id);
+        $task = OnwerTask::findOrFail($subtask->owner_task_id);
+
+        if ($task->team_lead_id !== $teamLead->id) {
+            return back()->with('error', 'Unauthorized access.');
+        }
+
+        $subtask->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'lead' => $request->lead,
+            'assigned_employee_id' => $request->assigned_employee_id,
+        ]);
+
+        return redirect()->route('team_lead.subtask.list', $task->id)->with('success', 'Subtask updated successfully.');
     }
 
     public function subtask_update_status(Request $request, $id)
@@ -388,6 +462,23 @@ class TeamLeadController extends Controller
     }
 
 
+    public function subtask_detail($id)
+    {
+        $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
+
+        $employeeId = $subtask->assigned_employee_id;
+
+        // All subtasks assigned to this employee
+        $employeeSubtasks = Subtask::with('employeeSubtask')
+            ->where('assigned_employee_id', $employeeId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('team_lead.subtask_detail', compact('subtask', 'employeeSubtasks'));
+    }
+
+
+
     function fetch_employee()
     {
         $teamLead   =  Auth::guard('team_lead')->user();
@@ -399,11 +490,11 @@ class TeamLeadController extends Controller
     }
 
 
-    
-  
 
 
-  public function send_message(Request $request)
+
+
+    public function send_message(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'content' => 'nullable|string',

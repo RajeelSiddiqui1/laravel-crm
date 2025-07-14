@@ -18,6 +18,7 @@ use App\Models\TeamLead;
 use Illuminate\Support\Facades\Storage;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Log;
+use App\Models\EmployeeSubtask;
 
 class Employee extends Controller
 {
@@ -199,57 +200,77 @@ class Employee extends Controller
         return view('employee.subtasks_list', compact('subtasks'));
     }
 
-    public function edit_subtask($id)
-    {
-        $subtask = Subtask::findOrFail($id);
-        return view('employee.subtasks_update', compact('subtask'));
+    function subtask_status_update(Request $request, $id){
+        $validator = Validator::make($request->all(), [
+           'status' => 'required|in:pending,in_progress,completed',
+           ]);
+
+           $subtask = Subtask::findOrFail($id);
+           $subtask->status = $request->status;
+           $subtask->save();
+           return back()->with('success', 'Subtask status updated successfully.');
     }
+public function edit_subtask($subtaskId)
+{
+    $subtask = Subtask::with('employeeSubtask')->findOrFail($subtaskId);
+    $employeeSubtask = $subtask->employeeSubtask;
+
+    $leadCount = (int) $subtask->lead ?? 1;
+    $leadValues = range(1, $leadCount);
+
+    return view('employee.subtasks_update', compact('subtask', 'employeeSubtask', 'leadValues'));
+}
 
 
 
+public function update_subtask(Request $request, $id)
+{
+    $leadIndex = (int) $request->input('lead') - 1;
 
-    public function update_subtask(Request $request, $id)
-    {
-        $request->validate([
-            'comment' => 'nullable|string',
-            'status' => 'required|in:pending,in_progress,completed',
-            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm,mp3,wav,ogg,pdf,doc,docx,xls,xlsx,txt|max:102400',
+    $request->validate([
+        'comment' => 'required|string',
+        'status' => 'required|string',
+    ]);
+
+    $subtask = Subtask::findOrFail($id);
+    $employeeSubtask = $subtask->employeeSubtask;
+
+    if (!$employeeSubtask) {
+        $employeeSubtask = $subtask->employeeSubtask()->create([
+            'comments' => [],
+            'statuses' => [],
+            'attachments' => [],
         ]);
-
-        $subtask = Subtask::findOrFail($id);
-        $subtask->comment = $request->comment;
-        $subtask->status = $request->status;
-
-        $existingattachments = $subtask->attachments ?? [];
-
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                try {
-                    $publicId = 'subtask_attachments/' . uniqid() . '_' . $file->getClientOriginalName();
-
-                    $uploaded = Cloudinary::uploadApi()->upload(
-                        $file->getRealPath(),
-                        [
-                            'public_id' => $publicId,
-                            'resource_type' => 'auto',
-                            'overwrite' => false
-                        ]
-                    );
-
-                    $existingattachments[] = $uploaded['secure_url'];
-                } catch (\Exception $e) {
-                    Log::error('Upload failed: ' . $e->getMessage());
-                    return redirect()->route('employee.subtasks')->with('error', 'attachments upload failed.');
-                }
-            }
-        }
-
-        $subtask->attachments = $existingattachments;
-        $subtask->save();
-
-        return redirect()->route('employee.subtasks')->with('success', 'Subtask updated successfully.');
     }
 
+    $comments = $employeeSubtask->comments ?? [];
+    $statuses = $employeeSubtask->statuses ?? [];
+    $attachments = $employeeSubtask->attachments ?? [];
+
+    $comments[$leadIndex] = $request->input('comment');
+    $statuses[$leadIndex] = $request->input('status');
+
+    if ($request->hasFile("attachments")) {
+        foreach ($request->file("attachments") as $file) {
+            $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                'public_id' => 'employee_subtask/' . uniqid() . '_' . $file->getClientOriginalName(),
+                'resource_type' => 'auto',
+            ]);
+            $attachments[$leadIndex][] = $uploaded['secure_url'];
+        }
+    }
+
+    $employeeSubtask->update([
+        'comments' => $comments,
+        'statuses' => $statuses,
+        'attachments' => $attachments,
+    ]);
+
+    return redirect()->back()->with([
+        'success' => 'Subtask updated successfully.',
+        'updated_lead' => $request->input('lead'),
+    ]);
+}
 
 
     protected function getCloudinaryPublicId($url)
