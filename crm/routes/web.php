@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Employee;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectOnwer;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProjectManager;
@@ -133,3 +134,8 @@ Route::controller(Employee::class)->group(function () {
 
 Route::get('/chat/group/{ownerTaskId}', [GroupChatController::class, 'index'])->name('chat.group');
 Route::post('/chat/group/send', [GroupChatController::class, 'send'])->name('chat.group.send');
+
+
+Route::get('/notifications', [NotificationController::class, 'allNotifications'])->name('notifications.index');
+
+Route::get('/admin/notifications', [NotificationController::class, 'showAllForAdmin'])->middleware('auth:admin');

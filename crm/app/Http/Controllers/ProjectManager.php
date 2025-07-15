@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\AssignedTeamLeaderTask;
 use App\Models\Department;
 use App\Models\OnwerTask;
 use App\Models\ProjectManager as ModelsProjectManager;
@@ -136,7 +137,7 @@ class ProjectManager extends Controller
         return view('project_manager.profile', compact('manager'));
     }
 
-     public function updateProfile(Request $request)
+    public function updateProfile(Request $request)
     {
         /** @var \App\Models\ProjectManager $employee */
         $employee = Auth::guard('project_manager')->user();
@@ -169,7 +170,7 @@ class ProjectManager extends Controller
         return back()->with('success', 'Profile updated successfully!');
     }
 
-      public function onwertask()
+    public function onwertask()
     {
         $pm = Auth::guard('project_manager')->user();
 
@@ -178,8 +179,8 @@ class ProjectManager extends Controller
         $teamLeads = TeamLead::whereIn('department_id', $departmentIds)->get();
 
         $tasks = OnwerTask::with(['teamLead', 'department'])
-                          ->where('project_manager_id', $pm->id)
-                          ->get();
+            ->where('project_manager_id', $pm->id)
+            ->get();
 
         if ($teamLeads->isEmpty()) {
             session()->flash('error', 'Team Lead data not fetched.');
@@ -208,7 +209,10 @@ class ProjectManager extends Controller
         }
 
         $task->team_lead_id = $teamLead->id;
-        $task->save();
+        if($task->save()){
+            $team_lead = TeamLead::find($task->team_lead_id);
+            Mail::to($team_lead->email)->send(new AssignedTeamLeaderTask($task));
+        }
 
         return back()->with('success', 'Team Lead assigned successfully!');
     }
@@ -219,42 +223,39 @@ class ProjectManager extends Controller
     }
 
 
-  
- 
-
-public function notifications()
-{
-    $manager = Auth::guard('project_manager')->user();
-    $notifications = $manager->notifications()->latest()->get();
-
-    $manager->unreadNotifications->markAsRead(); // mark all unread as read
-
-    return view('project_manager.notifications', compact('notifications'));
-}
 
 
-public function viewNotification($id)
-{
-    $notification = DatabaseNotification::findOrFail($id);
 
-    if ($notification->notifiable_id !== Auth::guard('project_manager')->id()) {
-        abort(403);
-    }
-
-    if ($notification->unread()) {
-        $notification->markAsRead();
-    }
-
-    return redirect()->route('project_manager.tasks');
-}
-
-function subtask()
+    public function notifications()
     {
-        
+        $manager = Auth::guard('project_manager')->user();
+        $notifications = $manager->notifications()->latest()->get();
+
+        $manager->unreadNotifications->markAsRead(); // mark all unread as read
+
+        return view('project_manager.notifications', compact('notifications'));
+    }
+
+
+    public function viewNotification($id)
+    {
+        $notification = DatabaseNotification::findOrFail($id);
+
+        if ($notification->notifiable_id !== Auth::guard('project_manager')->id()) {
+            abort(403);
+        }
+
+        if ($notification->unread()) {
+            $notification->markAsRead();
+        }
+
+        return redirect()->route('project_manager.tasks');
+    }
+
+    function subtask()
+    {
+
         $subtasks = Subtask::with('employee')->get();
         return view('project_manager.subtask', compact('subtasks'));
     }
-
-
 }
-

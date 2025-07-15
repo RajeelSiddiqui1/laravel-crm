@@ -110,12 +110,21 @@
 @section('content')
     <div class="container">
         <h2 class="text-white">Manager Tasks</h2>
+        {{-- Flash Alerts --}}
         @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                <strong>Success!</strong> {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         @endif
+
         @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
+            <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                <strong>Error!</strong> {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         @endif
+
         <div class="table-responsive">
             <table class="table table-dark table-bordered">
                 <thead>
@@ -224,16 +233,16 @@
                                     class="btn btn-sm btn-warning mb-1">Subtask</a>
 
                             </td>
-                           
+
                             <td>
                                 <a href="{{ route('team_lead.subtask.list', $task->id) }}"
                                     class="btn btn-sm btn-info">Subtask Assign</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('chat.group', $task->id) }}" class="btn btn-outline-primary btn-sm">Group
-                                        Chat</a>
-    
-                                </td>
+                            </td>
+                            <td>
+                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-outline-primary btn-sm">Group
+                                    Chat</a>
+
+                            </td>
 
                         </tr>
                     @empty
@@ -246,3 +255,14 @@
         </div>
     </div>
 @endsection
+<script>
+     setTimeout(function () {
+        let alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            alert.classList.remove('show');
+            alert.classList.add('fade');
+            setTimeout(() => alert.remove(), 300); // fully remove from DOM
+        });
+    }, 5000); // 5 seconds
+
+</script>

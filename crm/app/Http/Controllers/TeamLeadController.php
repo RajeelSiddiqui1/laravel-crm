@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\AssignedEmployeeTask;
 use App\Models\Message;
 use App\Models\OnwerTask;
 use App\Models\Subtask;
@@ -206,40 +207,54 @@ class TeamLeadController extends Controller
         return view('team_lead.manager_tasks', compact('tasks', 'employees'));
     }
 
-    public function assignEmployees(Request $request, OnwerTask $task)
-    {
-        $request->validate([
-            'employee_id' => 'nullable|array',
-            'employee_id.*' => 'exists:employees,id',
-        ]);
+   public function assignEmployees(Request $request, OnwerTask $task)
+{
+    $request->validate([
+        'employee_id' => 'nullable|array',
+        'employee_id.*' => 'exists:employees,id',
+    ]);
 
-        $teamLead = Auth::guard('team_lead')->user();
+    $teamLead = Auth::guard('team_lead')->user();
 
-        if ($task->team_lead_id !== $teamLead->id) {
-            ToastMagic::error('Unauthorized action. This task is not assigned to you.');
-            abort(403, 'Unauthorized action. This task is not assigned to you.');
+    if ($task->team_lead_id !== $teamLead->id) {
+        ToastMagic::error('Unauthorized action. This task is not assigned to you.');
+        abort(403, 'Unauthorized action. This task is not assigned to you.');
+    }
+
+    $newIds = $request->input('employee_id', []);
+    $existingIds = $task->employee_id ? explode(',', $task->employee_id) : [];
+
+    $mergedIds = array_unique(array_merge($existingIds, $newIds));
+
+    foreach ($mergedIds as $employeeId) {
+        $employee = Employee::find($employeeId);
+        if (!$employee || $employee->department_id !== $teamLead->department_id) {
+            ToastMagic::error('You can only assign employees from your own department.');
+            return redirect()->back()->with('error', 'You can only assign employees from your own department.');
         }
+    }
 
-        $newIds = $request->input('employee_id', []);
+    // Save assigned employees
+    $task->employee_id = implode(',', $mergedIds);
+    $task->save();
 
-        $existingIds = $task->employee_id ? explode(',', $task->employee_id) : [];
-
-        $mergedIds = array_unique(array_merge($existingIds, $newIds));
-
-        foreach ($mergedIds as $employeeId) {
-            $employee = Employee::find($employeeId);
-            if (!$employee || $employee->department_id !== $teamLead->department_id) {
-                ToastMagic::error('You can only assign employees from your own department.');
-                return back()->with('error', 'You can only assign employees from your own department.');
+    // Send email to each assigned employee
+    foreach ($mergedIds as $id) {
+        $employee = Employee::find($id);
+        if ($employee && $employee->email) {
+            try {
+                Mail::to($employee->email)->send(new AssignedEmployeeTask($task));
+            } catch (\Exception $e) {
+                // Optionally log the error or display warning
+                Log::error("Mail not sent to employee ID $id: " . $e->getMessage());
             }
         }
-
-        $task->employee_id = implode(',', $mergedIds);
-        $task->save();
-
-        ToastMagic::success('Employees assigned successfully!');
-        return back();
     }
+
+    ToastMagic::success('Employees assigned and notified successfully!');
+    return redirect()->back()->with('success', 'Employees assigned successfully!');
+}
+
 
     public function updateStatus(Request $request, OnwerTask $task)
     {

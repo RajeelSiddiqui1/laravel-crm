@@ -120,11 +120,20 @@
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>
                     </li>
-                    {{-- <li>
-                        <a href="{{ route('project_manager.subtask') }}">
-                            <i class="icon-power mr-2"></i> <span>SubTask</span>
+                    <li class="nav-item">
+                        <a class="nav-link position-relative d-flex align-items-center"
+                            href="{{ route('notifications.index') }}">
+                            <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
+                            @if ($notificationCount > 0)
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
+                                    {{ $notificationCount > 99 ? '99+' : $notificationCount }}
+                                    <span class="visually-hidden">unread notifications</span>
+                                </span>
+                            @endif
                         </a>
-                    </li> --}}
+                    </li>
+
                 </ul>
             </div>
 
@@ -244,7 +253,7 @@
                         </li>
                     </ul>
                     <ul class="navbar-nav align-items-center right-nav-link">
-                     
+
                     </ul>
                 </nav>
             </header>
