@@ -116,6 +116,11 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('project_manager.mytask') }}">
+                            <i class="zmdi zmdi-city mr-2"></i> <span>My Tasks</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('project_manager.logout') }}">
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>
@@ -163,7 +168,61 @@
                             </a>
                         </li>
 
+                        @php
+                            $user = null;
+                            $guard = null;
 
+                            foreach (['project_owner', 'project_manager', 'team_lead', 'employee'] as $g) {
+                                if (Auth::guard($g)->check()) {
+                                    $user = Auth::guard($g)->user();
+                                    $guard = $g;
+                                    break;
+                                }
+                            }
+
+                            $notificationCount = 0;
+
+                            if ($user && $guard) {
+                                $notificationCount = \App\Models\Notification::where('user_id', $user->id)
+                                    ->where('user_type', $guard)
+                                    ->where('is_read', false)
+                                    ->count();
+                            }
+                        @endphp
+
+                        <!-- 🔔 Notification Icon -->
+                        <li class="nav-item">
+                            <a class="nav-link position-relative d-flex align-items-center"
+                                href="{{ route('notifications.index') }}"
+                                @if ($notificationCount > 0) onclick="playNotificationSound()" @endif>
+                                <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
+                                @if ($notificationCount > 0)
+                                    <span
+                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
+                                        {{ $notificationCount > 99 ? '99+' : $notificationCount }}
+                                        <span class="visually-hidden">unread notifications</span>
+                                    </span>
+                                @endif
+                            </a>
+                        </li>
+
+                        <!-- 🔊 Audio Element -->
+                        <audio id="notif-sound" preload="auto">
+                            <source src="{{ asset('sounds/notification.mp3') }}" type="audio/mpeg">
+                        </audio>
+
+                        <!-- 📜 JS Script -->
+                        <script>
+                            function playNotificationSound() {
+                                const audio = document.getElementById('notif-sound');
+                                if (audio) {
+                                    audio.currentTime = 0;
+                                    audio.play().catch(err => {
+                                        console.warn("Sound failed:", err);
+                                    });
+                                }
+                            }
+                        </script>
                     </ul>
 
                 </nav>
@@ -233,11 +292,46 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ url('/project-owner/manager-tasks') }}">
+                            <i class="zmdi zmdi-city"></i>
+                            <span>Managers Task</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ url('/project-owner/subtasks') }}">
                             <i class="zmdi zmdi-city"></i>
                             <span>Sub Tasks</span>
                         </a>
                     </li>
+                    @php
+                        $adminNotificationCount = 0;
+
+                        if (Illuminate\Support\Facades\Auth::guard('project_owner')->check()) {
+                            $admin = Illuminate\Support\Facades\Auth::guard('project_owner')->user();
+
+                            $adminNotificationCount = \App\Models\Notification::where('user_id', $admin->id)
+                                ->where('user_type', 'project_owner')
+                                ->where('is_read', false)
+                                ->count();
+                        }
+                    @endphp
+
+                    <li class="nav-item">
+                        <a class="nav-link position-relative d-flex align-items-center"
+                            href="{{ route('notifications.admin') }}">
+                            <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
+                            <span>All Notification</span>
+                            @if ($adminNotificationCount > 0)
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
+                                    {{ $adminNotificationCount > 99 ? '99+' : $adminNotificationCount }}
+                                    <span class="visually-hidden">unread notifications</span>
+                                </span>
+                            @endif
+                        </a>
+                    </li>
+
+
                 </ul>
             </div>
             <header class="topbar-nav">
@@ -296,11 +390,63 @@
                         </a>
                     </li>
 
-                    <li>
-                        <a href="{{ route('team_lead.employees') }}">
-                            <i class="fas fa-users mr-2"></i> <span>Employees</span>
+                    @php
+                        $user = null;
+                        $guard = null;
+
+                        foreach (['project_owner', 'project_manager', 'team_lead', 'employee'] as $g) {
+                            if (Auth::guard($g)->check()) {
+                                $user = Auth::guard($g)->user();
+                                $guard = $g;
+                                break;
+                            }
+                        }
+
+                        $notificationCount = 0;
+
+                        if ($user && $guard) {
+                            $notificationCount = \App\Models\Notification::where('user_id', $user->id)
+                                ->where('user_type', $guard)
+                                ->where('is_read', false)
+                                ->count();
+                        }
+                    @endphp
+
+                    <!-- 🔔 Notification Icon -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative d-flex align-items-center"
+                            href="{{ route('notifications.index') }}"
+                            @if ($notificationCount > 0) onclick="playNotificationSound()" @endif>
+                            <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
+                            @if ($notificationCount > 0)
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
+                                    {{ $notificationCount > 99 ? '99+' : $notificationCount }}
+                                    <span class="visually-hidden">unread notifications</span>
+                                </span>
+                            @endif
                         </a>
                     </li>
+
+                    <!-- 🔊 Audio Element -->
+                    <audio id="notif-sound" preload="auto">
+                        <source src="{{ asset('sounds/notification.mp3') }}" type="audio/mpeg">
+                    </audio>
+
+                    <!-- 📜 JS Script -->
+                    <script>
+                        function playNotificationSound() {
+                            const audio = document.getElementById('notif-sound');
+                            if (audio) {
+                                audio.currentTime = 0;
+                                audio.play().catch(err => {
+                                    console.warn("Sound failed:", err);
+                                });
+                            }
+                        }
+                    </script>
+
+
 
                     <li>
                         <a href="{{ route('team_lead.logout') }}">

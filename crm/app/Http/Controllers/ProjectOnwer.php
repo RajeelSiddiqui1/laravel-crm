@@ -173,61 +173,61 @@ class ProjectOnwer extends Controller
         return view('project_owner.tasks_create', compact('departments'));
     }
 
- 
 
-function tasks_create(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'name' => 'required',
-        'client_name' => 'required',
-        'description' => 'required',
-        'client_email' => 'required|email',
-        'client_contact' => 'required',
-        'department_id' => 'required|exists:departments,id',
-        'project_manager_id' => 'required|exists:project_managers,id',
-        'start_date' => 'required|date',
-        'deadline' => 'required|date|after_or_equal:start_date',
-        'priority' => 'required|in:Low,Medium,High',
-    ]);
 
-    if ($validator->fails()) {
-        return redirect()->back()->withErrors($validator)->withInput();
-    }
-
-    $task = new OnwerTask();
-    $task->name = $request->name;
-    $task->client_name = $request->client_name;
-    $task->description = $request->description;
-    $task->client_email = $request->client_email;
-    $task->client_contact = $request->client_contact;
-    $task->department_id = $request->department_id;
-    $task->project_manager_id = $request->project_manager_id;
-
-    $projectManager = ProjectManager::find($request->project_manager_id);
-    $task->manager_email = $projectManager->email;
-    $task->start_date = $request->start_date;
-    $task->deadline = $request->deadline;
-    $task->priority = $request->priority;
-    $task->status = 'pending';
-
-    if ($task->save()) {
-
-        // ✅ Send email
-        Mail::to($projectManager->email)->send(new TaskAssignedMail($task));
-
-        // ✅ Create notification
-        Notification::create([
-            'title' => 'New Task Assigned',
-            'message' => 'You have been assigned a new task: ' . $task->name,
-            'user_id' => $projectManager->id,
-            'user_type' => 'project_manager',
+    function tasks_create(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'client_name' => 'required',
+            'description' => 'required',
+            'client_email' => 'required|email',
+            'client_contact' => 'required',
+            'department_id' => 'required|exists:departments,id',
+            'project_manager_id' => 'required|exists:project_managers,id',
+            'start_date' => 'required|date',
+            'deadline' => 'required|date|after_or_equal:start_date',
+            'priority' => 'required|in:Low,Medium,High',
         ]);
 
-        return redirect()->route('project_owner.task')->with('success', 'Task created and notification sent.');
-    }
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
-    return redirect()->route('project_owner.task')->with('error', 'Task creation failed.');
-}
+        $task = new OnwerTask();
+        $task->name = $request->name;
+        $task->client_name = $request->client_name;
+        $task->description = $request->description;
+        $task->client_email = $request->client_email;
+        $task->client_contact = $request->client_contact;
+        $task->department_id = $request->department_id;
+        $task->project_manager_id = $request->project_manager_id;
+
+        $projectManager = ProjectManager::find($request->project_manager_id);
+        $task->manager_email = $projectManager->email;
+        $task->start_date = $request->start_date;
+        $task->deadline = $request->deadline;
+        $task->priority = $request->priority;
+        $task->status = 'pending';
+
+        if ($task->save()) {
+
+            // ✅ Send email
+            Mail::to($projectManager->email)->send(new TaskAssignedMail($task));
+
+            // ✅ Create notification
+            Notification::create([
+                'title' => 'New Task Assigned',
+                'message' => 'You have been assigned a new task: ' . $task->name,
+                'user_id' => $projectManager->id,
+                'user_type' => 'project_manager',
+            ]);
+
+            return redirect()->route('project_owner.task')->with('success', 'Task created and notification sent.');
+        }
+
+        return redirect()->route('project_owner.task')->with('error', 'Task creation failed.');
+    }
 
 
     public function edit($id)
@@ -301,20 +301,31 @@ function tasks_create(Request $request)
         return view('project_owner.subtask', compact('subtasks'));
     }
 
-   public function subtask_detail($id)
-{
-    $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
+    public function subtask_detail($id)
+    {
+        $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
 
-    $employeeId = $subtask->assigned_employee_id;
+        $employeeId = $subtask->assigned_employee_id;
 
-    $employeeSubtasks = Subtask::with('employeeSubtask')
-        ->where('assigned_employee_id', $employeeId)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $employeeSubtasks = Subtask::with('employeeSubtask')
+            ->where('assigned_employee_id', $employeeId)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    return view('project_owner.subtask_detail', compact('subtask', 'employeeSubtasks'));
-}
+        return view('project_owner.subtask_detail', compact('subtask', 'employeeSubtasks'));
+    }
 
+
+    public function allOwnerTasks()
+    {
+        // Fetch all owner tasks where project_manager_task is set (not null)
+        $tasks = OnwerTask::with('projectManagerTask')
+            ->whereNotNull('project_manger_task')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('project_owner.project_manager_tasks', compact('tasks'));
+    }
 
 
 }

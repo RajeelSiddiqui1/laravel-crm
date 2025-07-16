@@ -28,8 +28,8 @@ class ProjectManager extends Authenticatable
         return $this->belongsTo(Department::class, 'department_id');
     }
 
-    public function departments()
-    {
-        return $this->belongsToMany(Department::class, 'department_project_manager');
-    }
+ public function departments()
+{
+    return $this->belongsToMany(Department::class, 'department_project_manager', 'project_manager_id', 'department_id');
+}
 }

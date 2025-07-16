@@ -11,6 +11,7 @@ use App\Models\Subtask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
+use App\Models\Notification;
 use App\Models\TeamLead;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -209,7 +210,7 @@ class ProjectManager extends Controller
         }
 
         $task->team_lead_id = $teamLead->id;
-        if($task->save()){
+        if ($task->save()) {
             $team_lead = TeamLead::find($task->team_lead_id);
             Mail::to($team_lead->email)->send(new AssignedTeamLeaderTask($task));
         }
@@ -257,5 +258,165 @@ class ProjectManager extends Controller
 
         $subtasks = Subtask::with('employee')->get();
         return view('project_manager.subtask', compact('subtasks'));
+    }
+
+    function manager_task_list()
+    {
+        $manager = Auth::guard('project_manager')->user();
+        $tasks = OnwerTask::where('project_manger_task', $manager->id)->get();
+        return view('project_manager.my_task', compact('tasks'));
+    }
+
+    function my_task_detail($id)
+    {
+        $task = OnwerTask::findOrFail($id);
+        return view('project_manager.my_task_detail', compact('task'));
+    }
+
+
+    function create_my_task()
+    {
+        $project_manager = Auth::guard('project_manager')->user();
+
+        // Fetch departments assigned to the logged-in manager
+        $departments = $project_manager->departments; // uses the belongsToMany relation
+
+        // Get team leads belonging to those departments
+        $team_leads = TeamLead::whereIn('department_id', $departments->pluck('id'))->get();
+
+        return view('project_manager.create_my_task', compact('team_leads', 'departments'));
+    }
+
+    function store_my_task(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'client_name' => 'required',
+            'description' => 'required',
+            'client_email' => 'required|email',
+            'client_contact' => 'required',
+            'department_id' => 'required|exists:departments,id',
+            'team_lead_id' => 'required|exists:team_leads,id',
+            'start_date' => 'required|date',
+            'deadline' => 'required|date|after_or_equal:start_date',
+            'priority' => 'required|in:Low,Medium,High',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $task = new OnwerTask();
+        $task->name = $request->name;
+        $task->client_name = $request->client_name;
+        $task->description = $request->description;
+        $task->client_email = $request->client_email;
+        $task->client_contact = $request->client_contact;
+        $task->department_id = $request->department_id;
+        $task->team_lead_id = $request->team_lead_id;
+        $task->start_date = $request->start_date;
+        $task->deadline = $request->deadline;
+        $task->priority = $request->priority;
+        $task->status = 'pending';
+        $task->project_manager_id =  Auth::guard('project_manager')->id();
+        $task->project_manger_task =  Auth::guard('project_manager')->id();
+
+        if ($task->save()) {
+            $team_leads = TeamLead::where('department_id', $request->department_id)->get();
+
+            foreach ($team_leads as $teamLead) {
+                Notification::create([
+                    'title' => 'New Task Created',
+                    'message' => 'A new task "' . $task->name . '" has been assigned in your department.',
+                    'user_id' => $teamLead->id,
+                    'user_type' => 'team_lead',
+                ]);
+                return redirect()->route('project_manager.mytask')->with('success', 'Task created and team leads notified.');
+            }
+            return redirect()->route('project_manager.mytask')->with('error', 'Task creation failed.');
+        }
+    }
+
+    function mytask_edit($id)
+    {
+        $task = OnwerTask::findOrFail($id);
+        $departments = Department::with('teamLeads')->get(); // use correct relationship name
+        $team_leads = TeamLead::all(); // get team leads if needed for dropdown
+        return view('project_manager.edit_my_task', compact('task', 'departments', 'team_leads'));
+    }
+
+
+    function mytask_update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'client_name' => 'required',
+            'description' => 'required',
+            'client_email' => 'required|email',
+            'client_contact' => 'required',
+            'department_id' => 'required|exists:departments,id',
+            'team_lead_id' => 'required|exists:team_leads,id',
+            'start_date' => 'required|date',
+            'deadline' => 'required|date|after_or_equal:start_date',
+            'priority' => 'required|in:Low,Medium,High',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $task = OnwerTask::findOrFail($id);
+        $task->name = $request->name;
+        $task->client_name = $request->client_name;
+        $task->description = $request->description;
+        $task->client_email = $request->client_email;
+        $task->client_contact = $request->client_contact;
+        $task->department_id = $request->department_id;
+        $task->team_lead_id = $request->team_lead_id;
+        $task->start_date = $request->start_date;
+        $task->deadline = $request->deadline;
+        $task->priority = $request->priority;
+        $task->status = 'pending';
+
+        if ($task->save()) {
+            $team_leads = TeamLead::where('department_id', $request->department_id)->get();
+
+            foreach ($team_leads as $teamLead) {
+                Notification::create([
+                    'title' => 'Task Updated',
+                    'message' => 'Task "' . $task->name . '" has been updated in your department.',
+                    'user_id' => $teamLead->id,
+                    'user_type' => 'team_lead',
+                ]);
+            }
+
+            return redirect()->route('project_manager.mytask')->with('success', 'Task updated and team leads notified.');
+        }
+
+        return redirect()->route('project_manager.mytask')->with('error', 'Task update failed.');
+    }
+    function my_task_destroy($id)
+    {
+        $task = OnwerTask::findOrFail($id);
+
+
+        $taskName = $task->name;
+        $teamLeadId = $task->team_lead_id;
+
+        $task->delete();
+
+
+        $team_lead = TeamLead::find($teamLeadId);
+        if ($team_lead) {
+            Notification::create([
+                'title' => 'Task Deleted',
+                'message' => 'Task "' . $taskName . '" has been deleted in your department.',
+                'user_id' => $team_lead->id,
+                'user_type' => 'team_lead',
+            ]);
+        }
+
+        return redirect()->route('project_manager.mytask')->with('success', 'Task deleted successfully.');
     }
 }

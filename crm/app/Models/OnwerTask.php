@@ -3,25 +3,27 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\TeamLead; // Import the TeamLead model
 
 class OnwerTask extends Model
 {
     protected $table = "owner_tasks";
+
     protected $fillable = [
+        'name',
         'client_name',
         'description',
         'client_email',
         'client_contact',
         'department_id',
         'project_manager_id',
+        'project_manager_task',
         'team_lead_id',
         'employee_id',
         'manager_email',
         'priority',
         'status',
-        'start_date', // Make sure these are in fillable if you're mass assigning them
-        'deadline',   // Make sure these are in fillable if you're mass assigning them
+        'start_date',
+        'deadline',
     ];
 
     protected $casts = [
@@ -30,11 +32,14 @@ class OnwerTask extends Model
         'employee_ids' => 'array',
     ];
 
-
-
     public function projectManager()
     {
         return $this->belongsTo(ProjectManager::class);
+    }
+
+    public function projectManagerTask()
+    {
+        return $this->belongsTo(ProjectManager::class, 'project_manger_task');
     }
 
     public function department()
@@ -51,7 +56,6 @@ class OnwerTask extends Model
     {
         return $this->hasMany(Subtask::class, 'owner_task_id');
     }
-
 
     public function teamLead()
     {

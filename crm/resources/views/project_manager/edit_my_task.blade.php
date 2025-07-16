@@ -36,55 +36,57 @@
                                 <input type="text" name="name" class="form-control"
                                     value="{{ old('name', $task->name) }}">
                             </div>
+
                             <div class="form-group">
                                 <label class="text-white">Client Name</label>
                                 <input type="text" name="client_name" class="form-control"
                                     value="{{ old('client_name', $task->client_name) }}">
                             </div>
+
                             <div class="form-group">
                                 <label class="text-white">Description</label>
                                 <textarea name="description" class="form-control">{{ old('description', $task->description) }}</textarea>
                             </div>
+
                             <div class="form-group">
                                 <label class="text-white">Client Email</label>
                                 <input type="email" name="client_email" class="form-control"
                                     value="{{ old('client_email', $task->client_email) }}">
                             </div>
+
                             <div class="form-group">
                                 <label class="text-white">Client Contact</label>
                                 <input type="text" name="client_contact" class="form-control"
                                     value="{{ old('client_contact', $task->client_contact) }}">
                             </div>
-                            <select name="department_id" id="department_id"
-                                class="form-control custom-select bg-dark text-white">
-                                <option value="">Select Department</option>
-                                @foreach ($departments as $department)
-                                    <option value="{{ $department->id }}"
-                                        {{ old('department_id', $task->department_id ?? '') == $department->id ? 'selected' : '' }}>
-                                        {{ $department->name }}
-                                    </option>
-                                @endforeach
-                            </select>
 
                             <div class="form-group">
-                                <label class="text-white">Project Manager</label>
-                                <select name="project_manager_id" class="form-control custom-select bg-dark text-white">
-                                    <option value="">Select Project Manager</option>
+                                <label class="text-white" for="department_id">Department</label>
+                                <select name="department_id" id="department_id"
+                                    class="form-control custom-select bg-dark text-white">
+                                    <option value="">Select Department</option>
                                     @foreach ($departments as $department)
-                                        @foreach ($department->projectManagers as $manager)
-                                            <option value="{{ $manager->id }}"
-                                                {{ $manager->id == $task->project_manager_id ? 'selected' : '' }}>
-                                                {{ $department->name }} ({{ $manager->name }})
-                                            </option>
-                                        @endforeach
+                                        <option value="{{ $department->id }}"
+                                            {{ old('department_id', $task->department_id ?? '') == $department->id ? 'selected' : '' }}>
+                                            {{ $department->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
+
                             <div class="form-group">
-                                <label class="text-white">Manager Email</label>
-                                <input type="email" name="manager_email" class="form-control"
-                                    value="{{ old('manager_email', $task->manager_email) }}">
+                                <label class="text-white" for="team_lead_id">Team Lead</label>
+                                <select name="team_lead_id" class="form-control custom-select bg-dark text-white">
+                                    <option value="">Select Team Lead</option>
+                                    @foreach ($team_leads as $lead)
+                                        <option value="{{ $lead->id }}"
+                                            {{ old('team_lead_id', $task->team_lead_id) == $lead->id ? 'selected' : '' }}>
+                                            {{ $lead->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
+
                             <div class="form-group">
                                 <label class="text-white">Start Date</label>
                                 <input type="date" name="start_date" class="form-control"
@@ -101,13 +103,9 @@
                                 <label class="text-white">Priority</label>
                                 <select name="priority" class="form-control custom-select bg-dark text-white">
                                     <option value="">Select Priority</option>
-                                    <option value="Low"
-                                        {{ old('priority', $task->priority) == 'Low' ? 'selected' : '' }}>Low</option>
-                                    <option value="Medium"
-                                        {{ old('priority', $task->priority) == 'Medium' ? 'selected' : '' }}>Medium
-                                    </option>
-                                    <option value="High"
-                                        {{ old('priority', $task->priority) == 'High' ? 'selected' : '' }}>High</option>
+                                    <option value="Low" {{ old('priority', $task->priority) == 'Low' ? 'selected' : '' }}>Low</option>
+                                    <option value="Medium" {{ old('priority', $task->priority) == 'Medium' ? 'selected' : '' }}>Medium</option>
+                                    <option value="High" {{ old('priority', $task->priority) == 'High' ? 'selected' : '' }}>High</option>
                                 </select>
                             </div>
 
