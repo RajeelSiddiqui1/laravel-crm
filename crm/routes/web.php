@@ -105,6 +105,8 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::get('/team-lead/subtask/detail/{id}',  'subtask_detail')->name('team_lead.subtask.detail');
 
         Route::get('/team-lead/subtask/{id}/edit',  'subtask_edit')->name('team_lead.subtask.edit');
+        Route::put('/subtask/update/{id}',  'subtask_update')->name('team_lead.subtask.update');
+
         Route::delete('team-lead/subtask/{id}/delete', 'subtask_delete')->name('team_lead.subtask.delete');
         Route::patch('subtask/{id}/status', 'subtask_update_status')->name('team_lead.subtask.update_status');
         Route::get('team-lead/employees/', 'fetch_employee')->name('team_lead.employees');

@@ -11,12 +11,35 @@
             <a href="{{ route('team_lead.manager_tasks') }}" class="btn btn-secondary">← Back to Manager Tasks</a>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+        {{-- SweetAlert2 Script --}}
+   
+
+        @if (session('success_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: "{{ session('success_swal') }}",
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
         @endif
-        @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
+
+        @if (session('error_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: "{{ session('error_swal') }}",
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
         @endif
+
 
         @if ($task->subtasks->count())
             <div class="row mb-3">
@@ -57,18 +80,22 @@
                                 <td>{{ $subtask->title }}</td>
                                 <td>{{ $subtask->employee->name ?? 'N/A' }}</td>
                                 <td>
-                                    <form action="{{ route('team_lead.subtask.update_status', $subtask->id) }}" method="POST">
+                                    <form action="{{ route('team_lead.subtask.update_status', $subtask->id) }}"
+                                        method="POST">
                                         @csrf
                                         @method('PATCH')
-                                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                        <select name="status" class="form-select form-select-sm"
+                                            onchange="this.form.submit()">
                                             @foreach ($statuses as $status)
-                                                <option value="{{ $status }}" {{ $subtask->status == $status ? 'selected' : '' }}>
+                                                <option value="{{ $status }}"
+                                                    {{ $subtask->status == $status ? 'selected' : '' }}>
                                                     {{ ucfirst(str_replace('_', ' ', $status)) }}
                                                 </option>
                                             @endforeach
                                         </select>
                                     </form>
-                                    <span class="badge mt-2 {{ $subtask->status == 'completed' ? 'bg-success' : ($subtask->status == 'rejected' ? 'bg-danger' : ($subtask->status == 'late' ? 'bg-warning' : ($subtask->status == 'in_progress' ? 'bg-primary' : 'bg-secondary'))) }}">
+                                    <span
+                                        class="badge mt-2 {{ $subtask->status == 'completed' ? 'bg-success' : ($subtask->status == 'rejected' ? 'bg-danger' : ($subtask->status == 'late' ? 'bg-warning' : ($subtask->status == 'in_progress' ? 'bg-primary' : 'bg-secondary'))) }}">
                                         {{ ucfirst(str_replace('_', ' ', $subtask->status ?? 'pending')) }}
                                     </span>
                                 </td>
@@ -77,13 +104,16 @@
                                 <td>{{ $subtask->end_date ?? '-' }}</td>
                                 <td>{{ $subtask->end_time ?? '-' }}</td>
                                 <td>
-                                     <a href="{{ route('team_lead.subtask.detail', $subtask->id) }}" class="btn btn-sm btn-info">View</a>
+                                    <a href="{{ route('team_lead.subtask.detail', $subtask->id) }}"
+                                        class="btn btn-sm btn-info">View</a>
                                 </td>
                                 <td>
-                                    <a href="{{ route('team_lead.subtask.edit', $subtask->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                    <a href="{{ route('team_lead.subtask.edit', $subtask->id) }}"
+                                        class="btn btn-sm btn-warning">Edit</a>
                                 </td>
                                 <td>
-                                    <form action="{{ route('team_lead.subtask.delete', $subtask->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this subtask?');">
+                                    <form action="{{ route('team_lead.subtask.delete', $subtask->id) }}" method="POST"
+                                        onsubmit="return confirm('Are you sure you want to delete this subtask?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
@@ -100,7 +130,7 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const employeeInput = document.getElementById('employeeFilter');
             const statusSelect = document.getElementById('statusFilter');
             const rows = document.querySelectorAll('table tbody tr');

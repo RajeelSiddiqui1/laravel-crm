@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Log;
 use App\Models\EmployeeSubtask;
+use App\Models\Notification;
 
 class Employee extends Controller
 {
@@ -40,7 +41,7 @@ class Employee extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return redirect()->back()->witherror_swals($validator)->withInput();
         }
 
         $manager = new ModelsEmployee();
@@ -73,11 +74,11 @@ class Employee extends Controller
             $loginLink = route('employee.token.login', ['token' => $token]);
             Mail::to($manager->email)->send(new AuthMail($manager, $loginLink));
 
-            session()->flash('success', 'Team Lead registered successfully.');
+            session()->flash('success_swal', 'Team Lead registered successfully.');
             return redirect()->route('welcome');
         }
 
-        session()->flash('error', 'Failed to register Team Lead.');
+        session()->flash('error_swal', 'Failed to register Team Lead.');
         return redirect()->back()->withInput();
     }
 
@@ -94,16 +95,16 @@ class Employee extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return redirect()->back()->witherror_swals($validator)->withInput();
         }
 
         $credentials = $request->only('email', 'password');
 
         if (Auth::guard('employee')->attempt($credentials)) {
-            return redirect()->route('employee.home')->with('success', 'Login successful');
+            return redirect()->route('employee.home')->with('success_swal', 'Login successfully');
         }
 
-        return redirect()->back()->with('error', 'Invalid login credentials');
+        return redirect()->back()->with('error_swal', 'Invalid login credentials');
     }
 
     function tokenLogin($token)
@@ -111,20 +112,20 @@ class Employee extends Controller
         $employee = ModelsEmployee::where('login_token', $token)->first();
 
         if (!$employee) {
-            return redirect()->route('employee.login')->with('error', 'Invalid or expired login token.');
+            return redirect()->route('employee.login')->with('error_swal', 'Invalid or expired login token.');
         }
 
         Auth::guard('employee')->login($employee);
         $employee->login_token = null;
         $employee->save();
 
-        return redirect()->route('employee.home')->with('success', 'Logged in successfully via token.');
+        return redirect()->route('employee.home')->with('success_swal', 'Logged in successfully via token.');
     }
 
     function logout()
     {
         Auth::guard('employee')->logout();
-        return redirect()->route('employee.login')->with('success', 'Logged out successfully');
+        return redirect()->route('employee.login')->with('success_swal', 'Logged out successfully');
     }
 
     function home()
@@ -168,7 +169,7 @@ class Employee extends Controller
 
         $employee->save();
 
-        return back()->with('success', 'Profile updated successfully!');
+        return back()->with('success_swal', 'Profile updated successfully!');
     }
 
 
@@ -208,19 +209,20 @@ class Employee extends Controller
            $subtask = Subtask::findOrFail($id);
            $subtask->status = $request->status;
            $subtask->save();
-           return back()->with('success', 'Subtask status updated successfully.');
+           return back()->with('success_swal', 'Subtask status updated successfully.');
     }
 public function edit_subtask($subtaskId)
 {
-    $subtask = Subtask::with('employeeSubtask')->findOrFail($subtaskId);
+    $subtask = Subtask::with(['employeeSubtask', 'task'])->findOrFail($subtaskId);
     $employeeSubtask = $subtask->employeeSubtask;
 
     $leadCount = (int) $subtask->lead ?? 1;
     $leadValues = range(1, $leadCount);
 
-    return view('employee.subtasks_update', compact('subtask', 'employeeSubtask', 'leadValues'));
-}
+    $isCallCenter = $subtask->task->department_id == 2; // 2 = Call Center (example)
 
+    return view('employee.subtasks_update', compact('subtask', 'employeeSubtask', 'leadValues', 'isCallCenter'));
+}
 
 
 public function update_subtask(Request $request, $id)
@@ -232,7 +234,7 @@ public function update_subtask(Request $request, $id)
         'status' => 'required|string',
     ]);
 
-    $subtask = Subtask::findOrFail($id);
+    $subtask = Subtask::with('task')->findOrFail($id);
     $employeeSubtask = $subtask->employeeSubtask;
 
     if (!$employeeSubtask) {
@@ -260,14 +262,36 @@ public function update_subtask(Request $request, $id)
         }
     }
 
-    $employeeSubtask->update([
+    $updateData = [
         'comments' => $comments,
         'statuses' => $statuses,
         'attachments' => $attachments,
-    ]);
+    ];
+
+    // If Call Center, include these fields:
+    if ($subtask->task->department_id == 2) {
+        $updateData = array_merge($updateData, $request->only([
+            'name', 'business_name', 'business_num', 'personal_num', 'personal_email',
+            'business_email', 'address', 'perivos', 'provider', 'category_pos',
+            'pos_type', 'debt', 'credit', 'rentle', 'oppiomennt_date', 'date', 'time'
+        ]));
+    }
+
+    $employeeSubtask->update($updateData);
+
+    // Notify Team Lead
+    $teamLead = TeamLead::find($subtask->task->team_lead_id);
+    if ($teamLead) {
+        Notification::create([
+            'title' => 'Subtask Updated by Employee',
+            'message' => 'The subtask "' . $subtask->title . '" has been updated.',
+            'user_id' => $teamLead->id,
+            'user_type' => 'team_lead',
+        ]);
+    }
 
     return redirect()->back()->with([
-        'success' => 'Subtask updated successfully.',
+        'success_swal_swal' => 'Subtask assignment sent successfully.',
         'updated_lead' => $request->input('lead'),
     ]);
 }
@@ -323,7 +347,7 @@ public function update_subtask(Request $request, $id)
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->with('error', $validator->errors()->first());
+            return redirect()->back()->with('error_swal', $validator->error_swals()->first());
         }
 
         $message = new Message();
@@ -335,7 +359,7 @@ public function update_subtask(Request $request, $id)
         } elseif (Auth::guard('employee')->check()) {
             $message->sender_id = Auth::guard('employee')->id();
         } else {
-            return redirect()->back()->with('error', 'Unauthorized sender');
+            return redirect()->back()->with('error_swal', 'Unauthorized sender');
         }
 
         // Handle single file upload
@@ -355,15 +379,15 @@ public function update_subtask(Request $request, $id)
 
                 $message->attachments = $uploaded['secure_url'];
             } catch (\Exception $e) {
-                Log::error('attachments upload failed: ' . $e->getMessage());
-                return redirect()->back()->with('error', 'attachments upload failed.');
+                Log::error_swal('attachments upload failed: ' . $e->getMessage());
+                return redirect()->back()->with('error_swal', 'attachments upload failed.');
             }
         }
 
         if ($message->save()) {
-            return redirect()->back()->with('success', 'Message sent successfully.');
+            return redirect()->back()->with('success_swal', 'Message sent successfully.');
         }
 
-        return redirect()->back()->with('error', 'Message not sent.');
+        return redirect()->back()->with('error_swal', 'Message not sent.');
     }
 }

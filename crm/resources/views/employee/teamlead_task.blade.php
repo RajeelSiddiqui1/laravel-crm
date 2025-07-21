@@ -109,13 +109,32 @@
     <div class="container">
         <h2 class="text-white">Team Lead Tasks</h2>
 
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+         @if (session('success_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: "{{ session('success_swal') }}",
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
         @endif
 
-        @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
+        @if (session('error_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: "{{ session('error_swal') }}",
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
         @endif
+
 
         <div class="table-responsive">
             <table class="table table-dark table-bordered">

@@ -2,13 +2,35 @@
 
 @section('content')
     <div class="container">
-        @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
+
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        @if (session('success_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: "{{ session('success_swal') }}",
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
         @endif
 
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+        @if (session('error_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: "{{ session('error_swal') }}",
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
         @endif
+
 
         @if ($errors->any())
             <div class="alert alert-danger">

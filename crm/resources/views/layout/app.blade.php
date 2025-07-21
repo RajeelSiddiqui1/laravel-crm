@@ -1,3 +1,5 @@
+@include('sweetalert2::index')
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -125,9 +127,33 @@
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>
                     </li>
+                    @php
+                        $user = null;
+                        $guard = null;
+
+                        foreach (['project_owner', 'project_manager', 'team_lead', 'employee'] as $g) {
+                            if (Auth::guard($g)->check()) {
+                                $user = Auth::guard($g)->user();
+                                $guard = $g;
+                                break;
+                            }
+                        }
+
+                        $notificationCount = 0;
+
+                        if ($user && $guard) {
+                            $notificationCount = \App\Models\Notification::where('user_id', $user->id)
+                                ->where('user_type', $guard)
+                                ->where('is_read', false)
+                                ->count();
+                        }
+                    @endphp
+
+                    <!-- 🔔 Notification Icon -->
                     <li class="nav-item">
                         <a class="nav-link position-relative d-flex align-items-center"
-                            href="{{ route('notifications.index') }}">
+                            href="{{ route('notifications.index') }}"
+                            @if ($notificationCount > 0) onclick="playNotificationSound()" @endif>
                             <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
                             @if ($notificationCount > 0)
                                 <span
@@ -138,6 +164,24 @@
                             @endif
                         </a>
                     </li>
+
+                    <!-- 🔊 Audio Element -->
+                    <audio id="notif-sound" preload="auto">
+                        <source src="{{ asset('sounds/notification.mp3') }}" type="audio/mpeg">
+                    </audio>
+
+                    <!-- 📜 JS Script -->
+                    <script>
+                        function playNotificationSound() {
+                            const audio = document.getElementById('notif-sound');
+                            if (audio) {
+                                audio.currentTime = 0;
+                                audio.play().catch(err => {
+                                    console.warn("Sound failed:", err);
+                                });
+                            }
+                        }
+                    </script>
 
                 </ul>
             </div>
@@ -522,6 +566,61 @@
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>
                     </li>
+                    @php
+                        $user = null;
+                        $guard = null;
+
+                        foreach (['project_owner', 'project_manager', 'team_lead', 'employee'] as $g) {
+                            if (Auth::guard($g)->check()) {
+                                $user = Auth::guard($g)->user();
+                                $guard = $g;
+                                break;
+                            }
+                        }
+
+                        $notificationCount = 0;
+
+                        if ($user && $guard) {
+                            $notificationCount = \App\Models\Notification::where('user_id', $user->id)
+                                ->where('user_type', $guard)
+                                ->where('is_read', false)
+                                ->count();
+                        }
+                    @endphp
+
+                    <!-- 🔔 Notification Icon -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative d-flex align-items-center"
+                            href="{{ route('notifications.index') }}"
+                            @if ($notificationCount > 0) onclick="playNotificationSound()" @endif>
+                            <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
+                            @if ($notificationCount > 0)
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
+                                    {{ $notificationCount > 99 ? '99+' : $notificationCount }}
+                                    <span class="visually-hidden">unread notifications</span>
+                                </span>
+                            @endif
+                        </a>
+                    </li>
+
+                    <!-- 🔊 Audio Element -->
+                    <audio id="notif-sound" preload="auto">
+                        <source src="{{ asset('sounds/notification.mp3') }}" type="audio/mpeg">
+                    </audio>
+
+                    <!-- 📜 JS Script -->
+                    <script>
+                        function playNotificationSound() {
+                            const audio = document.getElementById('notif-sound');
+                            if (audio) {
+                                audio.currentTime = 0;
+                                audio.play().catch(err => {
+                                    console.warn("Sound failed:", err);
+                                });
+                            }
+                        }
+                    </script>
                 </ul>
             </div>
 
@@ -615,6 +714,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
         integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous">
     </script>
+         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js"
         integrity="sha384-7qAoOXltbVP82dhxHAUje59V5r2YsVfBafyUDxEdApLPmcdhBPg1DKg1ERo0BZlK" crossorigin="anonymous">
     </script>

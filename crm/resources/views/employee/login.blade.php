@@ -48,23 +48,32 @@
 
             <div class="row justify-content-center">
                 <div class="col-md-10">
-                    @if (Session::has('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ Session::get('success') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    @endif
+                     @if (session('success_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: "{{ session('success_swal') }}",
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
+        @endif
 
-                    @if (Session::has('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {{ Session::get('error') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    @endif
+        @if (session('error_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: "{{ session('error_swal') }}",
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
+        @endif
+
                 </div>
             </div>
 
@@ -180,7 +189,7 @@
     <!-- Bootstrap & Popper -->
     <script src="{{ asset('assets/js/popper.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap.min.js') }}"></script>
-
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- SimpleBar -->
     <script src="{{ asset('assets/plugins/simplebar/js/simplebar.js') }}"></script>
 
