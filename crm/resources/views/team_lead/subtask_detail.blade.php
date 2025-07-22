@@ -48,7 +48,7 @@
                         <th>Lead</th>
                         <th>Comment</th>
                         <th>Status</th>
-                        <th>Attachments</th>
+                        <th>show more</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,6 +60,11 @@
                                 <td>{{ $i + 1 }}</td>
                                 <td>{{ $empSub->comments[$i] ?? '-' }}</td>
                                 <td>{{ ucfirst($empSub->statuses[$i] ?? 'pending') }}</td>
+                                <td>
+                                    <a href="{{ route('team_subtask_show_more', $task->id) }}"
+                                        class="btn btn-primary">View</a>
+                                </td>
+
                                 <td>
                                     @if ($subtask->employeeTasks && $subtask->employeeTasks->count())
                                         <div class="card text-white mt-5 p-4 rounded-4">
@@ -82,6 +87,7 @@
                                                             <td>{{ ucfirst($task->status ?? 'pending') }}</td>
                                                             <td>{{ \Carbon\Carbon::parse($task->created_at)->format('d M, Y h:i A') }}
                                                             </td>
+
                                                         </tr>
                                                     @endforeach
                                                 </tbody>

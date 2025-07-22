@@ -1,207 +1,310 @@
 @extends('layout.app')
 
-<style>
-    .blur-bg {
-        backdrop-filter: blur(10px);
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-</style>
+@section('styles')
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --body-bg: #0d0d11;
+            --card-bg: #1a1b26;
+            --accent: #7b68ee;
+            --text: #f5f5f5;
+        }
+
+        body {
+            background: var(--body-bg);
+            color: var(--text);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: none;
+            border-radius: .75rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(90deg, var(--accent), #8a5cf5);
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #5a4fcf;
+        }
+
+        .form-control,
+        .form-select {
+            background: #252837;
+            border: 1px solid #3a3c4f;
+            color: var(--text);
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background: #252837;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 .2rem rgba(123, 104, 238, .25);
+        }
+
+        .attachment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: .5rem;
+        }
+
+        .attachment-item img,
+        .attachment-item video {
+            height: 100px;
+            width: 100%;
+            object-fit: cover;
+            border-radius: .5rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+@endsection
 
 @section('content')
-    <div class="container mt-4">
-        <h3 class="text-white mb-4">Update Subtask by Lead</h3>
+    <div class="container py-4">
+        <h2 class="mb-4 fw-bold">Update Subtask by Lead</h2>
 
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-        @if (session('success_swal'))
+        @if(session('success_swal') || session('error_swal'))
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <script>
-                document.addEventListener('DOMContentLoaded', function() {
+                document.addEventListener('DOMContentLoaded', () => {
                     Swal.fire({
-                        title: 'Success!',
-                        text: "{{ session('success_swal') }}",
-                        icon: 'success',
+                        title: '{{ session('success_swal') ? "Success" : "Error" }}',
+                        text: '{{ session('success_swal') ?: session('error_swal') }}',
+                        icon: '{{ session('success_swal') ? "success" : "error" }}',
                         confirmButtonText: 'OK'
                     });
                 });
             </script>
         @endif
 
-        @if (session('error_swal'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: "{{ session('error_swal') }}",
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                });
-            </script>
-        @endif
-
-        @foreach ($leadValues as $lead)
+        @foreach($leadValues as $lead)
             @php
-                $index = $lead - 1;
-                $empSubtask = $employeeSubtask;
-                $commentVal = old('comment', $empSubtask->comments[$index] ?? '');
-                $statusVal = $empSubtask->statuses[$index] ?? 'pending';
-                $attachmentUrls = $empSubtask->attachments[$index] ?? [];
+                $i = $lead - 1;
+                $c = $employeeSubtask->comments[$i] ?? '';
+                $s = $employeeSubtask->statuses[$i] ?? 'pending';
+                $a = $employeeSubtask->attachments[$i] ?? [];
             @endphp
 
-            <h4 class="text-warning mt-4">Lead {{ $lead }}</h4>
-
-            <form action="{{ route('employee.subtask.update', ['id' => $subtask->id]) }}" method="POST"
-                enctype="multipart/form-data" class="mb-5 p-4 border rounded blur-bg">
-                @csrf
-                @method('PUT')
-
-                <input type="hidden" name="lead" value="{{ $lead }}">
-
-                <div class="mb-3">
-                    <label class="form-label text-white">Title</label>
-                    <input class="form-control" value="{{ $subtask->title }}" readonly>
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Lead {{ $lead }}</span>
+                    <button form="form{{ $lead }}" type="submit" class="btn btn-primary btn-sm">Save</button>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label text-white">Description</label>
-                    <textarea class="form-control" readonly rows="2">{{ $subtask->description }}</textarea>
-                </div>
+                <form id="form{{ $lead }}" action="{{ route('employee.subtask.update', ['id' => $subtask->id]) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="lead" value="{{ $lead }}">
+                    <div class="card-body row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label mb-1">Title</label>
+                            <input class="form-control form-control-sm" value="{{ $subtask->title }}" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label mb-1">Status</label>
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="pending" {{ $s == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="in_progress" {{ $s == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                <option value="completed" {{ $s == 'completed' ? 'selected' : '' }}>Completed</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-1">Description</label>
+                            <textarea class="form-control form-control-sm" rows="2" readonly>{{ $subtask->description }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label mb-1">Comment</label>
+                            <textarea name="comment" class="form-control form-control-sm" rows="2">{{ old('comment', $c) }}</textarea>
+                        </div>
 
-                <div class="mb-3">
-                    <label class="form-label text-white">Comment</label>
-                    <textarea name="comment" class="form-control">{{ $commentVal }}</textarea>
-                </div>
+                        @if($isCallCenter)
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Name</label>
+                                <input
+                                    name="name"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('name', $employeeSubtask->name) }}"
+                                >
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Business Name</label>
+                                <input
+                                    name="business_name"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('business_name', $employeeSubtask->business_name) }}"
+                                >
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Business Number</label>
+                                <input
+                                    name="business_num"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('business_num', $employeeSubtask->business_num) }}"
+                                >
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Personal Number</label>
+                                <input
+                                    name="personal_num"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('personal_num', $employeeSubtask->personal_num) }}"
+                                >
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Personal Email</label>
+                                <input
+                                    type="email"
+                                    name="personal_email"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('personal_email', $employeeSubtask->personal_email) }}"
+                                >
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Business Email</label>
+                                <input
+                                    type="email"
+                                    name="business_email"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('business_email', $employeeSubtask->business_email) }}"
+                                >
+                            </div>
+                            <div class="col-12 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Address</label>
+                                <textarea
+                                    name="address"
+                                    class="form-control form-control-sm"
+                                    rows="2"
+                                >{{ old('address', $employeeSubtask->address) }}</textarea>
+                            </div>
+                            <div class="col-md-4 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Provider</label>
+                                <input
+                                    name="provider"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('provider', $employeeSubtask->provider) }}"
+                                >
+                            </div>
+                            <div class="col-md-4 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Category POS</label>
+                                <input
+                                    name="category_pos"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('category_pos', $employeeSubtask->category_pos) }}"
+                                >
+                            </div>
+                            <div class="col-md-4 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">POS Type</label>
+                                <input
+                                    name="pos_type"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('pos_type', $employeeSubtask->pos_type) }}"
+                                >
+                            </div>
+                            <div class="col-md-4 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Debt</label>
+                                <input
+                                    name="debt"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('debt', $employeeSubtask->debt) }}"
+                                >
+                            </div>
+                            <div class="col-md-4 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Credit</label>
+                                <input
+                                    name="credit"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('credit', $employeeSubtask->credit) }}"
+                                >
+                            </div>
+                            <div class="col-md-4 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Rentle</label>
+                                <input
+                                    name="rentle"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('rentle', $employeeSubtask->rentle) }}"
+                                >
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Business Type</label>
+                                <input
+                                    name="bussiness_type"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('bussiness_type', $employeeSubtask->bussiness_type) }}"
+                                >
+                            </div>
+                            <div class="col-md-3 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Date</label>
+                                <input
+                                    type="date"
+                                    name="date"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('date', $employeeSubtask->date) }}"
+                                >
+                            </div>
+                            <div class="col-md-3 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Time</label>
+                                <input
+                                    type="time"
+                                    name="time"
+                                    class="form-control form-control-sm"
+                                    value="{{ old('time', $employeeSubtask->time) }}"
+                                >
+                            </div>
+                        @endif
 
-                <div class="mb-3">
-                    <label class="form-label text-white">Status</label>
-                    <select name="status" class="form-control">
-                        <option value="pending" {{ $statusVal == 'pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="in_progress" {{ $statusVal == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                        <option value="completed" {{ $statusVal == 'completed' ? 'selected' : '' }}>Completed</option>
-                    </select>
-                </div>
-
-                @if ($isCallCenter)
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Name</label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', $employeeSubtask->name) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Business Name</label>
-                            <input type="text" name="business_name" class="form-control" value="{{ old('business_name', $employeeSubtask->business_name) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Business Number</label>
-                            <input type="text" name="business_num" class="form-control" value="{{ old('business_num', $employeeSubtask->business_num) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Personal Number</label>
-                            <input type="text" name="personal_num" class="form-control" value="{{ old('personal_num', $employeeSubtask->personal_num) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Personal Email</label>
-                            <input type="email" name="personal_email" class="form-control" value="{{ old('personal_email', $employeeSubtask->personal_email) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Business Email</label>
-                            <input type="email" name="business_email" class="form-control" value="{{ old('business_email', $employeeSubtask->business_email) }}">
-                        </div>
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label text-white">Address</label>
-                            <textarea name="address" class="form-control">{{ old('address', $employeeSubtask->address) }}</textarea>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Perivos</label>
-                            <input type="text" name="perivos" class="form-control" value="{{ old('perivos', $employeeSubtask->perivos) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Provider</label>
-                            <input type="text" name="provider" class="form-control" value="{{ old('provider', $employeeSubtask->provider) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Category POS</label>
-                            <input type="text" name="category_pos" class="form-control" value="{{ old('category_pos', $employeeSubtask->category_pos) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">POS Type</label>
-                            <input type="text" name="pos_type" class="form-control" value="{{ old('pos_type', $employeeSubtask->pos_type) }}">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label text-white">Debt</label>
-                            <input type="text" name="debt" class="form-control" value="{{ old('debt', $employeeSubtask->debt) }}">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label text-white">Credit</label>
-                            <input type="text" name="credit" class="form-control" value="{{ old('credit', $employeeSubtask->credit) }}">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label text-white">Rentle</label>
-                            <input type="text" name="rentle" class="form-control" value="{{ old('rentle', $employeeSubtask->rentle) }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label text-white">Oppiomennt Date</label>
-                            <input type="date" name="oppiomennt_date" class="form-control" value="{{ old('oppiomennt_date', $employeeSubtask->oppiomennt_date) }}">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label text-white">Date</label>
-                            <input type="date" name="date" class="form-control" value="{{ old('date', $employeeSubtask->date) }}">
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label class="form-label text-white">Time</label>
-                            <input type="time" name="time" class="form-control" value="{{ old('time', $employeeSubtask->time) }}">
-                        </div>
-                    </div>
-                @endif
-
-                @if (count($attachmentUrls))
-                    <div class="mb-3 text-white">
-                        <label class="form-label">Attachments</label>
-                        <div class="row g-2">
-                            @foreach ($attachmentUrls as $url)
-                                @php
-                                    $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION));
-                                    $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                                    $isVideo = in_array($ext, ['mp4', 'mov', 'avi', 'webm']);
-                                    $isAudio = in_array($ext, ['mp3', 'wav', 'ogg']);
-                                    $isDoc = in_array($ext, ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt']);
-                                @endphp
-                                <div class="col-md-4">
-                                    <div class="p-2 border border-light rounded">
-                                        @if ($isImage)
-                                            <img src="{{ $url }}" class="img-fluid rounded"
-                                                style="height: 180px; object-fit: contain;">
-                                        @elseif($isVideo)
-                                            <video controls class="w-100 rounded"
-                                                style="height: 180px; object-fit: contain;">
-                                                <source src="{{ $url }}">
-                                            </video>
-                                        @elseif($isAudio)
-                                            <audio controls class="w-100 mt-2">
-                                                <source src="{{ $url }}">
-                                            </audio>
-                                        @elseif($isDoc)
-                                            <a href="{{ $url }}" target="_blank"
-                                                class="btn btn-info btn-sm w-100 mt-2">View Document</a>
-                                        @else
-                                            <a href="{{ $url }}" target="_blank"
-                                                class="btn btn-secondary btn-sm w-100 mt-2">Download File</a>
-                                        @endif
-                                    </div>
+                        @if(count($a))
+                            <div class="col-12">
+                                <label class="form-label mb-1">Attachments</label>
+                                <div class="attachment-grid">
+                                    @foreach($a as $url)
+                                        @php $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION)); @endphp
+                                        <div class="attachment-item">
+                                            @if(in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                                <img src="{{ $url }}">
+                                            @elseif(in_array($ext, ['mp4', 'mov', 'avi', 'webm']))
+                                                <video controls src="{{ $url }}"></video>
+                                            @elseif(in_array($ext, ['mp3', 'wav', 'ogg']))
+                                                <audio controls src="{{ $url }}"></audio>
+                                            @else
+                                                <a href="{{ $url }}" target="_blank" class="btn btn-outline-light btn-sm w-100">View</a>
+                                            @endif
+                                        </div>
+                                    @endforeach
                                 </div>
-                            @endforeach
+                            </div>
+                        @endif
+
+                        <div class="col-12">
+                            <label class="form-label mb-1">Add Attachments</label>
+                            <input type="file" name="attachments[]" multiple class="form-control form-control-sm">
+                        </div>
+
+                        <div class="col-12 my-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="toggleRow({{ $lead }})">
+                                <i class="bi bi-chevron-down"></i> Show more
+                            </button>
                         </div>
                     </div>
-                @endif
-
-                <div class="mb-3">
-                    <label class="form-label text-white">Upload New Attachments</label>
-                    <input type="file" name="attachments[]" multiple class="form-control">
-                </div>
-
-                <button type="submit" class="btn btn-primary">Update Lead {{ $lead }}</button>
-            </form>
+                </form>
+            </div>
         @endforeach
-
     </div>
+
+    <script>
+        function toggleRow(id) {
+            document.querySelectorAll('.row2' + id).forEach(el => el.classList.toggle('hidden'));
+        }
+    </script>
 @endsection

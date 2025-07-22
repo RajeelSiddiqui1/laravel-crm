@@ -13,8 +13,7 @@
 
         {{-- SweetAlert2 Script --}}
    
-
-        @if (session('success_swal'))
+ @if (session('success_swal'))
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({

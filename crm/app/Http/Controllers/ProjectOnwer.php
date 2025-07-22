@@ -104,7 +104,7 @@ class ProjectOnwer extends Controller
         $department->name = $request->name;
         $department->save();
 
-        return redirect()->route('project_owner.departments')->with('success', 'Department created successfully');
+        return redirect()->route('project_owner.departments')->with('success_swal', 'Department created successfully');
     }
 
     function department_edit_view($id)
@@ -113,7 +113,7 @@ class ProjectOnwer extends Controller
         if ($department) {
             return view('project_owner.departments_edit', ['department' => $department]);
         } else {
-            return redirect()->route('project_owner.departments')->with('error', 'Department not found');
+            return redirect()->route('project_owner.departments')->with('error_swal', 'Department not found');
         }
     }
 
@@ -131,9 +131,9 @@ class ProjectOnwer extends Controller
         if ($department) {
             $department->name = $request->name;
             $department->save();
-            return redirect()->route('project_owner.departments')->with('success', 'Department updated successfully');
+            return redirect()->route('project_owner.departments')->with('success_swal', 'Department updated successfully');
         } else {
-            return redirect()->route('project_owner.departments')->with('error', 'Department not found');
+            return redirect()->route('project_owner.departments')->with('error_swal', 'Department not found');
         }
     }
 
@@ -142,9 +142,9 @@ class ProjectOnwer extends Controller
         $department = Department::find($id);
         if ($department) {
             $department->delete();
-            return redirect()->route('project_owner.departments')->with('success', 'Department deleted successfully');
+            return redirect()->route('project_owner.departments')->with('success_swal', 'Department deleted successfully');
         } else {
-            return redirect()->route('project_owner.departments')->with('error', 'Department not found');
+            return redirect()->route('project_owner.departments')->with('error_swal', 'Department not found');
         }
     }
 
@@ -160,7 +160,7 @@ class ProjectOnwer extends Controller
         if ($task) {
             return view('project_owner.task_detail', ['task' => $task]);
         } else {
-            return redirect()->route('project_owner.task_detail')->with('error', 'Task not found');
+            return redirect()->route('project_owner.task_detail')->with('error_swal', 'Task not found');
         }
     }
 
@@ -223,10 +223,10 @@ class ProjectOnwer extends Controller
                 'user_type' => 'project_manager',
             ]);
 
-            return redirect()->route('project_owner.task')->with('success', 'Task created and notification sent.');
+            return redirect()->route('project_owner.task')->with('success_swal', 'Task created and notification sent.');
         }
 
-        return redirect()->route('project_owner.task')->with('error', 'Task creation failed.');
+        return redirect()->route('project_owner.task')->with('error_swal', 'Task creation failed.');
     }
 
 
@@ -276,7 +276,7 @@ class ProjectOnwer extends Controller
         Mail::to($task->manager_email)->send(new EditTask($task));
         $manager = ProjectManager::find($task->project_manager_id);
         $manager->notify(new OwnerTaskEdit($task));
-        return redirect()->route('project_owner.task', $id)->with('success', 'Task updated successfully.');
+        return redirect()->route('project_owner.task', $id)->with('success_swal', 'Task updated successfully.');
     }
 
     function destroy($id)
@@ -286,7 +286,7 @@ class ProjectOnwer extends Controller
         Mail::to($task->manager_email)->send(new TaskDeletedMail($task));
         $manager = ProjectManager::find($task->project_manager_id);
         $manager->notify(new OwnerTaskAssign($task));
-        return redirect()->route('project_owner.task')->with('success', 'Task deleted successfully.');
+        return redirect()->route('project_owner.task')->with('success_swal', 'Task deleted successfully.');
     }
 
     public function taskFullDetails($id)

@@ -40,7 +40,7 @@ class ProjectManager extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return redirect()->back()->witheError($validator)->withInput();
         }
 
         $manager = new ModelsProjectManager();
@@ -73,10 +73,10 @@ class ProjectManager extends Controller
             $loginLink = route('project_manager.token.login', ['token' => $token]);
             Mail::to($manager->email)->send(new AuthMail($manager, $loginLink));
 
-            session()->flash('success', 'Project Manager registered successfully.');
+            session()->flash('success_swal', 'Project Manager registered successfullyly.');
             return redirect()->route('welcome');
         }
-        session()->flash('error', 'Failed to register Project Manager.');
+        session()->flash('error_swal', 'Failed to register Project Manager.');
         return redirect()->back()->withInput();
     }
 
@@ -93,16 +93,16 @@ class ProjectManager extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return redirect()->back()->witherror_swals($validator)->withInput();
         }
 
         $credentials = $request->only('email', 'password');
 
         if (Auth::guard('project_manager')->attempt($credentials)) {
-            return redirect()->route('project_manager.home')->with('success', 'Login successful');
+            return redirect()->route('project_manager.home')->with('success_swal', 'Login successfully');
         }
 
-        return redirect()->back()->with('error', 'Invalid login credentials');
+        return redirect()->back()->with('error_swal', 'Invalid login credentials');
     }
 
     function tokenLogin($token)
@@ -110,21 +110,21 @@ class ProjectManager extends Controller
         $manager = ModelsProjectManager::where('login_token', $token)->first();
 
         if (!$manager) {
-            return redirect()->route('project_manager.login')->with('error', 'Invalid or expired login token.');
+            return redirect()->route('project_manager.login')->with('error_swal', 'Invalid or expired login token.');
         }
 
         Auth::guard('project_manager')->login($manager);
         $manager->login_token = null;
         $manager->save();
 
-        return redirect()->route('project_manager.home')->with('success', 'Logged in successfully via token.');
+        return redirect()->route('project_manager.home')->with('success_swal', 'Logged in successfullyly via token.');
     }
 
 
     function logout()
     {
         Auth::guard('project_manager')->logout();
-        return redirect()->route('project_manager.login')->with('success', 'Logged out successfully');
+        return redirect()->route('project_manager.login')->with('success_swal', 'Logged out successfullyly');
     }
 
     function home()
@@ -168,7 +168,7 @@ class ProjectManager extends Controller
 
         $employee->save();
 
-        return back()->with('success', 'Profile updated successfully!');
+        return back()->with('success_swal', 'Profile updated successfullyly!');
     }
 
     public function onwertask()
@@ -184,7 +184,7 @@ class ProjectManager extends Controller
             ->get();
 
         if ($teamLeads->isEmpty()) {
-            session()->flash('error', 'Team Lead data not fetched.');
+            session()->flash('error_swal', 'Team Lead data not fetched.');
         }
 
         return view('project_manager.owner_tasks', compact('tasks', 'teamLeads'));
@@ -215,7 +215,7 @@ class ProjectManager extends Controller
             Mail::to($team_lead->email)->send(new AssignedTeamLeaderTask($task));
         }
 
-        return back()->with('success', 'Team Lead assigned successfully!');
+        return back()->with('success_swal', 'Team Lead assigned successfullyly!');
     }
     function onwertask_detail($id)
     {
@@ -304,7 +304,7 @@ class ProjectManager extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return redirect()->back()->witherror_swals($validator)->withInput();
         }
 
         $task = new OnwerTask();
@@ -332,9 +332,9 @@ class ProjectManager extends Controller
                     'user_id' => $teamLead->id,
                     'user_type' => 'team_lead',
                 ]);
-                return redirect()->route('project_manager.mytask')->with('success', 'Task created and team leads notified.');
+                return redirect()->route('project_manager.mytask')->with('success_swal', 'Task created and team leads notified.');
             }
-            return redirect()->route('project_manager.mytask')->with('error', 'Task creation failed.');
+            return redirect()->route('project_manager.mytask')->with('error_swal', 'Task creation failed.');
         }
     }
 
@@ -363,7 +363,7 @@ class ProjectManager extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return redirect()->back()->witherror_swals($validator)->withInput();
         }
 
         $task = OnwerTask::findOrFail($id);
@@ -391,10 +391,10 @@ class ProjectManager extends Controller
                 ]);
             }
 
-            return redirect()->route('project_manager.mytask')->with('success', 'Task updated and team leads notified.');
+            return redirect()->route('project_manager.mytask')->with('success_swal', 'Task updated and team leads notified.');
         }
 
-        return redirect()->route('project_manager.mytask')->with('error', 'Task update failed.');
+        return redirect()->route('project_manager.mytask')->with('error_swal', 'Task update failed.');
     }
     function my_task_destroy($id)
     {
@@ -417,6 +417,6 @@ class ProjectManager extends Controller
             ]);
         }
 
-        return redirect()->route('project_manager.mytask')->with('success', 'Task deleted successfully.');
+        return redirect()->route('project_manager.mytask')->with('success_swal', 'Task deleted successfullyly.');
     }
 }

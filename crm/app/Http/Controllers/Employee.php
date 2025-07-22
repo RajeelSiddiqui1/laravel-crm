@@ -272,8 +272,8 @@ public function update_subtask(Request $request, $id)
     if ($subtask->task->department_id == 2) {
         $updateData = array_merge($updateData, $request->only([
             'name', 'business_name', 'business_num', 'personal_num', 'personal_email',
-            'business_email', 'address', 'perivos', 'provider', 'category_pos',
-            'pos_type', 'debt', 'credit', 'rentle', 'oppiomennt_date', 'date', 'time'
+            'business_email', 'address', 'provider', 'category_pos',
+            'pos_type', 'debt', 'credit', 'rentle', 'bussiness_type', 'date', 'time'
         ]));
     }
 
@@ -291,7 +291,7 @@ public function update_subtask(Request $request, $id)
     }
 
     return redirect()->back()->with([
-        'success_swal_swal' => 'Subtask assignment sent successfully.',
+        'success_swal' => 'Subtask assignment sent successfully.',
         'updated_lead' => $request->input('lead'),
     ]);
 }

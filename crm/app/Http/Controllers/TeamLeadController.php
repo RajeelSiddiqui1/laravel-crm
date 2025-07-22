@@ -46,7 +46,7 @@ class TeamLeadController extends Controller
         ]);
 
         if ($validator->fails()) {
-            session('success_swal','Validation failed. Please check your input.');
+            session('success_swal', 'Validation failed. Please check your input.');
             return redirect()->back()->witherror_swals($validator)->withInput();
         }
 
@@ -80,11 +80,11 @@ class TeamLeadController extends Controller
             $loginLink = route('team_lead.token.login', ['token' => $token]);
             Mail::to($manager->email)->send(new AuthMail($manager, $loginLink));
 
-            return redirect()->route('welcome')->with('success_swal','Team Lead registered success_swalfully. Check your email for login link.');
+            return redirect()->route('welcome')->with('success_swal', 'Team Lead registered success_swalfully. Check your email for login link.');
         }
 
 
-        return redirect()->back()->withInput()->with('error_swal','Failed to register Team Lead.');
+        return redirect()->back()->withInput()->with('error_swal', 'Failed to register Team Lead.');
     }
 
     function loginview()
@@ -100,19 +100,19 @@ class TeamLeadController extends Controller
         ]);
 
         if ($validator->fails()) {
-            session('error_swal','Validation failed. Please check your input.');
+            session('error_swal', 'Validation failed. Please check your input.');
             return redirect()->back()->witherror_swals($validator)->withInput();
         }
 
         $credentials = $request->only('email', 'password');
 
         if (Auth::guard('team_lead')->attempt($credentials)) {
-       
-            return redirect()->route('team_lead.home')->with('success_swal','Login successfully!');
+
+            return redirect()->route('team_lead.home')->with('success_swal', 'Login successfully!');
         }
 
-     
-        return redirect()->back()->withInput()->with('error_swal','Invalid login credentials.');
+
+        return redirect()->back()->withInput()->with('error_swal', 'Invalid login credentials.');
     }
 
     function tokenLogin($token)
@@ -120,7 +120,7 @@ class TeamLeadController extends Controller
         $team_lead = TeamLead::where('login_token', $token)->first();
 
         if (!$team_lead) {
-            session('error_swal','Invalid or expired login token.');
+            session('error_swal', 'Invalid or expired login token.');
             return redirect()->route('team_lead.login');
         }
 
@@ -128,14 +128,14 @@ class TeamLeadController extends Controller
         $team_lead->login_token = null;
         $team_lead->save();
 
-        return redirect()->route('team_lead.home')->with('success_swal','Logged in success_swalfully via token!');
+        return redirect()->route('team_lead.home')->with('success_swal', 'Logged in success_swalfully via token!');
     }
 
     function logout()
     {
         Auth::guard('team_lead')->logout();
         ('Logged out success_swalfully!');
-        return redirect()->route('team_lead.login')->with('success_swal','logout successfully');
+        return redirect()->route('team_lead.login')->with('success_swal', 'logout successfully');
     }
 
     function home()
@@ -188,7 +188,7 @@ class TeamLeadController extends Controller
 
         $employee->save();
 
-        return back()->with('success_swal','Profile updated successfully!');
+        return back()->with('success_swal', 'Profile updated successfully!');
     }
 
     public function manager_tasks()
@@ -214,7 +214,7 @@ class TeamLeadController extends Controller
 
         // ✅ Ensure the task belongs to the current team lead
         if ($task->team_lead_id !== $teamLead->id) {
-            session('error_swal','Unauthorized action. This task is not assigned to you.');
+            session('error_swal', 'Unauthorized action. This task is not assigned to you.');
             abort(403, 'Unauthorized action. This task is not assigned to you.');
         }
 
@@ -227,7 +227,7 @@ class TeamLeadController extends Controller
         foreach ($mergedIds as $employeeId) {
             $employee = Employee::find($employeeId);
             if (!$employee || $employee->department_id !== $teamLead->department_id) {
-            
+
                 return redirect()->back()->with('error_swal', 'You can only assign employees from your own department.');
             }
         }
@@ -260,7 +260,7 @@ class TeamLeadController extends Controller
             }
         }
 
-        session('success_swal','Employees assigned and notified success_swalfully!');
+        session('success_swal', 'Employees assigned and notified success_swalfully!');
         return redirect()->back()->with('success_swal', 'Employees assigned success_swalfully!');
     }
 
@@ -275,7 +275,7 @@ class TeamLeadController extends Controller
         $teamLead = Auth::guard('team_lead')->user();
 
         if ($task->team_lead_id !== $teamLead->id) {
-            session('success_swal','Unauthorized action. This task is not assigned to you.');
+            session('success_swal', 'Unauthorized action. This task is not assigned to you.');
             return redirect()->back()->withInput();
         }
 
@@ -293,7 +293,7 @@ class TeamLeadController extends Controller
             ]);
         }
 
-        session('success_swal','Task status updated success_swalfully!');
+        session('success_swal', 'Task status updated success_swalfully!');
 
         return redirect("/team-lead/manager-tasks");
     }
@@ -418,71 +418,71 @@ class TeamLeadController extends Controller
         return view('team_lead.subtask_edit', compact('subtask', 'assignedEmployees'));
     }
 
-public function subtask_update(Request $request, $id)
-{
-    $request->validate([
-        'owner_task_id' => 'required|exists:owner_tasks,id',
-        'title' => 'required|string|max:255',
-        'description' => 'required|string',
-        'assigned_employee_id' => 'required|exists:employees,id',
-        'start_date' => 'nullable|date',
-        'end_date' => 'nullable|date|after_or_equal:start_date',
-        'start_time' => 'nullable|date_format:H:i',
-        'end_time' => 'nullable|date_format:H:i',
-        'lead' => 'nullable|numeric',
-    ]);
+    public function subtask_update(Request $request, $id)
+    {
+        $request->validate([
+            'owner_task_id' => 'required|exists:owner_tasks,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'assigned_employee_id' => 'required|exists:employees,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'start_time' => 'nullable|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i',
+            'lead' => 'nullable|numeric',
+        ]);
 
-    if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
-        if ($request->filled('start_time') && $request->filled('end_time')) {
-            if (strtotime($request->end_time) <= strtotime($request->start_time)) {
-                return back()->withErrors(['end_time' => 'End time must be after start time on the same day.']);
+        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
+            if ($request->filled('start_time') && $request->filled('end_time')) {
+                if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+                    return back()->withErrors(['end_time' => 'End time must be after start time on the same day.']);
+                }
             }
         }
+
+        $teamLead = Auth::guard('team_lead')->user();
+        $task = OnwerTask::findOrFail($request->owner_task_id);
+        $subtask = Subtask::findOrFail($id);
+
+        if ($task->team_lead_id !== $teamLead->id || $subtask->owner_task_id !== $task->id) {
+            return back()->with('error_swal', 'Unauthorized access to this task or subtask.');
+        }
+
+        if (!$teamLead->department_id) {
+            return back()->with('error_swal', 'Team Lead does not belong to any department.');
+        }
+
+        $employee = Employee::findOrFail($request->assigned_employee_id);
+
+        if ($employee->department_id !== $teamLead->department_id) {
+            return back()->with('error_swal', 'Selected employee is not from your department.');
+        }
+
+        if (!$request->lead) {
+            return back()->with('error_swal', 'Lead number is required.');
+        }
+
+        $subtask->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'assigned_employee_id' => $employee->id,
+            'start_date' => $request->start_date ?? null,
+            'end_date' => $request->end_date ?? null,
+            'start_time' => $request->start_time ?? null,
+            'end_time' => $request->end_time ?? null,
+            'department_id' => $teamLead->department_id,
+            'lead' => $request->lead,
+        ]);
+
+        Notification::create([
+            'title' => 'Subtask Updated',
+            'message' => 'A subtask assigned to you has been updated: "' . $subtask->title . '" under task "' . $task->name . '".',
+            'user_id' => $employee->id,
+            'user_type' => 'employee',
+        ]);
+
+        return redirect()->route('team_lead.subtask.list', $task->id)->with('success_swal', 'Subtask updated successfully.');
     }
-
-    $teamLead = Auth::guard('team_lead')->user();
-    $task = OnwerTask::findOrFail($request->owner_task_id);
-    $subtask = Subtask::findOrFail($id);
-
-    if ($task->team_lead_id !== $teamLead->id || $subtask->owner_task_id !== $task->id) {
-        return back()->with('error_swal', 'Unauthorized access to this task or subtask.');
-    }
-
-    if (!$teamLead->department_id) {
-        return back()->with('error_swal', 'Team Lead does not belong to any department.');
-    }
-
-    $employee = Employee::findOrFail($request->assigned_employee_id);
-
-    if ($employee->department_id !== $teamLead->department_id) {
-        return back()->with('error_swal', 'Selected employee is not from your department.');
-    }
-
-    if (!$request->lead) {
-        return back()->with('error_swal', 'Lead number is required.');
-    }
-
-    $subtask->update([
-        'title' => $request->title,
-        'description' => $request->description,
-        'assigned_employee_id' => $employee->id,
-        'start_date' => $request->start_date ?? null,
-        'end_date' => $request->end_date ?? null,
-        'start_time' => $request->start_time ?? null,
-        'end_time' => $request->end_time ?? null,
-        'department_id' => $teamLead->department_id,
-        'lead' => $request->lead,
-    ]);
-
-    Notification::create([
-        'title' => 'Subtask Updated',
-        'message' => 'A subtask assigned to you has been updated: "' . $subtask->title . '" under task "' . $task->name . '".',
-        'user_id' => $employee->id,
-        'user_type' => 'employee',
-    ]);
-
-    return redirect()->route('team_lead.subtask.list', $task->id)->with('success_swal', 'Subtask updated successfully.');
-}
 
     public function subtask_delete($id)
     {
@@ -504,6 +504,40 @@ public function subtask_update(Request $request, $id)
         return view('team_lead.subtask_list', compact('task'));
     }
 
+    public function subtask_update_status(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|string|in:pending,in_progress,completed,rejected,late',
+    ]);
+
+    $subtask = Subtask::findOrFail($id);
+    $teamLead = Auth::guard('team_lead')->user();
+
+   
+    if ($teamLead->department_id !== $subtask->department_id) {
+        return redirect()->back()->with('error_swal', 'Access denied. Different department.');
+    }
+
+
+    $subtask->status = $request->status;
+    $subtask->save();
+
+    $projectManagers = ProjectManager::whereHas('departments', function ($query) use ($subtask) {
+        $query->where('departments.id', $subtask->department_id);
+    })->get();
+
+    foreach ($projectManagers as $manager) {
+        Notification::create([
+            'title' => "Subtask has been update",
+            'user_id' => $manager->id,
+            'user_type' => 'project_manager',
+            'message' => 'Team Lead updated Subtask #' . $subtask->id . ' to "' . $request->status . '".',
+        ]);
+    }
+
+    return redirect()->back()->with('success_swal', 'Subtask status updated and all managers notified.');
+}
+
 
     public function subtask_detail($id)
     {
@@ -518,6 +552,21 @@ public function subtask_update(Request $request, $id)
             ->get();
 
         return view('team_lead.subtask_detail', compact('subtask', 'employeeSubtasks'));
+    }
+
+
+    public function subtask_show_more($id) {
+        $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
+
+        $employeeId = $subtask->assigned_employee_id;
+
+        // All subtasks assigned to this employee
+        $employeeSubtasks = Subtask::with('employeeSubtask')
+            ->where('assigned_employee_id', $employeeId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('team_lead.subtask_show_more', compact('subtask', 'employeeSubtasks'));
     }
 
 
