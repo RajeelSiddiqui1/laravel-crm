@@ -253,12 +253,7 @@ class ProjectManager extends Controller
         return redirect()->route('project_manager.tasks');
     }
 
-    function subtask()
-    {
-
-        $subtasks = Subtask::with('employee')->get();
-        return view('project_manager.subtask', compact('subtasks'));
-    }
+   
 
     function manager_task_list()
     {
@@ -419,4 +414,50 @@ class ProjectManager extends Controller
 
         return redirect()->route('project_manager.mytask')->with('success_swal', 'Task deleted successfullyly.');
     }
+
+    function subtask()
+    {
+        $manager = Auth::guard('project_manager')->user();
+    
+       
+        $departmentIds = $manager->departments->pluck('id')->toArray();
+    
+       
+        $subtasks = Subtask::whereIn('department_id', $departmentIds)
+            ->with('employee') 
+            ->get();
+    
+        return view('project_manager.subtask', compact('subtasks'));
+    }
+
+    public function subtask_detail($id)
+    { $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
+    
+        $employeeId = $subtask->assigned_employee_id;
+    
+        $employeeSubtasks = Subtask::with('employeeSubtask')
+            ->where('assigned_employee_id', $employeeId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    
+        $attachments = [];
+    
+        if ($subtask->employeeSubtask && $subtask->employeeSubtask->attachments) {
+            $attachments = is_array($subtask->employeeSubtask->attachments)
+                ? $subtask->employeeSubtask->attachments
+                : json_decode($subtask->employeeSubtask->attachments, true);
+    
+            if (!is_array($attachments)) {
+                $attachments = explode(',', $subtask->employeeSubtask->attachments);
+            }
+    
+            $attachments = collect($attachments)->flatten()->filter(function ($url) {
+                return is_string($url) && !empty(trim($url));
+            })->values()->all();
+        }
+    
+
+        return view('project_manager.subtask_detail', compact('subtask', 'employeeSubtasks','attachments'));
+    }
+    
 }

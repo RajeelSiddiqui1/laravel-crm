@@ -30,7 +30,7 @@
         @endif
 
         <table class="table table-striped">
-            <thead>
+            <thead class="bg-dark text-white">
                 <tr>
                     <th>No</th>
                     <th>Client Name</th>
@@ -40,6 +40,7 @@
                     <th>Status</th>
                     <th>Team Lead</th>
                     <th>View</th>
+                    <th>Group Chat</th>
                 </tr>
             </thead>
             <tbody>
@@ -63,7 +64,7 @@
                                 <form method="POST"
                                     action="{{ route('project_manager.tasks.assign_team_lead', $task->id) }}">
                                     @csrf
-                                    <select name="team_lead_id" class="form-select form-select-sm"
+                                    <select name="team_lead_id" class="form-control form-select-sm"
                                         onchange="this.form.submit()">
                                         <option value="">Select</option>
                                         @foreach ($teamLeads as $lead)
@@ -79,13 +80,13 @@
                             <a href="{{ route('project_manager.tasks.detail', $task->id) }}"
                                 class="btn btn-sm btn-primary">View</a>
                         </td>
+                      
                         <td>
-                        <td>
-                            <a href="{{ route('chat.group', $task->id) }}" class="btn btn-outline-primary btn-sm">Group
+                            <a href="{{ route('chat.group', $task->id) }}" class="btn btn-success btn-sm">Group
                                 Chat</a>
 
                         </td>
-                        </td>
+                      
                     </tr>
                 @empty
                     <tr>

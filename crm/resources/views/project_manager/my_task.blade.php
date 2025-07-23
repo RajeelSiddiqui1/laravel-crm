@@ -24,8 +24,8 @@
                         <th>Task Name</th>
                         <th>Department</th>
                         <th>TeamLeader</th>
-                        <th>View</th>
                         <th>Status</th>
+                        <th>View</th>
                         <th>Group Chats</th>
                         <th>Action</th>
                     </tr>

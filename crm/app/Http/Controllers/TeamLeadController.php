@@ -507,7 +507,7 @@ class TeamLeadController extends Controller
     public function subtask_update_status(Request $request, $id)
 {
     $request->validate([
-        'status' => 'required|string|in:pending,in_progress,completed,rejected,late',
+        'status' => 'required|string|in:pending,in_progress,approved,rejected,late',
     ]);
 
     $subtask = Subtask::findOrFail($id);
@@ -557,16 +557,32 @@ class TeamLeadController extends Controller
 
     public function subtask_show_more($id) {
         $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
-
+    
         $employeeId = $subtask->assigned_employee_id;
-
-        // All subtasks assigned to this employee
+    
         $employeeSubtasks = Subtask::with('employeeSubtask')
             ->where('assigned_employee_id', $employeeId)
             ->orderBy('created_at', 'desc')
             ->get();
+    
+        $attachments = [];
+    
+        if ($subtask->employeeSubtask && $subtask->employeeSubtask->attachments) {
+            $attachments = is_array($subtask->employeeSubtask->attachments)
+                ? $subtask->employeeSubtask->attachments
+                : json_decode($subtask->employeeSubtask->attachments, true);
+    
+            if (!is_array($attachments)) {
+                $attachments = explode(',', $subtask->employeeSubtask->attachments);
+            }
+    
+            $attachments = collect($attachments)->flatten()->filter(function ($url) {
+                return is_string($url) && !empty(trim($url));
+            })->values()->all();
+        }
+    
 
-        return view('team_lead.subtask_show_more', compact('subtask', 'employeeSubtasks'));
+        return view('team_lead.subtask_show_more', compact('subtask', 'employeeSubtasks','attachments'));
     }
 
 

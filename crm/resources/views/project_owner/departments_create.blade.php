@@ -2,6 +2,31 @@
 
 @section('content')
     <div class="container">
+      @if (session('success_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: "{{ session('success_swal') }}",
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
+        @endif
+
+        @if (session('error_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: "{{ session('error_swal') }}",
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
+        @endif
         <div class="row mt-3 justify-content-center">
             <div class="col-lg-6">
                 <div class="card">

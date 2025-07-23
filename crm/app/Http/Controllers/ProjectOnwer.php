@@ -21,6 +21,10 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use SebastianBergmann\CodeCoverage\Report\Xml\Project;
 
+use function Laravel\Prompts\password;
+use function PHPUnit\Framework\fileExists;
+use function Termwind\render;
+
 class ProjectOnwer extends Controller
 {
     function loginview()
@@ -39,20 +43,69 @@ class ProjectOnwer extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $user = ProjectOwner::where('email', $request->email)->first();
+     $creditionals = $request->only('email','password');
 
-        if ($user && $user->password === $request->password) {
-            Auth::guard('project_owner')->login($user);
-            return redirect()->route('project_owner.home');
-        } else {
-            return redirect()->back()->withErrors(['email' => 'Invalid credentials'])->withInput();
-        }
+     if(Auth::guard('project_owner')->attempt($creditionals)){
+        return redirect()->route('project_owner.home')->with('success_swal', 'Login successfully');
+     }else{
+        return redirect()->back()->with('error_swal', 'Invalid login credentials');
+     }
     }
 
     function logout()
     {
         Auth::guard('project_owner')->logout();
         return redirect()->route('project_owner.login');
+    }
+
+
+    function profile_view()
+    {
+        $owner = Auth::guard('project_owner')->user();
+        return view('project_owner.profile', compact('owner'));
+    }
+
+    function profile_update(Request $request)
+    {
+        /** @var  \App\Models\ProjectOwner owner **/
+        $owner = Auth::guard('project_owner')->user();
+
+        $validator = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:team_leads,email,' . $owner->id,
+            'password' => 'nullable|string|min:6',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
+        ]);
+
+        if (!$validator) {
+            return redirect()->back()->withErrors('validation','error in validation')->withInput();
+        }
+
+        $owner->name = $request->name;
+        $owner->email = $request->email;
+        $owner->password = $request->password;
+
+        if ($request->hasFile('image')) {
+            $oldImage = public_path('images/project_owner/' . $owner->image);
+            if ($owner->image && file_exists($oldImage)) {
+                @unlink($oldImage);
+            }
+        
+            $imageName = time() . '.' . $request->image->getClientOriginalExtension();
+            $request->image->move(public_path('images/project_owner/'), $imageName);
+            $owner->image = $imageName;
+        }
+        
+
+        if($request->filled('password')){
+            $owner->password = bcrypt($request->password);
+        }
+
+        if($owner->save()){
+           return redirect()->back()->with('success_swal','profile updated successfully');
+        }else{
+            return redirect()->back()->with('error_swal','Error in profile update');
+        }
     }
 
     function home()
@@ -304,15 +357,31 @@ class ProjectOnwer extends Controller
     public function subtask_detail($id)
     {
         $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
-
+    
         $employeeId = $subtask->assigned_employee_id;
-
+    
         $employeeSubtasks = Subtask::with('employeeSubtask')
             ->where('assigned_employee_id', $employeeId)
             ->orderBy('created_at', 'desc')
             ->get();
-
-        return view('project_owner.subtask_detail', compact('subtask', 'employeeSubtasks'));
+    
+        $attachments = [];
+    
+        if ($subtask->employeeSubtask && $subtask->employeeSubtask->attachments) {
+            $attachments = is_array($subtask->employeeSubtask->attachments)
+                ? $subtask->employeeSubtask->attachments
+                : json_decode($subtask->employeeSubtask->attachments, true);
+    
+            if (!is_array($attachments)) {
+                $attachments = explode(',', $subtask->employeeSubtask->attachments);
+            }
+    
+            $attachments = collect($attachments)->flatten()->filter(function ($url) {
+                return is_string($url) && !empty(trim($url));
+            })->values()->all();
+        }
+    
+        return view('project_owner.subtask_detail', compact('subtask', 'employeeSubtasks', 'attachments'));
     }
 
 
@@ -326,6 +395,4 @@ class ProjectOnwer extends Controller
 
         return view('project_owner.project_manager_tasks', compact('tasks'));
     }
-
-
 }

@@ -34,6 +34,7 @@ Route::controller(ProjectManager::class)->group(function () {
             Route::get('project-manager/notifications',  'notifications')->name('project_manager.notifications');
             Route::get('project-manager/notifications/{id}',  'viewNotification')->name('project_manager.notifications.view');
             Route::get('/project-manager/subtasks', 'subtask')->name('project_manager.subtask');
+            Route::get('/project-manager/subtask/detail/{id}', 'subtask_detail')->name('project_manager.subtask_detail');
             Route::get('/project-manager/mytasks','manager_task_list')->name('project_manager.mytask');
             Route::get('/project-manager/mytasks/detail/{id}','my_task_detail')->name('project_manager.my_task_detail');
             Route::get('/project-manager/mytasks/create','create_my_task')->name('project_manager.mytask_create');
@@ -56,6 +57,8 @@ Route::controller(ProjectOnwer::class)->group(function () {
 
     Route::middleware('check.roles')->group(function () {
         Route::get('/project-owner/home', 'home')->name('project_owner.home');
+        Route::get('/projec-owner/profile', 'profile_view')->name('project_owner.profile');
+        Route::put('.ptoject_-owner/profile/update', 'profile_update')->name('project_owner.profile.update');
         Route::get('/project-owner/project-manager', 'project_manager_view')->name('project_owner.project_manager_view');
         Route::get('/project-owner/team-leads', 'teamLeadsView')->name('project_owner.team_lead_view');
         Route::get('/project-owner/employees', 'employee_view')->name('project_owner.employee_view');

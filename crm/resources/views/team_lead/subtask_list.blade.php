@@ -1,5 +1,5 @@
 @php
-    $statuses = ['pending', 'in_progress', 'completed', 'rejected', 'late'];
+    $statuses = ['pending', 'in_progress', 'approved', 'rejected', 'late'];
 @endphp
 
 @extends('layout.app')
@@ -94,7 +94,7 @@
                                         </select>
                                     </form>
                                     <span
-                                        class="badge mt-2 {{ $subtask->status == 'completed' ? 'bg-success' : ($subtask->status == 'rejected' ? 'bg-danger' : ($subtask->status == 'late' ? 'bg-warning' : ($subtask->status == 'in_progress' ? 'bg-primary' : 'bg-secondary'))) }}">
+                                        class="badge mt-2 {{ $subtask->status == 'approved' ? 'bg-success' : ($subtask->status == 'rejected' ? 'bg-danger' : ($subtask->status == 'late' ? 'bg-warning' : ($subtask->status == 'in_progress' ? 'bg-primary' : 'bg-secondary'))) }}">
                                         {{ ucfirst(str_replace('_', ' ', $subtask->status ?? 'pending')) }}
                                     </span>
                                 </td>

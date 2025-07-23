@@ -2,6 +2,31 @@
 
 @section('content')
     <div class="container mt-4">
+      @if (session('success_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: "{{ session('success_swal') }}",
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
+        @endif
+
+        @if (session('error_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: "{{ session('error_swal') }}",
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
+        @endif
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <h2 class="text-center mb-4">Project Owner Dashboard</h2>

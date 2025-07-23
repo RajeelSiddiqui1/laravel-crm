@@ -4,21 +4,31 @@
     <div class="container py-3">
         <div class="row justify-content-center">
             <div class="col-md-10">
-                @if (Session::has('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ Session::get('success') }}
-                        <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
-                    </div>
-                @endif
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                 @if (session('success_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: "{{ session('success_swal') }}",
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
+        @endif
+
+        @if (session('error_swal'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: "{{ session('error_swal') }}",
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            </script>
+        @endif
             </div>
         </div>
 

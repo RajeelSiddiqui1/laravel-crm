@@ -113,6 +113,11 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('project_manager.logout') }}">
+                            <i class="icon-power mr-2"></i> <span>Logout</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('project_manager.tasks') }}">
                             <i class="zmdi zmdi-city mr-2"></i> <span>Owner Tasks</span>
                         </a>
@@ -123,8 +128,8 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('project_manager.logout') }}">
-                            <i class="icon-power mr-2"></i> <span>Logout</span>
+                        <a href="{{ route('project_manager.subtask') }}">
+                            <i class="zmdi zmdi-city mr-2"></i> <span>Subtask</span>
                         </a>
                     </li>
                     @php
@@ -296,7 +301,7 @@
                     </li>
                     <li class="sidebar-header">MAIN NAVIGATION</li>
                     <li>
-                        <a href="{{ url('/project-owner/profile') }}">
+                        <a href="{{ route('project_owner.profile') }}">
                             <i class="icon-wallet mr-2"></i> <span>Profile</span>
                         </a>
                     </li>

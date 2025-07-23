@@ -12,7 +12,7 @@
             $statusColors = [
                 'pending' => 'warning',
                 'in_progress' => 'primary',
-                'completed' => 'success',
+                'approved' => 'success',
                 'rejected' => 'danger',
                 'late' => 'secondary',
             ];
@@ -68,7 +68,7 @@
                                         $rowClass = match ($subtask->status) {
                                             'pending' => 'table-warning',
                                             'in_progress' => 'table-primary',
-                                            'completed' => 'table-success',
+                                            'approved' => 'table-success',
                                             'rejected' => 'table-danger',
                                             'late' => 'table-secondary',
                                             default => '',
