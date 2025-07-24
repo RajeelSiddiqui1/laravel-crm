@@ -15,6 +15,11 @@ class Department extends Model
         return $this->belongsToMany(ProjectManager::class, 'department_project_manager', 'department_id', 'project_manager_id');
     }
 
+    public function callOperators()
+    {
+        return $this->hasMany(User::class)->where('role', 'call_operator'); // or whatever role you're using
+    }
+
     public function teamLeads()
     {
         return $this->hasMany(TeamLead::class, 'department_id');

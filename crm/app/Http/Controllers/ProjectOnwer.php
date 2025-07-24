@@ -17,6 +17,7 @@ use App\Notifications\OwnerTaskAssign;
 use App\Notifications\OwnerTaskEdit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use SebastianBergmann\CodeCoverage\Report\Xml\Project;
@@ -43,13 +44,13 @@ class ProjectOnwer extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-     $creditionals = $request->only('email','password');
+        $creditionals = $request->only('email', 'password');
 
-     if(Auth::guard('project_owner')->attempt($creditionals)){
-        return redirect()->route('project_owner.home')->with('success_swal', 'Login successfully');
-     }else{
-        return redirect()->back()->with('error_swal', 'Invalid login credentials');
-     }
+        if (Auth::guard('project_owner')->attempt($creditionals)) {
+            return redirect()->route('project_owner.home')->with('success_swal', 'Login successfully');
+        } else {
+            return redirect()->back()->with('error_swal', 'Invalid login credentials');
+        }
     }
 
     function logout()
@@ -78,7 +79,7 @@ class ProjectOnwer extends Controller
         ]);
 
         if (!$validator) {
-            return redirect()->back()->withErrors('validation','error in validation')->withInput();
+            return redirect()->back()->withErrors('validation', 'error in validation')->withInput();
         }
 
         $owner->name = $request->name;
@@ -90,21 +91,21 @@ class ProjectOnwer extends Controller
             if ($owner->image && file_exists($oldImage)) {
                 @unlink($oldImage);
             }
-        
+
             $imageName = time() . '.' . $request->image->getClientOriginalExtension();
             $request->image->move(public_path('images/project_owner/'), $imageName);
             $owner->image = $imageName;
         }
-        
 
-        if($request->filled('password')){
+
+        if ($request->filled('password')) {
             $owner->password = bcrypt($request->password);
         }
 
-        if($owner->save()){
-           return redirect()->back()->with('success_swal','profile updated successfully');
-        }else{
-            return redirect()->back()->with('error_swal','Error in profile update');
+        if ($owner->save()) {
+            return redirect()->back()->with('success_swal', 'profile updated successfully');
+        } else {
+            return redirect()->back()->with('error_swal', 'Error in profile update');
         }
     }
 
@@ -222,8 +223,16 @@ class ProjectOnwer extends Controller
 
     function tasks_createview()
     {
-        $departments = Department::with('projectManagers')->get();
-        return view('project_owner.tasks_create', compact('departments'));
+        $departments = Department::all();
+        $managers = ProjectManager::all();
+        return view('project_owner.tasks_create', compact('departments', 'managers'));
+    }
+    public function getProjectManagers($departmentId)
+    {
+        $managers = ProjectManager::whereJsonContains('department_ids', (string) $departmentId)
+            ->get(['id', 'name']);
+
+        return response()->json($managers);
     }
 
 
@@ -286,61 +295,74 @@ class ProjectOnwer extends Controller
     public function edit($id)
     {
         $task = OnwerTask::findOrFail($id);
-        $departments = Department::with('projectManagers')->get();
-        return view('project_owner.task_edit', compact('task', 'departments'));
+        $departments = Department::all();
+
+        // Get managers whose department_ids JSON contains this task's department_id
+        $managers = ProjectManager::whereJsonContains('department_ids', (string) $task->department_id)
+            ->get(['id', 'name', 'email']);
+
+        return view('project_owner.task_edit', compact('task', 'departments', 'managers'));
     }
+
 
     public function update(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'name'               => 'required|string|max:255',
-            'client_name'        => 'required|string|max:255',
-            'description'        => 'required|string',
-            'client_email'       => 'required|email',
-            'client_contact'     => 'required|string|max:20',
-            'project_manager_id' => 'required|exists:project_managers,id',
-            'department_id'      => 'required|exists:departments,id',
-            'manager_email'      => 'required|email',
-            'start_date'         => 'required|date',
-            'deadline'           => 'required|date|after_or_equal:start_date',
-            'priority'           => 'required|in:Low,Medium,High',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'name'               => 'required|string|max:255',
+                'client_name'        => 'required|string|max:255',
+                'description'        => 'required|string',
+                'client_email'       => 'required|email',
+                'client_contact'     => 'required|string|max:20',
+                'project_manager_id' => 'required|exists:project_managers,id',
+                'department_id'      => 'required|exists:departments,id',
+                'manager_email'      => 'required|email',
+                'start_date'         => 'required|date',
+                'deadline'           => 'required|date|after_or_equal:start_date',
+                'priority'           => 'required|in:Low,Medium,High',
+            ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+
+            $task = OnwerTask::findOrFail($id);
+
+            $task->update([
+                'name'               => $request->name,
+                'client_name'        => $request->client_name,
+                'description'        => $request->description,
+                'client_email'       => $request->client_email,
+                'client_contact'     => $request->client_contact,
+                'project_manager_id' => $request->project_manager_id,
+                'department_id'      => $request->department_id,
+                'manager_email'      => $request->manager_email,
+                'start_date'         => $request->start_date,
+                'deadline'           => $request->deadline,
+                'priority'           => $request->priority,
+            ]);
+
+            return redirect()->route('project_owner.task', $id)->with('success_swal', 'Task updated successfully.');
+        } catch (\Exception $e) {
+            Log::error('Update Task Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->back()->with('error_swal', 'Failed to update task: ' . $e->getMessage());
         }
-
-        $task = OnwerTask::findOrFail($id);
-
-        $task->update([
-            'name'               => $request->name,
-            'client_name'        => $request->client_name,
-            'description'        => $request->description,
-            'client_email'       => $request->client_email,
-            'client_contact'     => $request->client_contact,
-            'project_manager_id' => $request->project_manager_id,
-            'department_id'      => $request->department_id,
-            'manager_email'      => $request->manager_email,
-            'start_date'         => $request->start_date,
-            'deadline'           => $request->deadline,
-            'priority'           => $request->priority,
-        ]);
-
-        Mail::to($task->manager_email)->send(new EditTask($task));
-        $manager = ProjectManager::find($task->project_manager_id);
-        $manager->notify(new OwnerTaskEdit($task));
-        return redirect()->route('project_owner.task', $id)->with('success_swal', 'Task updated successfully.');
     }
 
-    function destroy($id)
+    public function destroy($id)
     {
-        $task = OnwerTask::findOrFail($id);
-        $task->delete();
-        Mail::to($task->manager_email)->send(new TaskDeletedMail($task));
-        $manager = ProjectManager::find($task->project_manager_id);
-        $manager->notify(new OwnerTaskAssign($task));
-        return redirect()->route('project_owner.task')->with('success_swal', 'Task deleted successfully.');
+        try {
+            $task = OnwerTask::findOrFail($id);
+            $task->delete();
+
+            return redirect()->route('project_owner.task')->with('success_swal', 'Task deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Delete Task Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->back()->with('error_swal', 'Failed to delete task: ' . $e->getMessage());
+        }
     }
+
+
 
     public function taskFullDetails($id)
     {
@@ -357,30 +379,30 @@ class ProjectOnwer extends Controller
     public function subtask_detail($id)
     {
         $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
-    
+
         $employeeId = $subtask->assigned_employee_id;
-    
+
         $employeeSubtasks = Subtask::with('employeeSubtask')
             ->where('assigned_employee_id', $employeeId)
             ->orderBy('created_at', 'desc')
             ->get();
-    
+
         $attachments = [];
-    
+
         if ($subtask->employeeSubtask && $subtask->employeeSubtask->attachments) {
             $attachments = is_array($subtask->employeeSubtask->attachments)
                 ? $subtask->employeeSubtask->attachments
                 : json_decode($subtask->employeeSubtask->attachments, true);
-    
+
             if (!is_array($attachments)) {
                 $attachments = explode(',', $subtask->employeeSubtask->attachments);
             }
-    
+
             $attachments = collect($attachments)->flatten()->filter(function ($url) {
                 return is_string($url) && !empty(trim($url));
             })->values()->all();
         }
-    
+
         return view('project_owner.subtask_detail', compact('subtask', 'employeeSubtasks', 'attachments'));
     }
 

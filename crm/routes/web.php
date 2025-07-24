@@ -35,13 +35,14 @@ Route::controller(ProjectManager::class)->group(function () {
             Route::get('project-manager/notifications/{id}',  'viewNotification')->name('project_manager.notifications.view');
             Route::get('/project-manager/subtasks', 'subtask')->name('project_manager.subtask');
             Route::get('/project-manager/subtask/detail/{id}', 'subtask_detail')->name('project_manager.subtask_detail');
-            Route::get('/project-manager/mytasks','manager_task_list')->name('project_manager.mytask');
-            Route::get('/project-manager/mytasks/detail/{id}','my_task_detail')->name('project_manager.my_task_detail');
-            Route::get('/project-manager/mytasks/create','create_my_task')->name('project_manager.mytask_create');
-            Route::post('/project-manager/mytasks/store','store_my_task')->name('project_manager.mytask_store');
-            Route::get('/project-manager/mytask/edit/{id}','mytask_edit')->name('project_manager.mytask_edit');
-            Route::put('/project-manager/mytask/edit/{id}','mytask_update')->name('project_manager.mytask_update');
-            Route::delete('/project-manager/mytask/delete/{id}','my_task_destroy')->name('project_manager.mytask_delete');
+            Route::get('/project-manager/mytasks', 'manager_task_list')->name('project_manager.mytask');
+            Route::get('/project-manager/mytasks/detail/{id}', 'my_task_detail')->name('project_manager.my_task_detail');
+            Route::get('/project-manager/mytasks/create', 'create_my_task')->name('project_manager.mytask_create');
+            Route::post('/project-manager/mytasks/store', 'store_my_task')->name('project_manager.mytask_store');
+            Route::get('/project-manager/mytask/edit/{id}', 'mytask_edit')->name('project_manager.mytask_edit');
+            Route::put('/project-manager/mytask/edit/{id}', 'mytask_update')->name('project_manager.mytask_update');
+            Route::delete('/project-manager/mytask/delete/{id}', 'my_task_destroy')->name('project_manager.mytask_delete');
+            Route::post('/my-tasks/share/{id}',  'share_task')->name('project_manager.share_task');
         }
     );
 
@@ -79,7 +80,8 @@ Route::controller(ProjectOnwer::class)->group(function () {
         Route::get('project-owner/task/full-details/{id}', 'taskFullDetails')->name('project_owner.task.details');
         Route::get('/project-owner/subtasks', 'subtask')->name('project_owner.subtask');
         Route::get('/project-owner/subtask/detail/{id}', 'subtask_detail')->name('project_owner.subtask.detail');
-        Route::get('/project-owner/manager-tasks','allOwnerTasks')->name('project_owner.manager_tasks');
+        Route::get('/project-owner/manager-tasks', 'allOwnerTasks')->name('project_owner.manager_tasks');
+        Route::get('/get-project-managers/{departmentId}', 'getProjectManagers');
 
     });
 });

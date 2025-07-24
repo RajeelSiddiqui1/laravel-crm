@@ -17,19 +17,23 @@ class ProjectManager extends Authenticatable
         'email',
         'phone',
         'password',
-        'department_id',
+        'department_ids',
         'image',
     ];
-
+    protected $casts = [
+        'department_ids' => 'array',
+    ];
+    
     protected $hidden = ['password'];
 
-    public function department()
+    public function departments()
     {
-        return $this->belongsTo(Department::class, 'department_id');
+        return $this->belongsToMany(Department::class);
     }
+    
 
- public function departments()
-{
-    return $this->belongsToMany(Department::class, 'department_project_manager', 'project_manager_id', 'department_id');
-}
+    
+    
+    
+
 }

@@ -7,21 +7,27 @@ use Illuminate\Notifications\Notifiable;
 
 class ProjectOwner extends Authenticatable
 {
+    use Notifiable;
 
-       use Notifiable;
-    protected $table = "project_owners";
+    protected $table = 'project_owners';
 
-      protected $fillable = [
-        'name', 'email',
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'project_manager_id', // Added assuming this is needed for the relationship
     ];
 
     protected $hidden = [
-        'password'
+        'password',
+        'remember_token',
     ];
 
+    /**
+     * Get the project manager associated with the project owner.
+     */
     public function projectManager()
-{
-    return $this->belongsTo(ProjectManager::class, 'project_manager_id');
-}
-
+    {
+        return $this->belongsTo(ProjectManager::class, 'project_manager_id');
+    }
 }

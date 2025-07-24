@@ -1,133 +1,165 @@
 @extends('layout.app')
 
 @section('content')
-    <div class="container py-3">
-        <div class="row justify-content-center">
-            <div class="col-md-10">
-                 @if (session('success_swal'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        title: 'Success!',
-                        text: "{{ session('success_swal') }}",
-                        icon: 'success',
-                        confirmButtonText: 'OK'
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            @if (session('success_swal'))
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: "{{ session('success_swal') }}",
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        });
                     });
-                });
-            </script>
-        @endif
+                </script>
+            @endif
 
-        @if (session('error_swal'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: "{{ session('error_swal') }}",
-                        icon: 'error',
-                        confirmButtonText: 'OK'
+            @if (session('error_swal'))
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: "{{ session('error_swal') }}",
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
                     });
-                });
-            </script>
-        @endif
-            </div>
+                </script>
+            @endif
         </div>
+    </div>
 
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card shadow rounded">
-                    <div class="card-body">
-                        <h2 class="card-title text-center text-white">Edit Task</h2>
-                        <form method="POST" action="{{ route('project_manager.mytask_update', $task->id) }}">
-                            @csrf
-                            @method('PUT')
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow rounded">
+                <div class="card-body">
+                    <h2 class="card-title text-center text-white">Edit Task</h2>
+                    <form method="POST" action="{{ route('project_manager.mytask_update', $task->id) }}">
+                        @csrf
+                        @method('PUT')
 
-                            <div class="form-group">
-                                <label class="text-white">Task Name</label>
-                                <input type="text" name="name" class="form-control"
-                                    value="{{ old('name', $task->name) }}">
-                            </div>
-                            <div class="form-group">
-                                <label class="text-white">Client Name</label>
-                                <input type="text" name="client_name" class="form-control"
-                                    value="{{ old('client_name', $task->client_name) }}">
-                            </div>
-                            <div class="form-group">
-                                <label class="text-white">Description</label>
-                                <textarea name="description" class="form-control">{{ old('description', $task->description) }}</textarea>
-                            </div>
-                            <div class="form-group">
-                                <label class="text-white">Client Email</label>
-                                <input type="email" name="client_email" class="form-control"
-                                    value="{{ old('client_email', $task->client_email) }}">
-                            </div>
-                            <div class="form-group">
-                                <label class="text-white">Client Contact</label>
-                                <input type="text" name="client_contact" class="form-control"
-                                    value="{{ old('client_contact', $task->client_contact) }}">
-                            </div>
+                        <div class="form-group mb-3">
+                            <label class="text-white">Task Name</label>
+                            <input type="text" name="name" class="form-control"
+                                value="{{ old('name', $task->name) }}">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="text-white">Client Name</label>
+                            <input type="text" name="client_name" class="form-control"
+                                value="{{ old('client_name', $task->client_name) }}">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="text-white">Description</label>
+                            <textarea name="description" class="form-control">{{ old('description', $task->description) }}</textarea>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="text-white">Client Email</label>
+                            <input type="email" name="client_email" class="form-control"
+                                value="{{ old('client_email', $task->client_email) }}">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="text-white">Client Contact</label>
+                            <input type="text" name="client_contact" class="form-control"
+                                value="{{ old('client_contact', $task->client_contact) }}">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="text-white">Department</label>
                             <select name="department_id" id="department_id"
-                                class="form-control custom-select bg-dark text-white">
+                                class="form-control custom-select bg-dark text-white" required>
                                 <option value="">Select Department</option>
                                 @foreach ($departments as $department)
                                     <option value="{{ $department->id }}"
-                                        {{ old('department_id', $task->department_id ?? '') == $department->id ? 'selected' : '' }}>
+                                        {{ old('department_id', $task->department_id) == $department->id ? 'selected' : '' }}>
                                         {{ $department->name }}
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
 
-                            <div class="form-group">
-                                <label class="text-white">Project Manager</label>
-                                <select name="project_manager_id" class="form-control custom-select bg-dark text-white">
-                                    <option value="">Select Project Manager</option>
-                                    @foreach ($departments as $department)
-                                        @foreach ($department->projectManagers as $manager)
-                                            <option value="{{ $manager->id }}"
-                                                {{ $manager->id == $task->project_manager_id ? 'selected' : '' }}>
-                                                {{ $department->name }} ({{ $manager->name }})
-                                            </option>
-                                        @endforeach
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="text-white">Manager Email</label>
-                                <input type="email" name="manager_email" class="form-control"
-                                    value="{{ old('manager_email', $task->manager_email) }}">
-                            </div>
-                            <div class="form-group">
-                                <label class="text-white">Start Date</label>
-                                <input type="date" name="start_date" class="form-control"
-                                    value="{{ old('start_date', \Carbon\Carbon::parse($task->start_date)->format('Y-m-d')) }}">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="text-white">Deadline</label>
-                                <input type="date" name="deadline" class="form-control"
-                                    value="{{ old('deadline', \Carbon\Carbon::parse($task->deadline)->format('Y-m-d')) }}">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="text-white">Priority</label>
-                                <select name="priority" class="form-control custom-select bg-dark text-white">
-                                    <option value="">Select Priority</option>
-                                    <option value="Low"
-                                        {{ old('priority', $task->priority) == 'Low' ? 'selected' : '' }}>Low</option>
-                                    <option value="Medium"
-                                        {{ old('priority', $task->priority) == 'Medium' ? 'selected' : '' }}>Medium
+                        <div class="form-group mb-3">
+                            <label class="text-white">Project Manager</label>
+                            <select name="project_manager_id" id="project_manager_id"
+                                class="form-control custom-select bg-dark text-white" required>
+                                <option value="">Select Project Manager</option>
+                                @foreach ($managers as $manager)
+                                    <option value="{{ $manager->id }}"
+                                        {{ old('project_manager_id', $task->project_manager_id) == $manager->id ? 'selected' : '' }}>
+                                        {{ $manager->name }}
                                     </option>
-                                    <option value="High"
-                                        {{ old('priority', $task->priority) == 'High' ? 'selected' : '' }}>High</option>
-                                </select>
-                            </div>
+                                @endforeach
+                            </select>
+                        </div>
 
-                            <div class="form-group text-center mt-3">
-                                <button type="submit" class="btn btn-light">Update Task</button>
-                            </div>
-                        </form>
-                    </div>
+                        <div class="form-group mb-3">
+                            <label class="text-white">Manager Email</label>
+                            <input type="email" name="manager_email" class="form-control"
+                                value="{{ old('manager_email', $task->manager_email) }}">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="text-white">Start Date</label>
+                            <input type="date" name="start_date" class="form-control"
+                                value="{{ old('start_date', \Carbon\Carbon::parse($task->start_date)->format('Y-m-d')) }}">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="text-white">Deadline</label>
+                            <input type="date" name="deadline" class="form-control"
+                                value="{{ old('deadline', \Carbon\Carbon::parse($task->deadline)->format('Y-m-d')) }}">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="text-white">Priority</label>
+                            <select name="priority" class="form-control custom-select bg-dark text-white">
+                                <option value="">Select Priority</option>
+                                <option value="Low" {{ old('priority', $task->priority) == 'Low' ? 'selected' : '' }}>Low</option>
+                                <option value="Medium" {{ old('priority', $task->priority) == 'Medium' ? 'selected' : '' }}>Medium</option>
+                                <option value="High" {{ old('priority', $task->priority) == 'High' ? 'selected' : '' }}>High</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group text-center mt-3">
+                            <button type="submit" class="btn btn-light">Update Task</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+{{-- jQuery AJAX for loading managers dynamically --}}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#department_id').on('change', function() {
+        let departmentId = $(this).val();
+        if (departmentId) {
+            $.ajax({
+                url: '/get-project-managers/' + departmentId,
+                type: 'GET',
+                dataType: 'json',
+                success: function(data) {
+                    $('#project_manager_id').empty().append('<option value="">Select Project Manager</option>');
+                    $.each(data, function(key, manager) {
+                        $('#project_manager_id').append(
+                            `<option value="${manager.id}">${manager.name}</option>`
+                        );
+                    });
+                }
+            });
+        } else {
+            $('#project_manager_id').empty().append('<option value="">Select Project Manager</option>');
+        }
+    });
+});
+</script>
 @endsection

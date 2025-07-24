@@ -27,59 +27,62 @@ class ProjectManager extends Controller
         return view('project_manager.register', compact('departments'));
     }
 
-    function register(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:project_managers',
-            'phone' => 'required|string|max:15',
-            'password' => 'required|string|min:3|confirmed',
-            'department_ids' => 'required|array',
-            'department_ids.*' => 'exists:departments,id',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+    
+function register(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:project_managers',
+        'phone' => 'required|string|max:15',
+        'password' => 'required|string|min:3|confirmed',
+        'department_ids' => 'required|array',
+        'department_ids.*' => 'exists:departments,id',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()->witheError($validator)->withInput();
-        }
-
-        $manager = new ModelsProjectManager();
-        $manager->name = $request->name;
-        $manager->email = $request->email;
-        $manager->phone = $request->phone;
-        $manager->password = bcrypt($request->password);
-
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('images/project_managers'), $imageName);
-            $manager->image = $imageName;
-        } else {
-            $randomId = rand(1, 30);
-            $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
-            if ($imageContent !== false) {
-                $imageName = time() . '_auto.jpg';
-                file_put_contents(public_path("images/project_managers/$imageName"), $imageContent);
-                $manager->image = $imageName;
-            }
-        }
-
-        if ($manager->save()) {
-            $manager->departments()->attach($request->department_ids);
-            $token = Str::random(64);
-            $manager->login_token = $token;
-            $manager->save();
-
-            $loginLink = route('project_manager.token.login', ['token' => $token]);
-            Mail::to($manager->email)->send(new AuthMail($manager, $loginLink));
-
-            session()->flash('success_swal', 'Project Manager registered successfullyly.');
-            return redirect()->route('welcome');
-        }
-        session()->flash('error_swal', 'Failed to register Project Manager.');
-        return redirect()->back()->withInput();
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput();
     }
 
+    $manager = new ModelsProjectManager();
+    $manager->name = $request->name;
+    $manager->email = $request->email;
+    $manager->phone = $request->phone;
+    $manager->password = bcrypt($request->password);
+    $manager->department_ids = $request->department_ids; // ✅ save as JSON
+
+    // Handle image
+    if ($request->hasFile('image')) {
+        $image = $request->file('image');
+        $imageName = time() . '.' . $image->getClientOriginalExtension();
+        $image->move(public_path('images/project_managers'), $imageName);
+        $manager->image = $imageName;
+    } else {
+        $randomId = rand(1, 30);
+        $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
+        if ($imageContent !== false) {
+            $imageName = time() . '_auto.jpg';
+            file_put_contents(public_path("images/project_managers/$imageName"), $imageContent);
+            $manager->image = $imageName;
+        }
+    }
+
+    // Save and send login link
+    if ($manager->save()) {
+        $token = Str::random(64);
+        $manager->login_token = $token;
+        $manager->save();
+
+        $loginLink = route('project_manager.token.login', ['token' => $token]);
+        Mail::to($manager->email)->send(new AuthMail($manager, $loginLink));
+
+        session()->flash('success_swal', 'Project Manager registered successfully.');
+        return redirect()->route('welcome');
+    }
+
+    session()->flash('error_swal', 'Failed to register Project Manager.');
+    return redirect()->back()->withInput();
+}
     function loginview()
     {
         return view('project_manager.login');
@@ -173,22 +176,22 @@ class ProjectManager extends Controller
 
     public function onwertask()
     {
-        $pm = Auth::guard('project_manager')->user();
-
-        $departmentIds = $pm->departments->pluck('id')->toArray();
-
-        $teamLeads = TeamLead::whereIn('department_id', $departmentIds)->get();
-
+        $manager = Auth::guard('project_manager')->user();
+    
+        // Fix: department_ids is a JSON column with array of IDs
+        $teamLeads = TeamLead::whereIn('department_id', $manager->department_ids)->get();
+    
         $tasks = OnwerTask::with(['teamLead', 'department'])
-            ->where('project_manager_id', $pm->id)
+            ->where('project_manager_id', $manager->id)
             ->get();
-
+    
         if ($teamLeads->isEmpty()) {
             session()->flash('error_swal', 'Team Lead data not fetched.');
         }
-
+    
         return view('project_manager.owner_tasks', compact('tasks', 'teamLeads'));
     }
+    
 
     public function assignTeamLead(Request $request, OnwerTask $task)
     {
@@ -254,13 +257,17 @@ class ProjectManager extends Controller
     }
 
    
-
-    function manager_task_list()
+    public function manager_task_list()
     {
-        $manager = Auth::guard('project_manager')->user();
-        $tasks = OnwerTask::where('project_manger_task', $manager->id)->get();
-        return view('project_manager.my_task', compact('tasks'));
+        $currentManager = Auth::guard('project_manager')->user();
+    
+        $managers = ModelsProjectManager::all();
+    
+        $tasks = OnwerTask::where('project_manger_task', $currentManager->id)->get();
+    
+        return view('project_manager.my_task', compact('tasks', 'managers'));
     }
+    
 
     function my_task_detail($id)
     {
@@ -268,19 +275,30 @@ class ProjectManager extends Controller
         return view('project_manager.my_task_detail', compact('task'));
     }
 
-
     function create_my_task()
     {
-        $project_manager = Auth::guard('project_manager')->user();
-
-        // Fetch departments assigned to the logged-in manager
-        $departments = $project_manager->departments; // uses the belongsToMany relation
-
-        // Get team leads belonging to those departments
-        $team_leads = TeamLead::whereIn('department_id', $departments->pluck('id'))->get();
-
+        $projectManager = Auth::guard('project_manager')->user();
+    
+        if (!$projectManager) {
+            abort(403, 'Unauthorized');
+        }
+    
+        // Get the single department assigned to this project manager
+        $department = Department::find($projectManager->department_id);
+    
+        if (!$department) {
+            abort(404, 'Department not found');
+        }
+    
+        // Get team leads who belong to this department
+        $team_leads = TeamLead::where('department_id', $department->id)->get();
+    
+        // Pass the department wrapped in an array so blade foreach works
+        $departments = [$department];
+    
         return view('project_manager.create_my_task', compact('team_leads', 'departments'));
     }
+    
 
     function store_my_task(Request $request)
     {
