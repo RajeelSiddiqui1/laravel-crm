@@ -43,6 +43,12 @@ Route::controller(ProjectManager::class)->group(function () {
             Route::put('/project-manager/mytask/edit/{id}', 'mytask_update')->name('project_manager.mytask_update');
             Route::delete('/project-manager/mytask/delete/{id}', 'my_task_destroy')->name('project_manager.mytask_delete');
             Route::post('/my-tasks/share/{id}',  'share_task')->name('project_manager.share_task');
+            Route::post('/project-manager/shared-tasks',  'shareTask')->name('project_manager.share_task');
+            // Route::get('/project-manager/shared-tasks/list',  'sharedTaskList')->name('project_manager.shared_tasks');
+            Route::patch('project-manager/owner-tasks/{id}/status2', 'updateStatus2')
+                ->name('project_manager.update_status2');
+            Route::patch('project-manager/owner-tasks/{id}/status3', 'updateStatus3')
+                ->name('project_manager.update_status3');
         }
     );
 
@@ -82,7 +88,6 @@ Route::controller(ProjectOnwer::class)->group(function () {
         Route::get('/project-owner/subtask/detail/{id}', 'subtask_detail')->name('project_owner.subtask.detail');
         Route::get('/project-owner/manager-tasks', 'allOwnerTasks')->name('project_owner.manager_tasks');
         Route::get('/get-project-managers/{departmentId}', 'getProjectManagers');
-
     });
 });
 

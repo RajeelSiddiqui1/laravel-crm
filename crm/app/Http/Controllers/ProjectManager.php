@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
 use App\Models\Notification;
+use App\Models\SharedTask;
 use App\Models\TeamLead;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -27,62 +28,62 @@ class ProjectManager extends Controller
         return view('project_manager.register', compact('departments'));
     }
 
-    
-function register(Request $request)
-{
-    $validator = Validator::make($request->all(), [
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255|unique:project_managers',
-        'phone' => 'required|string|max:15',
-        'password' => 'required|string|min:3|confirmed',
-        'department_ids' => 'required|array',
-        'department_ids.*' => 'exists:departments,id',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-    ]);
 
-    if ($validator->fails()) {
-        return redirect()->back()->withErrors($validator)->withInput();
-    }
+    function register(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:project_managers',
+            'phone' => 'required|string|max:15',
+            'password' => 'required|string|min:3|confirmed',
+            'department_ids' => 'required|array',
+            'department_ids.*' => 'exists:departments,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
-    $manager = new ModelsProjectManager();
-    $manager->name = $request->name;
-    $manager->email = $request->email;
-    $manager->phone = $request->phone;
-    $manager->password = bcrypt($request->password);
-    $manager->department_ids = $request->department_ids; // ✅ save as JSON
-
-    // Handle image
-    if ($request->hasFile('image')) {
-        $image = $request->file('image');
-        $imageName = time() . '.' . $image->getClientOriginalExtension();
-        $image->move(public_path('images/project_managers'), $imageName);
-        $manager->image = $imageName;
-    } else {
-        $randomId = rand(1, 30);
-        $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
-        if ($imageContent !== false) {
-            $imageName = time() . '_auto.jpg';
-            file_put_contents(public_path("images/project_managers/$imageName"), $imageContent);
-            $manager->image = $imageName;
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
         }
+
+        $manager = new ModelsProjectManager();
+        $manager->name = $request->name;
+        $manager->email = $request->email;
+        $manager->phone = $request->phone;
+        $manager->password = bcrypt($request->password);
+        $manager->department_ids = $request->department_ids; // ✅ save as JSON
+
+        // Handle image
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('images/project_managers'), $imageName);
+            $manager->image = $imageName;
+        } else {
+            $randomId = rand(1, 30);
+            $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
+            if ($imageContent !== false) {
+                $imageName = time() . '_auto.jpg';
+                file_put_contents(public_path("images/project_managers/$imageName"), $imageContent);
+                $manager->image = $imageName;
+            }
+        }
+
+        // Save and send login link
+        if ($manager->save()) {
+            $token = Str::random(64);
+            $manager->login_token = $token;
+            $manager->save();
+
+            $loginLink = route('project_manager.token.login', ['token' => $token]);
+            Mail::to($manager->email)->send(new AuthMail($manager, $loginLink));
+
+            session()->flash('success_swal', 'Project Manager registered successfully.');
+            return redirect()->route('welcome');
+        }
+
+        session()->flash('error_swal', 'Failed to register Project Manager.');
+        return redirect()->back()->withInput();
     }
-
-    // Save and send login link
-    if ($manager->save()) {
-        $token = Str::random(64);
-        $manager->login_token = $token;
-        $manager->save();
-
-        $loginLink = route('project_manager.token.login', ['token' => $token]);
-        Mail::to($manager->email)->send(new AuthMail($manager, $loginLink));
-
-        session()->flash('success_swal', 'Project Manager registered successfully.');
-        return redirect()->route('welcome');
-    }
-
-    session()->flash('error_swal', 'Failed to register Project Manager.');
-    return redirect()->back()->withInput();
-}
     function loginview()
     {
         return view('project_manager.login');
@@ -130,11 +131,18 @@ function register(Request $request)
         return redirect()->route('project_manager.login')->with('success_swal', 'Logged out successfullyly');
     }
 
-    function home()
+    public function home()
     {
-        return view('project_manager.home');
+        $manager = Auth::guard('project_manager')->user();
+    
+        $tasks = SharedTask::with(['task.department', 'task.teamLead'])
+                           ->where('assigned_to', $manager->id)
+                           ->latest()
+                           ->get()
+                           ->pluck('task');
+    
+        return view('project_manager.home', compact('tasks'));
     }
-
     function profile_view()
     {
         $manager = Auth::guard('project_manager')->user();
@@ -177,21 +185,37 @@ function register(Request $request)
     public function onwertask()
     {
         $manager = Auth::guard('project_manager')->user();
-    
+
+        $otherManagers = ModelsProjectManager::where('id', '!=', $manager->id)
+            ->pluck('name', 'id');
+
+        // tasks created by this manager
+        $tasks = OnwerTask::with(['department', 'teamLead'])
+            ->where('project_manger_task', $manager->id)
+            ->get()
+            ->map(function ($task) {
+                // show "Call operator" when department is "Call Center"
+                if ($task->department && $task->department->name === 'Call Center') {
+                    $task->department->name = 'Call operator';
+                }
+                return $task;
+            });
+
+
         // Fix: department_ids is a JSON column with array of IDs
         $teamLeads = TeamLead::whereIn('department_id', $manager->department_ids)->get();
-    
+
         $tasks = OnwerTask::with(['teamLead', 'department'])
             ->where('project_manager_id', $manager->id)
             ->get();
-    
+
         if ($teamLeads->isEmpty()) {
             session()->flash('error_swal', 'Team Lead data not fetched.');
         }
-    
-        return view('project_manager.owner_tasks', compact('tasks', 'teamLeads'));
+
+        return view('project_manager.owner_tasks', compact('tasks', 'teamLeads', 'otherManagers'));
     }
-    
+
 
     public function assignTeamLead(Request $request, OnwerTask $task)
     {
@@ -227,7 +251,24 @@ function register(Request $request)
     }
 
 
+    public function updateStatus2(Request $request, $id)
+    {
+        $request->validate(['status2' => 'required|in:approved,rejected,lated,pending']);
+        OnwerTask::findOrFail($id)->update(['status2' => $request->status2]);
+        return redirect()->back()->with('success_swal', 'Status updated');
+    }
 
+    // TaskController.php  (or wherever your project-manager methods live)
+    public function updateStatus3(Request $request, $id)
+    {
+        $request->validate([
+            'status3' => 'required|in:pending,approved,rejected,lated'
+        ]);
+
+        OnwerTask::findOrFail($id)->update(['status3' => $request->status3]);
+
+        return redirect()->back()->with('success_swal', 'Status3 updated successfully.');
+    }
 
 
     public function notifications()
@@ -256,18 +297,65 @@ function register(Request $request)
         return redirect()->route('project_manager.tasks');
     }
 
-   
+
     public function manager_task_list()
     {
         $currentManager = Auth::guard('project_manager')->user();
-    
-        $managers = ModelsProjectManager::all();
-    
-        $tasks = OnwerTask::where('project_manger_task', $currentManager->id)->get();
-    
-        return view('project_manager.my_task', compact('tasks', 'managers'));
+
+        // all managers for the share dropdown
+        $otherManagers = ModelsProjectManager::where('id', '!=', $currentManager->id)
+            ->pluck('name', 'id');
+
+        // tasks created by this manager
+        $tasks = OnwerTask::with(['department', 'teamLead'])
+            ->where('project_manger_task', $currentManager->id)
+            ->get()
+            ->map(function ($task) {
+                // show "Call operator" when department is "Call Center"
+                if ($task->department && $task->department->name === 'Call Center') {
+                    $task->department->name = 'Call operator';
+                }
+                return $task;
+            });
+
+        return view('project_manager.my_task', compact('tasks', 'otherManagers'));
     }
-    
+
+
+    public function shareTask(Request $request)
+    {
+        $validated = $request->validate([
+            'task_id'       => 'required|exists:owner_tasks,id',
+            'department_id' => 'required|exists:departments,id',
+            'assigned_to'   => 'required|exists:project_managers,id',
+        ]);
+
+        $currentManager = auth()->guard('project_manager')->user();
+        $task           = OnwerTask::findOrFail($validated['task_id']);
+
+        // Insert or update the share row
+        SharedTask::updateOrCreate(
+            [
+                'owner_task_id' => $validated['task_id'],
+                'assigned_by'   => $currentManager->id,
+                'assigned_to'   => $validated['assigned_to'],
+            ],
+            [
+                'department_id' => $validated['department_id'],
+            ]
+        );
+
+        // Notify the manager who receives the share
+        Notification::create([
+            'title'     => 'Task Shared With You',
+            'message'   => 'Task "' . $task->name . '" has been shared by ' . $currentManager->name . '.',
+            'user_id'   => $validated['assigned_to'],
+            'user_type' => 'project_manager',
+        ]);
+
+        // AJAX-friendly response
+        return response()->json(['success' => true, 'message' => 'Task has been shared']);
+    }
 
     function my_task_detail($id)
     {
@@ -275,30 +363,27 @@ function register(Request $request)
         return view('project_manager.my_task_detail', compact('task'));
     }
 
-    function create_my_task()
+    public function create_my_task()
     {
+        // 1. Logged-in manager (guard: project_manager)
         $projectManager = Auth::guard('project_manager')->user();
-    
-        if (!$projectManager) {
-            abort(403, 'Unauthorized');
-        }
-    
-        // Get the single department assigned to this project manager
-        $department = Department::find($projectManager->department_id);
-    
-        if (!$department) {
-            abort(404, 'Department not found');
-        }
-    
-        // Get team leads who belong to this department
-        $team_leads = TeamLead::where('department_id', $department->id)->get();
-    
-        // Pass the department wrapped in an array so blade foreach works
-        $departments = [$department];
-    
-        return view('project_manager.create_my_task', compact('team_leads', 'departments'));
+
+        // 2. Grab the JSON/array column `department_ids`
+        $departmentIds = $projectManager->department_ids;   // e.g. [1,2,3]
+
+        // 3. Departments that the manager oversees
+        $departments = Department::whereIn('id', $departmentIds)->get(['id', 'name']);
+
+        // 4. Team-leads that belong to those departments (with their department name)
+        $team_leads = TeamLead::with('department:id,name')
+            ->whereIn('department_id', $departmentIds)
+            ->get(['id', 'name', 'department_id']);
+
+        // 5. Pass to the view
+        return view('project_manager.create_my_task', compact('departments', 'team_leads'));
     }
-    
+
+
 
     function store_my_task(Request $request)
     {
@@ -351,14 +436,17 @@ function register(Request $request)
         }
     }
 
-    function mytask_edit($id)
+    public function mytask_edit($id)
     {
-        $task = OnwerTask::findOrFail($id);
-        $departments = Department::with('teamLeads')->get(); // use correct relationship name
-        $team_leads = TeamLead::all(); // get team leads if needed for dropdown
+        $task        = OnwerTask::with(['department', 'teamLead'])->findOrFail($id);
+        $manager     = Auth::guard('project_manager')->user();
+        $deptIds     = $manager->department_ids;
+
+        $departments = Department::whereIn('id', $deptIds)->get(['id', 'name']);
+        $team_leads  = TeamLead::whereIn('department_id', $deptIds)->get(['id', 'name', 'department_id']);
+
         return view('project_manager.edit_my_task', compact('task', 'departments', 'team_leads'));
     }
-
 
     function mytask_update(Request $request, $id)
     {
@@ -433,49 +521,62 @@ function register(Request $request)
         return redirect()->route('project_manager.mytask')->with('success_swal', 'Task deleted successfullyly.');
     }
 
+    // public function sharedTaskList()
+    // {
+    //     $manager = Auth::guard('project_manager')->user();
+
+    //     $tasks = SharedTask::with(['task.department', 'task.teamLead', 'sharedBy'])
+    //         ->where('assigned_to', $manager->id)
+    //         ->latest()
+    //         ->get()
+    //         ->pluck('task');
+
+    //     return view('project_manager.home', compact('tasks'));
+    // }
+
     function subtask()
     {
         $manager = Auth::guard('project_manager')->user();
-    
-       
+
+
         $departmentIds = $manager->departments->pluck('id')->toArray();
-    
-       
+
+
         $subtasks = Subtask::whereIn('department_id', $departmentIds)
-            ->with('employee') 
+            ->with('employee')
             ->get();
-    
+
         return view('project_manager.subtask', compact('subtasks'));
     }
 
     public function subtask_detail($id)
-    { $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
-    
+    {
+        $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
+
         $employeeId = $subtask->assigned_employee_id;
-    
+
         $employeeSubtasks = Subtask::with('employeeSubtask')
             ->where('assigned_employee_id', $employeeId)
             ->orderBy('created_at', 'desc')
             ->get();
-    
+
         $attachments = [];
-    
+
         if ($subtask->employeeSubtask && $subtask->employeeSubtask->attachments) {
             $attachments = is_array($subtask->employeeSubtask->attachments)
                 ? $subtask->employeeSubtask->attachments
                 : json_decode($subtask->employeeSubtask->attachments, true);
-    
+
             if (!is_array($attachments)) {
                 $attachments = explode(',', $subtask->employeeSubtask->attachments);
             }
-    
+
             $attachments = collect($attachments)->flatten()->filter(function ($url) {
                 return is_string($url) && !empty(trim($url));
             })->values()->all();
         }
-    
 
-        return view('project_manager.subtask_detail', compact('subtask', 'employeeSubtasks','attachments'));
+
+        return view('project_manager.subtask_detail', compact('subtask', 'employeeSubtasks', 'attachments'));
     }
-    
 }

@@ -22,6 +22,7 @@ class OnwerTask extends Model
         'manager_email',
         'priority',
         'status',
+        'status2',
         'start_date',
         'deadline',
     ];

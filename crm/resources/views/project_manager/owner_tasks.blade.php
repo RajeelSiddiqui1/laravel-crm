@@ -37,8 +37,9 @@
                     <th>Priority</th>
                     <th>Start Date</th>
                     <th>Deadline</th>
-                    <th>Status</th>
+                    <th>Teamlead Status</th>
                     <th>Team Lead</th>
+                    <th>Shared Task</th>
                     <th>View</th>
                     <th>Group Chat</th>
                 </tr>
@@ -76,6 +77,32 @@
                                 </form>
                             @endif
                         </td>
+                          <td>
+                                @php
+                                    // already shared with this manager?
+                                    $shared = \App\Models\SharedTask::where('owner_task_id', $task->id)
+                                        ->where('assigned_by', auth()->guard('project_manager')->id())
+                                        ->first();
+                                @endphp
+
+                                <form action="{{ route('project_manager.share_task') }}" method="POST"
+                                    style="display:inline;">
+                                    @csrf
+                                    <input type="hidden" name="task_id" value="{{ $task->id }}">
+                                    <input type="hidden" name="department_id" value="{{ $task->department_id }}">
+
+                                    <select name="assigned_to" class="form-control form-select-sm"
+                                        onchange="this.form.submit();">
+                                        <option value="">Share with…</option>
+                                        @foreach ($otherManagers as $id => $name)
+                                            <option value="{{ $id }}"
+                                                {{ optional($shared)->assigned_to == $id ? 'selected' : '' }}>
+                                                {{ $name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </form>
+                            </td>
                         <td>
                             <a href="{{ route('project_manager.tasks.detail', $task->id) }}"
                                 class="btn btn-sm btn-primary">View</a>

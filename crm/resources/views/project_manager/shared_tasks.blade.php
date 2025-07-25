@@ -2,9 +2,6 @@
 
 @section('content')
     <div class="container-fluid">
-        <div class="row justify-content-center">
-            <h2> 👋 Welcome, {{ Auth::guard('project_manager')->user()->name }}</h2>
-        </div>
         <h2 class="mb-3">Shared With Me</h2>
 
         @if (session('success_swal'))
@@ -41,10 +38,8 @@
                         <th>Priority</th>
                         <th>Start</th>
                         <th>Deadline</th>
+                        <th>Status</th>
                         <th>Team Lead</th>
-                        <th>TeamLead Status</th>
-                        <th>Manager Status</th>
-                        <th>Your Status</th>
                         <th>View</th>
                         <th>Group Chat</th>
                     </tr>
@@ -70,15 +65,14 @@
                                     {{ ucfirst($task->status2) }}
                                 </span>
                             </td>
-                            <td>{{ $task->teamLead->name ?? '—' }}</td>
 
                             {{-- status3 dropdown --}}
                             <td>
                                 <form method="POST" action="{{ route('project_manager.update_status3', $task->id) }}"
                                     class="d-inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <select name="status3" class="form-control " onchange="this.form.submit()">
+                                    @csrf @method('PATCH')
+                                    <select name="status3" class="form-control form-select-sm"
+                                        onchange="this.form.submit()">
                                         @foreach (['pending', 'approved', 'rejected', 'lated'] as $s)
                                             <option value="{{ $s }}"
                                                 {{ $task->status3 == $s ? 'selected' : '' }}>
@@ -88,11 +82,11 @@
                                     </select>
                                 </form>
                             </td>
+                            <td>{{ $task->teamLead->name ?? '—' }}</td>
                             <td>
                                 <a href="{{ route('project_manager.tasks.detail', $task->id) }}"
                                     class="btn btn-sm btn-primary">View</a>
                             </td>
-
                             <td>
                                 <a href="{{ route('chat.group', $task->id) }}" class="btn btn-success btn-sm">Group
                                     Chat</a>
