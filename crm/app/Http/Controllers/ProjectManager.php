@@ -185,71 +185,60 @@ class ProjectManager extends Controller
     public function onwertask()
     {
         $manager = Auth::guard('project_manager')->user();
-
+    
         $otherManagers = ModelsProjectManager::where('id', '!=', $manager->id)
             ->pluck('name', 'id');
-
-        // tasks created by this manager
+    
+        // Fetch tasks and apply department name transformation
         $tasks = OnwerTask::with(['department', 'teamLead'])
-            ->where('project_manger_task', $manager->id)
+            ->where('project_manager_id', $manager->id)
             ->get()
             ->map(function ($task) {
-                // show "Call operator" when department is "Call Center"
                 if ($task->department && $task->department->name === 'Call Center') {
                     $task->department->name = 'Call operator';
                 }
                 return $task;
             });
-
-
-        // Fix: department_ids is a JSON column with array of IDs
-        $teamLeads = TeamLead::whereIn('department_id', $manager->department_ids)->get();
-
-        $tasks = OnwerTask::with(['teamLead', 'department'])
-            ->where('project_manager_id', $manager->id)
-            ->get();
-
+    
+        // Fetch team leads based on manager's department_ids
+        $teamLeads = TeamLead::whereIn('department_id', $manager->department_ids ?? [])->get();
+    
         if ($teamLeads->isEmpty()) {
             session()->flash('error_swal', 'Team Lead data not fetched.');
         }
-
+    
         return view('project_manager.owner_tasks', compact('tasks', 'teamLeads', 'otherManagers'));
     }
-
 
     public function assignTeamLead(Request $request, OnwerTask $task)
     {
         $request->validate(['team_lead_id' => 'required|exists:team_leads,id']);
-
+    
         $pm = Auth::guard('project_manager')->user();
         $teamLead = TeamLead::find($request->team_lead_id);
-
+    
         if ($task->project_manager_id !== $pm->id) {
             abort(403, 'Unauthorized action.');
         }
-
+    
         if ($teamLead->department_id !== $task->department_id) {
             abort(403, 'The selected team lead does not belong to the same department as the task.');
         }
-
-        if (!$pm->departments->contains('id', $teamLead->department_id)) {
+    
+        // Check if team lead's department_id is in the manager's department_ids array
+        $managerDepartmentIds = $pm->department_ids ?? [];
+        if (!in_array($teamLead->department_id, $managerDepartmentIds)) {
             abort(403, 'You cannot assign a team lead from a department you are not associated with.');
         }
-
+    
         $task->team_lead_id = $teamLead->id;
         if ($task->save()) {
             $team_lead = TeamLead::find($task->team_lead_id);
             Mail::to($team_lead->email)->send(new AssignedTeamLeaderTask($task));
         }
-
-        return back()->with('success_swal', 'Team Lead assigned successfullyly!');
+    
+        return back()->with('success_swal', 'Team Lead assigned successfully!');
     }
-    function onwertask_detail($id)
-    {
-        $task = OnwerTask::findOrFail($id);
-        return view('project_manager.owner_task_detail', compact('task'));
-    }
-
 
     public function updateStatus2(Request $request, $id)
     {
@@ -264,8 +253,14 @@ class ProjectManager extends Controller
         $request->validate([
             'status3' => 'required|in:pending,approved,rejected,lated'
         ]);
+        
+        $task = OnwerTask::findOrFail($id);
+        $task->status3 = $request->status3;
+        $task->save();
 
-        OnwerTask::findOrFail($id)->update(['status3' => $request->status3]);
+        if(!$task->save()){
+                return redirect()->back()->with('error_swal', 'Status3 not updated successfully.');
+        }
 
         return redirect()->back()->with('success_swal', 'Status3 updated successfully.');
     }

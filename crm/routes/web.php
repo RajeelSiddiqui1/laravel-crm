@@ -158,5 +158,8 @@ Route::post('/chat/group/send', [GroupChatController::class, 'send'])->name('cha
 
 
 Route::get('/notifications', [NotificationController::class, 'allNotifications'])->name('notifications.index');
-
 Route::get('/admin/notifications', [NotificationController::class, 'showAllForAdmin'])->name('notifications.admin');
+
+
+Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])
+      ->name('notifications.unread-count');

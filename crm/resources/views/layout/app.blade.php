@@ -132,62 +132,77 @@
                             <i class="zmdi zmdi-city mr-2"></i> <span>Subtask</span>
                         </a>
                     </li>
-                    @php
-                        $user = null;
-                        $guard = null;
-
-                        foreach (['project_owner', 'project_manager', 'team_lead', 'employee'] as $g) {
-                            if (Auth::guard($g)->check()) {
-                                $user = Auth::guard($g)->user();
-                                $guard = $g;
-                                break;
-                            }
-                        }
-
-                        $notificationCount = 0;
-
-                        if ($user && $guard) {
-                            $notificationCount = \App\Models\Notification::where('user_id', $user->id)
-                                ->where('user_type', $guard)
-                                ->where('is_read', false)
-                                ->count();
-                        }
-                    @endphp
-
-                    <!-- 🔔 Notification Icon -->
+                    {{-- 🔔 Notification Icon --}}
                     <li class="nav-item">
                         <a class="nav-link position-relative d-flex align-items-center"
-                            href="{{ route('notifications.index') }}"
-                            @if ($notificationCount > 0) onclick="playNotificationSound()" @endif>
+                            href="{{ route('notifications.index') }}">
                             <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
-                            @if ($notificationCount > 0)
-                                <span
-                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
-                                    {{ $notificationCount > 99 ? '99+' : $notificationCount }}
-                                    <span class="visually-hidden">unread notifications</span>
-                                </span>
-                            @endif
+                            <span id="notif-badge"
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm"
+                                style="display:none;">
+                                0
+                            </span>
                         </a>
                     </li>
 
-                    <!-- 🔊 Audio Element -->
+                    {{-- 🔊 Audio --}}
                     <audio id="notif-sound" preload="auto">
                         <source src="{{ asset('sounds/notification.mp3') }}" type="audio/mpeg">
                     </audio>
 
-                    <!-- 📜 JS Script -->
+                    {{-- 🌐 Pusher via CDN (no npm) --}}
+                    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
                     <script>
-                        function playNotificationSound() {
-                            const audio = document.getElementById('notif-sound');
-                            if (audio) {
-                                audio.currentTime = 0;
-                                audio.play().catch(err => {
-                                    console.warn("Sound failed:", err);
-                                });
+                        /* 1. Identify current user/guard */
+                        @php
+                            $user = null;
+                            $guard = null;
+                            foreach (['project_owner', 'project_manager', 'team_lead', 'employee'] as $g) {
+                                if (Auth::guard($g)->check()) {
+                                    $user = Auth::guard($g)->user();
+                                    $guard = $g;
+                                    break;
+                                }
                             }
-                        }
-                    </script>
+                        @endphp
 
+                        /* 2. Initial unread count */
+                        let unreadCount = 0;
+
+                        function fetchCount() {
+                            fetch('{{ route('notifications.unread-count') }}')
+                                .then(r => r.json())
+                                .then(d => {
+                                    unreadCount = d.count;
+                                    updateBadge();
+                                });
+                        }
+                        fetchCount();
+
+                        /* 3. Badge DOM update */
+                        function updateBadge() {
+                            const badge = document.getElementById('notif-badge');
+                            badge.style.display = unreadCount > 0 ? 'block' : 'none';
+                            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                        }
+
+                        /* 4. Connect to Pusher and listen */
+                        @if ($user)
+                            (function() {
+                                const pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+                                    cluster: '{{ env('PUSHER_APP_CLUSTER') }}'
+                                });
+
+                                const channel = pusher.subscribe('notifications.{{ $user->id }}.{{ $guard }}');
+
+                                channel.bind('NewNotification', () => {
+                                    unreadCount += 1;
+                                    updateBadge();
+                                    document.getElementById('notif-sound').play().catch(() => {});
+                                });
+                            })();
+                        @endif
+                    </script>
                 </ul>
             </div>
 
@@ -719,7 +734,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
         integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous">
     </script>
-         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js"
         integrity="sha384-7qAoOXltbVP82dhxHAUje59V5r2YsVfBafyUDxEdApLPmcdhBPg1DKg1ERo0BZlK" crossorigin="anonymous">
     </script>
