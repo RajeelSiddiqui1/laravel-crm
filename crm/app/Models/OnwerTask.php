@@ -25,6 +25,7 @@ class OnwerTask extends Model
         'status2',
         'start_date',
         'deadline',
+        'account_id',
     ];
 
     protected $casts = [
@@ -48,6 +49,11 @@ class OnwerTask extends Model
         return $this->belongsTo(Department::class);
     }
 
+   public function account()
+{
+    return $this->belongsTo(Account::class, 'account_id');
+}
+
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id');
@@ -61,5 +67,10 @@ class OnwerTask extends Model
     public function teamLead()
     {
         return $this->belongsTo(TeamLead::class, 'team_lead_id');
+    }
+
+    public function sharedTasks()
+    {
+        return $this->hasMany(SharedTask::class, 'owner_task_id');
     }
 }

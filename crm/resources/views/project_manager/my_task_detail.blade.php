@@ -37,7 +37,7 @@
         }
 
         .task-card:hover {
-            transform: rotateY(5deg) rotateX(5deg) transalateY(-10px);
+            transform: rotateY(5deg) rotateX(5deg) translateY(-10px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
         }
 
@@ -295,7 +295,7 @@
             to { opacity: 1; transform: translateX(0); }
         }
 
-        /* Particle Background (Optional) */
+        /* Particle Background */
         #particles-js {
             position: fixed;
             top: 0;
@@ -321,30 +321,23 @@
                 <div class="task-card fade-in" data-tilt data-tilt-max="10" data-tilt-speed="400" data-tilt-perspective="1000">
                     <!-- Task Header -->
                     <div class="task-header">
-                        <h5 class="task-title">{{ $task->client_name }}</h5>
-                        <p class="task-description">{{ $task->description }}</p>
+                        <h5 class="task-title">{{ $task->name }}</h5>
+                        <p class="task-description">{{ $task->description ?? 'No description available' }}</p>
                     </div>
                     <!-- Task Body -->
                     <div class="task-body">
-                        <div class="task-detail" data-tooltip="Client's email address">
-                            <i class="bi bi-envelope-fill"></i>
-                            <div>
-                                <strong>Client Email:</strong> {{ $task->client_email }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Client's contact number">
-                            <i class="bi bi-telephone-fill"></i>
-                            <div>
-                                <strong>Client Contact:</strong> {{ $task->client_contact }}
-                            </div>
-                        </div>
                         <div class="task-detail" data-tooltip="Assigned department">
                             <i class="bi bi-building"></i>
                             <div>
                                 <strong>Department:</strong> {{ $task->department->name ?? 'N/A' }}
                             </div>
                         </div>
-                      
+                        <div class="task-detail" data-tooltip="Team lead assigned">
+                            <i class="bi bi-person-fill"></i>
+                            <div>
+                                <strong>Team Lead:</strong> {{ $task->teamLead->name ?? 'N/A' }}
+                            </div>
+                        </div>
                         <div class="task-detail" data-tooltip="Task start date">
                             <i class="bi bi-calendar-fill"></i>
                             <div>
@@ -375,8 +368,60 @@
                                 </span>
                             </div>
                         </div>
+                        <!-- Account Details (only if account exists) -->
+                        @if ($task->account)
+                            <div class="task-detail" data-tooltip="Client's name">
+                                <i class="bi bi-person-circle"></i>
+                                <div>
+                                    <strong>Client Name:</strong> {{ $task->account->clientname }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Client's email address">
+                                <i class="bi bi-envelope-fill"></i>
+                                <div>
+                                    <strong>Client Email:</strong> {{ $task->account->email }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Client's contact number">
+                                <i class="bi bi-telephone-fill"></i>
+                                <div>
+                                    <strong>Client Contact:</strong> {{ $task->account->contact ?? 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Nature of business">
+                                <i class="bi bi-briefcase-fill"></i>
+                                <div>
+                                    <strong>Business:</strong> {{ $task->account->nature_of_business }}
+                                </div>
+                            </div>
+                            @if ($task->account->attachments)
+                                <div class="task-detail" data-tooltip="View attached files">
+                                    <i class="bi bi-file-earmark-arrow-down"></i>
+                                    <div>
+                                        <strong>Attachment:</strong>
+                                        <a href="{{ asset('storage/' . $task->account->attachments) }}" target="_blank">View Attachment</a>
+                                    </div>
+                                </div>
+                            @endif
+                        @else
+                            <div class="task-detail" data-tooltip="No account information available">
+                                <i class="bi bi-info-circle"></i>
+                                <div>
+                                    <strong>Account Info:</strong> <span class="text-muted">No Account Info</span>
+                                </div>
+                            </div>
+                        @endif
                         <!-- Progress Timeline -->
-                        
+                        <div class="progress-timeline">
+                            <div class="timeline-step">
+                                <div class="timeline-node {{ $task->status == 'pending' ? 'active' : '' }}"></div>
+                                <div class="timeline-node {{ $task->status == 'in_progress' ? 'active' : '' }}"></div>
+                                <div class="timeline-node {{ $task->status == 'completed' ? 'active' : '' }}"></div>
+                            </div>
+                            <div class="timeline-label" style="left: 0;">Pending</div>
+                            <div class="timeline-label" style="left: 50%; transform: translateX(-50%);">In Progress</div>
+                            <div class="timeline-label" style="right: 0;">Completed</div>
+                        </div>
                         <!-- Action Buttons -->
                         <div class="task-actions">
                             <button class="btn btn-primary" id="export-pdf">Export as PDF</button>
@@ -451,7 +496,7 @@
             const element = document.querySelector('.task-card');
             const opt = {
                 margin: 1,
-                filename: `Task_${{ $task->client_name }}.pdf`,
+                filename: `Task_${{ $task->name }}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }

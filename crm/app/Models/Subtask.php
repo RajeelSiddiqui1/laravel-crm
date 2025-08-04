@@ -17,10 +17,12 @@ class Subtask extends Model
         'end_time',
         'comment',
         'status',
-        'attachments', // corrected from 'attachment'
+        'attachments',
         'attachment_type',
         'department_id',
         'lead',
+        'form_task',
+        'cell_center_pos_id',
     ];
 
     protected $casts = [
@@ -37,8 +39,13 @@ class Subtask extends Model
         return $this->belongsTo(Employee::class, 'assigned_employee_id');
     }
 
-  public function employeeSubtask()
-{
-    return $this->hasOne(EmployeeSubtask::class, 'subtask_id');
-}
+    public function employeeSubtask()
+    {
+        return $this->hasOne(EmployeeSubtask::class, 'subtask_id');
+    }
+
+    public function cellCenterPos()
+    {
+        return $this->belongsTo(CellCenterPos::class, 'cell_center_pos_id');
+    }
 }

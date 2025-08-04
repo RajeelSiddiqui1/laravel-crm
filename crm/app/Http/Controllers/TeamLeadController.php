@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\AssignedEmployeeTask;
+use App\Models\CellCenterPos;
 use App\Models\Message;
 use App\Models\OnwerTask;
 use App\Models\Subtask;
@@ -307,6 +308,7 @@ class TeamLeadController extends Controller
 
 
 
+
     public function subtask_create($taskId)
     {
         $task = OnwerTask::findOrFail($taskId);
@@ -316,10 +318,10 @@ class TeamLeadController extends Controller
             ->where('department_id', $teamLead->department_id)
             ->get();
 
+        $cellCenterPos = CellCenterPos::all();
 
-        return view('team_lead.create_subtask', compact('task', 'assignedEmployees'));
+        return view('team_lead.create_subtask', compact('task', 'assignedEmployees', 'cellCenterPos'));
     }
-
 
     public function subtask_store(Request $request)
     {
@@ -332,13 +334,20 @@ class TeamLeadController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'start_time' => 'nullable|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i',
-            'lead' => 'nullable|numeric',
+            'lead' => 'required|numeric',
+            'form_task' => 'required|exists:cell_center_pos,id',
+            'cell_center_pos_id' => 'required|exists:cell_center_pos,id',
+        ], [
+            'form_task.required' => 'Please select a Form Task.',
+            'form_task.exists' => 'The selected Form Task is invalid.',
+            'cell_center_pos_id.required' => 'Please select a Cell Center POS.',
+            'cell_center_pos_id.exists' => 'The selected Cell Center POS is invalid.',
         ]);
 
         if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
             if ($request->filled('start_time') && $request->filled('end_time')) {
                 if (strtotime($request->end_time) <= strtotime($request->start_time)) {
-                    return back()->witherror_swals(['end_time' => 'End time must be after start time on the same day.']);
+                    return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
                 }
             }
         }
@@ -360,9 +369,7 @@ class TeamLeadController extends Controller
             return back()->with('error_swal_swal', 'Selected employee is not from your department.');
         }
 
-        if (!$request->lead) {
-            return back()->with('error_swal_swal', 'Lead number is required.');
-        }
+        $formTask = CellCenterPos::findOrFail($request->form_task);
 
         $data = [
             'title' => $request->title,
@@ -375,12 +382,12 @@ class TeamLeadController extends Controller
             'end_time' => $request->end_time ?? null,
             'department_id' => $teamLead->department_id,
             'lead' => $request->lead,
+            'form_task' => $formTask->name,
+            'cell_center_pos_id' => $request->cell_center_pos_id,
         ];
 
-        // 🔥 1. Create Subtask
         $subtask = Subtask::create($data);
 
-        // 🔥 2. Create empty EmployeeSubtask with default structure
         EmployeeSubtask::create([
             'subtask_id' => $subtask->id,
             'comments' => [],
@@ -395,10 +402,8 @@ class TeamLeadController extends Controller
             'user_type' => 'employee',
         ]);
 
-
-        return redirect()->route('team_lead.subtask.list', $task->id)->with('success_swal_swal', 'Subtask created success_swalfully.');
+        return redirect()->route('team_lead.subtask.list', $task->id)->with('success_swal_swal', 'Subtask created successfully.');
     }
-
 
     public function subtask_edit($id)
     {
@@ -505,38 +510,38 @@ class TeamLeadController extends Controller
     }
 
     public function subtask_update_status(Request $request, $id)
-{
-    $request->validate([
-        'status' => 'required|string|in:pending,in_progress,approved,rejected,late',
-    ]);
-
-    $subtask = Subtask::findOrFail($id);
-    $teamLead = Auth::guard('team_lead')->user();
-
-   
-    if ($teamLead->department_id !== $subtask->department_id) {
-        return redirect()->back()->with('error_swal', 'Access denied. Different department.');
-    }
-
-
-    $subtask->status = $request->status;
-    $subtask->save();
-
-    $projectManagers = ProjectManager::whereHas('departments', function ($query) use ($subtask) {
-        $query->where('departments.id', $subtask->department_id);
-    })->get();
-
-    foreach ($projectManagers as $manager) {
-        Notification::create([
-            'title' => "Subtask has been update",
-            'user_id' => $manager->id,
-            'user_type' => 'project_manager',
-            'message' => 'Team Lead updated Subtask #' . $subtask->id . ' to "' . $request->status . '".',
+    {
+        $request->validate([
+            'status' => 'required|string|in:pending,in_progress,approved,rejected,late',
         ]);
-    }
 
-    return redirect()->back()->with('success_swal', 'Subtask status updated and all managers notified.');
-}
+        $subtask = Subtask::findOrFail($id);
+        $teamLead = Auth::guard('team_lead')->user();
+
+
+        if ($teamLead->department_id !== $subtask->department_id) {
+            return redirect()->back()->with('error_swal', 'Access denied. Different department.');
+        }
+
+
+        $subtask->status = $request->status;
+        $subtask->save();
+
+        $projectManagers = ProjectManager::whereHas('departments', function ($query) use ($subtask) {
+            $query->where('departments.id', $subtask->department_id);
+        })->get();
+
+        foreach ($projectManagers as $manager) {
+            Notification::create([
+                'title' => "Subtask has been update",
+                'user_id' => $manager->id,
+                'user_type' => 'project_manager',
+                'message' => 'Team Lead updated Subtask #' . $subtask->id . ' to "' . $request->status . '".',
+            ]);
+        }
+
+        return redirect()->back()->with('success_swal', 'Subtask status updated and all managers notified.');
+    }
 
 
     public function subtask_detail($id)
@@ -555,34 +560,35 @@ class TeamLeadController extends Controller
     }
 
 
-    public function subtask_show_more($id) {
+    public function subtask_show_more($id)
+    {
         $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
-    
+
         $employeeId = $subtask->assigned_employee_id;
-    
+
         $employeeSubtasks = Subtask::with('employeeSubtask')
             ->where('assigned_employee_id', $employeeId)
             ->orderBy('created_at', 'desc')
             ->get();
-    
+
         $attachments = [];
-    
+
         if ($subtask->employeeSubtask && $subtask->employeeSubtask->attachments) {
             $attachments = is_array($subtask->employeeSubtask->attachments)
                 ? $subtask->employeeSubtask->attachments
                 : json_decode($subtask->employeeSubtask->attachments, true);
-    
+
             if (!is_array($attachments)) {
                 $attachments = explode(',', $subtask->employeeSubtask->attachments);
             }
-    
+
             $attachments = collect($attachments)->flatten()->filter(function ($url) {
                 return is_string($url) && !empty(trim($url));
             })->values()->all();
         }
-    
 
-        return view('team_lead.subtask_show_more', compact('subtask', 'employeeSubtasks','attachments'));
+
+        return view('team_lead.subtask_show_more', compact('subtask', 'employeeSubtasks', 'attachments'));
     }
 
 

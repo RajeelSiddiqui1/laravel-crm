@@ -51,6 +51,11 @@
         </div>
     </div>
 
+
+    @foreach ($subtask as $subtasks )
+    
+  
+
     @if($subtask->employeeSubtask)
     <div class="card glass-card shadow-lg border-0 rounded-5 mb-5">
         <div class="card-header bg-gradient p-3">
@@ -107,6 +112,7 @@
         </div>
     </div>
     @endif
+    @endforeach
 </div>
 
 <style>
