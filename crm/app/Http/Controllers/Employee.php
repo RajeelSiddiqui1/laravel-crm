@@ -172,12 +172,11 @@ class Employee extends Controller
         return back()->with('success_swal', 'Profile updated successfully!');
     }
 
-
     function team_task_view()
     {
         $employee = Auth::guard('employee')->user();
 
-        $tasks = OnwerTask::with(['employee', 'department'])
+        $tasks = OnwerTask::with(['employee', 'department', 'account']) // include account
             ->where('employee_id', $employee->id)
             ->get();
 
@@ -201,17 +200,20 @@ class Employee extends Controller
         return view('employee.subtasks_list', compact('subtasks'));
     }
 
-    function subtask_status_update(Request $request, $id){
+    function subtask_status_update(Request $request, $id)
+    {
         $validator = Validator::make($request->all(), [
-           'status' => 'required|in:pending,in_progress,completed',
-           ]);
+            'status' => 'required|in:pending,in_progress,completed',
+        ]);
 
-           $subtask = Subtask::findOrFail($id);
-           $subtask->status = $request->status;
-           $subtask->save();
-           return back()->with('success_swal', 'Subtask status updated successfully.');
+        $subtask = Subtask::findOrFail($id);
+        $subtask->status = $request->status;
+        $subtask->save();
+        return back()->with('success_swal', 'Subtask status updated successfully.');
     }
-public function edit_subtask($subtaskId)
+
+    
+  public function edit_subtask($subtaskId)
 {
     $subtask = Subtask::with(['employeeSubtask', 'task'])->findOrFail($subtaskId);
     $employeeSubtask = $subtask->employeeSubtask;
@@ -219,82 +221,96 @@ public function edit_subtask($subtaskId)
     $leadCount = (int) $subtask->lead ?? 1;
     $leadValues = range(1, $leadCount);
 
-    $isCallCenter = $subtask->task->department_id == 2; // 2 = Call Center (example)
+    // Check if task_type is 'cell_center_pos'
+    $isCallCenter = $subtask->task_type === 'cell_center_pos';
 
     return view('employee.subtasks_update', compact('subtask', 'employeeSubtask', 'leadValues', 'isCallCenter'));
 }
 
 
-public function update_subtask(Request $request, $id)
-{
-    $leadIndex = (int) $request->input('lead') - 1;
+    public function update_subtask(Request $request, $id)
+    {
+        $leadIndex = (int) $request->input('lead') - 1;
 
-    $request->validate([
-        'comment' => 'required|string',
-        'status' => 'required|string',
-    ]);
-
-    $subtask = Subtask::with('task')->findOrFail($id);
-    $employeeSubtask = $subtask->employeeSubtask;
-
-    if (!$employeeSubtask) {
-        $employeeSubtask = $subtask->employeeSubtask()->create([
-            'comments' => [],
-            'statuses' => [],
-            'attachments' => [],
+        $request->validate([
+            'comment' => 'required|string',
+            'status' => 'required|string',
         ]);
-    }
 
-    $comments = $employeeSubtask->comments ?? [];
-    $statuses = $employeeSubtask->statuses ?? [];
-    $attachments = $employeeSubtask->attachments ?? [];
+        $subtask = Subtask::with('task')->findOrFail($id);
+        $employeeSubtask = $subtask->employeeSubtask;
 
-    $comments[$leadIndex] = $request->input('comment');
-    $statuses[$leadIndex] = $request->input('status');
-
-    if ($request->hasFile("attachments")) {
-        foreach ($request->file("attachments") as $file) {
-            $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                'public_id' => 'employee_subtask/' . uniqid() . '_' . $file->getClientOriginalName(),
-                'resource_type' => 'auto',
+        if (!$employeeSubtask) {
+            $employeeSubtask = $subtask->employeeSubtask()->create([
+                'comments' => [],
+                'statuses' => [],
+                'attachments' => [],
             ]);
-            $attachments[$leadIndex][] = $uploaded['secure_url'];
         }
-    }
 
-    $updateData = [
-        'comments' => $comments,
-        'statuses' => $statuses,
-        'attachments' => $attachments,
-    ];
+        $comments = $employeeSubtask->comments ?? [];
+        $statuses = $employeeSubtask->statuses ?? [];
+        $attachments = $employeeSubtask->attachments ?? [];
 
-    // If Call Center, include these fields:
-    if ($subtask->task->department_id == 2) {
-        $updateData = array_merge($updateData, $request->only([
-            'name', 'business_name', 'business_num', 'personal_num', 'personal_email',
-            'business_email', 'address', 'provider', 'category_pos',
-            'pos_type', 'debt', 'credit', 'rentle', 'bussiness_type', 'date', 'time'
-        ]));
-    }
+        $comments[$leadIndex] = $request->input('comment');
+        $statuses[$leadIndex] = $request->input('status');
 
-    $employeeSubtask->update($updateData);
+        if ($request->hasFile("attachments")) {
+            foreach ($request->file("attachments") as $file) {
+                $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                    'public_id' => 'employee_subtask/' . uniqid() . '_' . $file->getClientOriginalName(),
+                    'resource_type' => 'auto',
+                ]);
+                $attachments[$leadIndex][] = $uploaded['secure_url'];
+            }
+        }
 
-    // Notify Team Lead
-    $teamLead = TeamLead::find($subtask->task->team_lead_id);
-    if ($teamLead) {
-        Notification::create([
-            'title' => 'Subtask Updated by Employee',
-            'message' => 'The subtask "' . $subtask->title . '" has been updated.',
-            'user_id' => $teamLead->id,
-            'user_type' => 'team_lead',
+        $updateData = [
+            'comments' => $comments,
+            'statuses' => $statuses,
+            'attachments' => $attachments,
+        ];
+
+        // If Call Center, include these fields:
+        if ($subtask->task->department_id == 2) {
+            $updateData = array_merge($updateData, $request->only([
+                'name',
+                'business_name',
+                'business_num',
+                'personal_num',
+                'personal_email',
+                'business_email',
+                'address',
+                'provider',
+                'category_pos',
+                'pos_type',
+                'debt',
+                'credit',
+                'rentle',
+                'bussiness_type',
+                'date',
+                'time'
+            ]));
+        }
+
+        $employeeSubtask->update($updateData);
+
+        // Notify Team Lead
+        $teamLead = TeamLead::find($subtask->task->team_lead_id);
+        if ($teamLead) {
+            Notification::create([
+                'title' => 'Subtask Updated by Employee',
+                'message' => 'The subtask "' . $subtask->title . '" has been updated.',
+                'user_id' => $teamLead->id,
+                'user_type' => 'team_lead',
+            ]);
+        }
+
+        return redirect()->back()->with([
+            'success_swal' => 'Subtask assignment sent successfully.',
+            'updated_lead' => $request->input('lead'),
         ]);
     }
-
-    return redirect()->back()->with([
-        'success_swal' => 'Subtask assignment sent successfully.',
-        'updated_lead' => $request->input('lead'),
-    ]);
-}
 
 
     protected function getCloudinaryPublicId($url)

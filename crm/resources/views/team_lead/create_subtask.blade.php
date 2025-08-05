@@ -58,7 +58,8 @@
 
             <div class="mb-3">
                 <label class="form-label text-white">Leads</label>
-                <input type="number" min="0" name="lead" class="form-control" value="{{ old('lead') }}" required>
+                <input type="number" min="0" name="lead" class="form-control" value="{{ old('lead') }}"
+                    required>
             </div>
 
             <div class="mb-3">
@@ -66,12 +67,24 @@
                 <select name="assigned_employee_id" class="form-control" required>
                     <option value="">Select Employee</option>
                     @foreach ($assignedEmployees as $emp)
-                        <option value="{{ $emp->id }}" {{ old('assigned_employee_id') == $emp->id ? 'selected' : '' }}>
+                        <option value="{{ $emp->id }}"
+                            {{ old('assigned_employee_id') == $emp->id ? 'selected' : '' }}>
                             {{ $emp->name }} - {{ $emp->department->name ?? 'No Department' }}
                         </option>
                     @endforeach
                 </select>
             </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Task Type</label>
+                    <select name="task_type" class="form-control" required>
+                        <option value="">Select Task Type</option>
+                        <option value="cell_center_pos" {{ old('task_type') == 'cell_center_pos' ? 'selected' : '' }}>Cell Center Pos</option>
+                        <option value="cell_center_accounts" {{ old('task_type') == 'cell_center_accounts' ? 'selected' : '' }}>Cell Center Accounts</option>
+                    </select>
+                </div>
+        
+
 
             <div class="mb-3">
                 <label class="form-label text-white">Start Date</label>
@@ -93,30 +106,7 @@
                 <input type="time" name="end_time" class="form-control" value="{{ old('end_time') }}">
             </div>
 
-            <div class="mb-3">
-                <label class="form-label text-white">Cell Center POS</label>
-                <select name="cell_center_pos_id" class="form-control" required>
-                    <option value="">Select Cell Center POS</option>
-                    @foreach ($cellCenterPos as $pos)
-                        <option value="{{ $pos->id }}" {{ old('cell_center_pos_id') == $pos->id ? 'selected' : '' }}>
-                            {{ $pos->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label text-white">Form Task</label>
-                <select name="form_task" class="form-control" required>
-                    <option value="">Select Form Task</option>
-                    @foreach ($cellCenterPos as $pos)
-                        <option value="{{ $pos->id }}" {{ old('form_task') == $pos->id ? 'selected' : '' }}>
-                            {{ $pos->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
+           
             <button class="btn btn-success">Create Subtask</button>
         </form>
     </div>

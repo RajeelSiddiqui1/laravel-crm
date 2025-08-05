@@ -145,7 +145,7 @@ Route::controller(Employee::class)->group(function () {
         Route::get('/employee/subtasks',  'subtasks_list')->name('employee.subtasks');
         Route::patch('/employee/subtask-update/{id}', 'subtask_status_update')->name('employee.subtask.update_status');
         Route::get('/employee/subtask/{id}/edit', 'edit_subtask')->name('employee.subtask.edit');
-        Route::put('/employee/subtask/update/{id}', 'update_subtask')->name('employee.subtask.update');
+       Route::post('/employee/subtasks/{id}',  'update_employee_task')->name('employee.subtask.update');
         Route::get('employee/team-lead/', 'fetch_team_leads')->name('team_lead.teamleads');
         Route::get('employee/message/{id}/team-lead', 'message_teamlead')->name('employee.message.teamlead');
         Route::post('employee/message/send',  'send_message')

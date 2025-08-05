@@ -192,16 +192,39 @@ class TeamLeadController extends Controller
         return back()->with('success_swal', 'Profile updated successfully!');
     }
 
-    public function manager_tasks()
+    // public function manager_tasks()
+    // {
+    //     $teamLead = Auth::guard('team_lead')->user();
+    //     $departmentId = $teamLead->department_id;
+       
+    //     $tasks = OnwerTask::with(['teamLead', 'department'])
+    //         ->where('team_lead_id', $teamLead->id)
+    //         ->get();
+
+    //     return view('team_lead.manager_tasks', compact('tasks', 'employees'));
+    // }
+
+     public function manager_tasks()
     {
         $teamLead = Auth::guard('team_lead')->user();
         $departmentId = $teamLead->department_id;
-        $employees = Employee::where('department_id', $departmentId)->get();
-        $tasks = OnwerTask::with(['teamLead', 'department'])
-            ->where('team_lead_id', $teamLead->id)
-            ->get();
 
-        return view('team_lead.manager_tasks', compact('tasks', 'employees'));
+        // Fetch tasks with 'account' relation only for this team lead and department
+        $tasks = OnwerTask::with(['department', 'account'])
+            ->where('team_lead_id', $teamLead->id)
+            ->where('department_id', $departmentId)
+            ->get()
+            ->map(function ($task) {
+                // Optional: Rename department if needed like in manager logic
+                if ($task->department && $task->department->name === 'Call Center') {
+                    $task->department->name = 'Call operator';
+                }
+                return $task;
+            });
+
+             $employees = Employee::where('department_id', $departmentId)->get();
+
+        return view('team_lead.manager_tasks', compact('tasks','employees'));
     }
 
     public function assignEmployees(Request $request, OnwerTask $task)
@@ -320,7 +343,9 @@ class TeamLeadController extends Controller
 
         $cellCenterPos = CellCenterPos::all();
 
-        return view('team_lead.create_subtask', compact('task', 'assignedEmployees', 'cellCenterPos'));
+        $teamLeadDepartmentName = $teamLead->department->name ?? '';
+
+        return view('team_lead.create_subtask', compact('task', 'assignedEmployees', 'cellCenterPos','teamLeadDepartmentName'));
     }
 
     public function subtask_store(Request $request)
@@ -335,13 +360,7 @@ class TeamLeadController extends Controller
             'start_time' => 'nullable|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i',
             'lead' => 'required|numeric',
-            'form_task' => 'required|exists:cell_center_pos,id',
-            'cell_center_pos_id' => 'required|exists:cell_center_pos,id',
-        ], [
-            'form_task.required' => 'Please select a Form Task.',
-            'form_task.exists' => 'The selected Form Task is invalid.',
-            'cell_center_pos_id.required' => 'Please select a Cell Center POS.',
-            'cell_center_pos_id.exists' => 'The selected Cell Center POS is invalid.',
+            'task_type' => 'nullable',
         ]);
 
         if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
@@ -382,8 +401,7 @@ class TeamLeadController extends Controller
             'end_time' => $request->end_time ?? null,
             'department_id' => $teamLead->department_id,
             'lead' => $request->lead,
-            'form_task' => $formTask->name,
-            'cell_center_pos_id' => $request->cell_center_pos_id,
+            'task_type' => $request->task_type,
         ];
 
         $subtask = Subtask::create($data);

@@ -305,7 +305,7 @@ public function manager_task_list()
 
     // Fetch tasks with required relations
     $tasks = OnwerTask::with(['department', 'teamLead', 'account'])
-        ->where('project_manger_task', $currentManager->id)
+        ->where('project_manager_task', $currentManager->id)
         ->get()
         ->filter(function ($task) use ($currentManager) {
             $isCallCenter = $task->department && $task->department->name === 'Call Center';
@@ -333,6 +333,11 @@ public function manager_task_list()
 
 
 
+function my_task_detail($id)
+{
+    $task = OnwerTask::findOrFail($id);
+    return view('project_manager.my_task_detail', compact('task'));
+}
 
 
 
@@ -371,11 +376,6 @@ public function shareTask(Request $request)
     return response()->json(['success' => true, 'message' => 'Task has been shared']);
 }
 
-function my_task_detail($id)
-{
-    $task = OnwerTask::findOrFail($id);
-    return view('project_manager.my_task_detail', compact('task'));
-}
 
 public function create_my_task()
 {
@@ -411,7 +411,7 @@ public function store_my_task(Request $request)
             'phone' => 'required|string|max:20',
             'due_date' => 'required|date',
             'nature_of_business' => 'required|string',
-            'attachments' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx',
+            'attachments' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,txt,rtf,mp4,avi,mov,webm,mp3,wav,ogg,zip,rar,7z,js,html,css,php,py,java,c,cpp,dart|max:20480',
             'priority' => 'string',
         ]);
     }
@@ -454,6 +454,7 @@ public function store_my_task(Request $request)
     $task->team_lead_id = $request->team_lead_id;
     $task->status = 'pending';
     $task->project_manager_id = $manager->id;
+    $task->project_manager_task = $manager->id;
 
     if ($isAccounts && $account) {
         $task->account_id = $account->id;

@@ -1,3 +1,5 @@
+ @php use Illuminate\Support\Str; @endphp
+
 @extends('layout.app')
 
 @section('styles')
@@ -184,27 +186,76 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if ($task->account && !empty($task->account->attachments))
-                                        <div class="attachment-grid">
-                                            @foreach ((array)$task->account->attachments as $url)
-                                                @php $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION)); @endphp
-                                                <div class="attachment-item">
-                                                    @if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
-                                                        <img src="{{ asset('storage/' . $url) }}" alt="Attachment">
-                                                    @elseif (in_array($ext, ['mp4', 'mov', 'avi', 'webm']))
-                                                        <video controls src="{{ asset('storage/' . $url) }}"></video>
-                                                    @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
-                                                        <audio controls src="{{ asset('storage/' . $url) }}"></audio>
-                                                    @else
-                                                        <a href="{{ asset('storage/' . $url) }}" target="_blank" class="btn btn-outline-light btn-sm w-100">View</a>
-                                                    @endif
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <span class="text-muted">No Attachments</span>
-                                    @endif
-                                </td>
+                                     @if ($task->account && !empty($task->account->attachments))
+                                         <div class="attachment-grid">
+                                             @foreach ((array) $task->account->attachments as $url)
+                                                 @php
+                                                     $fileUrl = Str::startsWith($url, ['http://', 'https://'])
+                                                         ? $url
+                                                         : asset('storage/' . $url);
+                                                     $ext = strtolower(
+                                                         pathinfo(
+                                                             parse_url($fileUrl, PHP_URL_PATH),
+                                                             PATHINFO_EXTENSION,
+                                                         ),
+                                                     );
+                                                     $fileName = basename($url);
+                                                 @endphp
+
+                                                 <div class="attachment-item text-center">
+                                                     @if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                                         <a href="{{ $fileUrl }}" target="_blank">
+                                                             <img src="{{ $fileUrl }}" alt="Image"
+                                                                 style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px;">
+                                                         </a>
+                                                     @elseif (in_array($ext, ['mp4', 'mov', 'avi', 'webm']))
+                                                         <video src="{{ $fileUrl }}" controls
+                                                             style="width: 100%; height: 100px; border-radius: 8px;"></video>
+                                                     @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
+                                                         <audio controls style="width: 100%;">
+                                                             <source src="{{ $fileUrl }}"
+                                                                 type="audio/{{ $ext }}">
+                                                         </audio>
+                                                     @elseif (in_array($ext, ['pdf']))
+                                                         <a href="{{ $fileUrl }}" target="_blank"
+                                                             title="{{ $fileName }}">
+                                                             <img src="https://img.icons8.com/color/48/000000/pdf.png"
+                                                                 alt="PDF" style="height: 48px;">
+                                                             <div style="font-size: 12px; color: #f5f5f5;">
+                                                                 {{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                         </a>
+                                                     @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
+                                                         <a href="{{ $fileUrl }}" target="_blank"
+                                                             title="{{ $fileName }}">
+                                                             <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
+                                                                 alt="Excel" style="height: 48px;">
+                                                             <div style="font-size: 12px; color: #f5f5f5;">
+                                                                 {{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                         </a>
+                                                     @elseif (in_array($ext, ['doc', 'docx']))
+                                                         <a href="{{ $fileUrl }}" target="_blank"
+                                                             title="{{ $fileName }}">
+                                                             <img src="https://img.icons8.com/color/48/000000/ms-word.png"
+                                                                 alt="Word" style="height: 48px;">
+                                                             <div style="font-size: 12px; color: #f5f5f5;">
+                                                                 {{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                         </a>
+                                                     @else
+                                                         <a href="{{ $fileUrl }}" target="_blank"
+                                                             title="{{ $fileName }}">
+                                                             <img src="https://img.icons8.com/fluency/48/000000/file.png"
+                                                                 alt="File" style="height: 48px;">
+                                                             <div style="font-size: 12px; color: #f5f5f5;">
+                                                                 {{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                         </a>
+                                                     @endif
+                                                 </div>
+                                             @endforeach
+                                         </div>
+                                     @else
+                                         <span class="text-muted">No Attachments</span>
+                                     @endif
+                                 </td>
                             @else
                                 <td>
                                     @if ($task->account)

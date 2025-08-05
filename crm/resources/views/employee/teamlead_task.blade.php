@@ -1,187 +1,337 @@
-@extends('layout.app')
+ @php use Illuminate\Support\Str; @endphp
 
-@section('head')
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-@endsection
+ @extends('layout.app')
 
-@section('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-@endsection
+ @section('styles')
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+     <style>
+         :root {
+             --body-bg: #0d0d11;
+             --table-bg: #1a1b26;
+             --accent: #7b68ee;
+             --text: #f5f5f5;
+         }
 
-@section('styles')
-    <style>
-        .checkbox-wrapper {
-            max-height: 160px;
-            overflow-y: auto;
-            border-radius: 8px;
-            padding: 10px;
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            scrollbar-width: thin;
-            scrollbar-color: #0d6efd rgba(255, 255, 255, 0.1);
-        }
+         body {
+             background: var(--body-bg);
+             color: var(--text);
+             font-family: 'Inter', sans-serif;
+         }
 
-        .checkbox-wrapper::-webkit-scrollbar {
-            width: 6px;
-        }
+         .table {
+             background: var(--table-bg);
+             border: none;
+             border-radius: .75rem;
+             overflow: hidden;
+         }
 
-        .checkbox-wrapper::-webkit-scrollbar-thumb {
-            background-color: #0d6efd;
-            border-radius: 10px;
-        }
+         .table thead {
+             background: linear-gradient(90deg, var(--accent), #8a5cf5);
+             color: #fff;
+             font-weight: 600;
+         }
 
-        .form-check {
-            margin-bottom: 8px;
-        }
+         .table th,
+         .table td {
+             vertical-align: middle;
+             padding: 0.75rem;
+             text-align: center;
+         }
 
-        .form-check-input {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #0d6efd;
-            border-radius: 4px;
-            background-color: transparent;
-            transition: all 0.25s ease-in-out;
-            margin-top: 0.2rem;
-        }
+         .btn-primary {
+             background: var(--accent);
+             border: none;
+             border-radius: 0.5rem;
+         }
 
-        .form-check-input:hover {
-            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
-        }
+         .btn-primary:hover {
+             background: #5a4fcf;
+         }
 
-        .form-check-input:checked {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
+         .btn-success,
+         .btn-warning,
+         .btn-danger {
+             border-radius: 0.5rem;
+         }
 
-        .form-check-label {
-            color: #ffffff;
-            font-weight: 500;
-            margin-left: 10px;
-            cursor: pointer;
-        }
+         .form-control,
+         .form-select {
+             background: #252837;
+             border: 1px solid #3a3c4f;
+             color: var(--text);
+             border-radius: 0.5rem;
+         }
 
-        .employee-name {
-            color: #ffffff;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
+         .form-control:focus,
+         .form-select:focus {
+             background: #252837;
+             border-color: var(--accent);
+             box-shadow: 0 0 0 .2rem rgba(123, 104, 238, .25);
+         }
 
-        .dropdown-menu {
-            background-color: #212529;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
+         .badge {
+             font-size: 0.85rem;
+             padding: 0.5rem 1rem;
+             border-radius: 50px;
+         }
 
-        .dropdown-menu::-webkit-scrollbar {
-            width: 6px;
-        }
+         .badge-info {
+             background: #17a2b8;
+         }
 
-        .dropdown-menu::-webkit-scrollbar-thumb {
-            background-color: #0d6efd;
-            border-radius: 4px;
-        }
+         .badge-success {
+             background: #28a745;
+         }
 
-        .dropdown-toggle {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-        }
+         .badge-warning {
+             background: #ffc107;
+         }
 
-        .dropdown-toggle:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
+         .badge-secondary {
+             background: #6c757d;
+         }
 
-        .table-responsive::-webkit-scrollbar {
-            height: 8px;
-        }
+         .attachment-grid {
+             display: grid;
+             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+             gap: .5rem;
+         }
 
-        .table-responsive::-webkit-scrollbar-thumb {
-            background-color: #0d6efd;
-            border-radius: 4px;
-        }
-    </style>
-@endsection
+         .attachment-item img,
+         .attachment-item video {
+             height: 100px;
+             width: 100%;
+             object-fit: cover;
+             border-radius: .5rem;
+         }
+     </style>
+ @endsection
 
-@section('content')
-    <div class="container">
-        <h2 class="text-white">Team Lead Tasks</h2>
-
-         @if (session('success_swal'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        title: 'Success!',
-                        text: "{{ session('success_swal') }}",
-                        icon: 'success',
-                        confirmButtonText: 'OK'
-                    });
-                });
-            </script>
-        @endif
-
-        @if (session('error_swal'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    Swal.fire({
-                        title: 'Error!',
-                        text: "{{ session('error_swal') }}",
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    });
-                });
-            </script>
-        @endif
+ @section('content')
+     <div class="container mt-4">
+         <div class="row justify-content-center">
+             <div class="col-md-8">
+                 <h2 class="text-center mb-4 fw-bold">My Tasks Dashboard</h2>
+             </div>
+         </div>
 
 
-        <div class="table-responsive">
-            <table class="table table-dark table-bordered">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Client Name</th>
-                        <th>Priority</th>
-                        <th>Start Date</th>
-                        <th>Deadline</th>
-                        <th>Status</th>
-                        <th>View</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($tasks as $task)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $task->client_name }}</td>
-                            <td>{{ $task->priority }}</td>
-                            <td>{{ $task->start_date->format('Y-m-d') }}</td>
-                            <td>{{ $task->deadline->format('Y-m-d') }}</td>
-                            <td>
-                                <span
-                                    class="badge bg-{{ $task->status == 'completed' ? 'success' : ($task->status == 'in_progress' ? 'warning' : ($task->status == 'cancelled' ? 'danger' : 'info')) }}">
-                                    {{ ucfirst(str_replace('_', ' ', $task->status)) }}
-                                </span>
-                            </td>
 
-                            <td>
+         <div class="table-responsive">
+             <table class="table table-bordered table-hover">
+                 <thead>
+                     <tr class="text-center align-middle">
+                         <th>#</th>
+                         <th>Department</th>
+                         <th>Team Lead</th>
+                         <th>Manager Status</th>
+                         <th>Shared</th>
+                         @if ($tasks->pluck('account')->filter()->isNotEmpty())
+                             <th>Client Name</th>
+                             <th>Email</th>
+                             <th>Due Date</th>
+                             <th>Business</th>
+                             <th>Priority</th>
+                             <th>Attachments</th>
+                         @else
+                             <th>Account Info</th>
+                         @endif
+                         <th>View</th>
+                         <th>Manager</th>
+                         <th>Group Chat</th>
+                     </tr>
+                 </thead>
+                 <tbody>
+                     @forelse ($tasks as $task)
+                         <tr class="align-middle text-center">
+                             <td>{{ $loop->iteration }}</td>
+                             <!-- Department -->
+                             <td>
+                                 @if ($task->department && $task->department->name === 'Call operator')
+                                     <span class="badge badge-info">Call Operator</span>
+                                 @else
+                                     {{ $task->department->name ?? 'No Department' }}
+                                 @endif
+                             </td>
+                             <!-- Team Lead -->
+                             <td>{{ $task->teamLead->name ?? 'N/A' }}</td>
+                             <!-- Team Lead Status -->
+                             <td>
+                                 <span
+                                     class="badge badge-{{ $task->status2 === 'approved'
+                                         ? 'success'
+                                         : ($task->status2 === 'pending'
+                                             ? 'secondary'
+                                             : ($task->status2 === 'rejected'
+                                                 ? 'danger'
+                                                 : ($task->status2 === 'late'
+                                                     ? 'warning'
+                                                     : 'dark'))) }}">
+                                     {{ ucfirst($task->status2) }}
+                                 </span>
 
-                                <a href="{{ route('employee.task_detail', $task->id) }}"
-                                    class="btn btn-sm btn-primary">View</a>
-                            </td>
-                            <td>
-                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-outline-primary btn-sm">Group
-                                    Chat</a>
+                             </td>
+                             <!-- Your Status -->
 
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="10" class="text-center text-muted">No tasks found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-@endsection
+                             <!-- Shared Status -->
+                             <td>
+                                 <span class="badge badge-{{ $task->is_shared ? 'info' : 'secondary' }}">
+                                     {{ $task->is_shared ? 'Yes' : 'No' }}
+                                 </span>
+                             </td>
+                             <!-- Account Info -->
+                             @if ($tasks->pluck('account')->filter()->isNotEmpty())
+                                 <td>{{ $task->account ? $task->account->clientname : 'N/A' }}</td>
+                                 <td>{{ $task->account ? $task->account->email : 'N/A' }}</td>
+                                 <td>{{ $task->account ? $task->account->due_date : 'N/A' }}</td>
+                                 <td>{{ $task->account ? $task->account->nature_of_business : 'N/A' }}</td>
+                                 <td>
+                                     @if ($task->account)
+                                         <span
+                                             class="badge badge-{{ $task->account->priority == 'high' ? 'danger' : ($task->account->priority == 'medium' ? 'warning' : 'success') }}">
+                                             {{ ucfirst($task->account->priority) }}
+                                         </span>
+                                     @else
+                                         N/A
+                                     @endif
+                                 </td>
+
+
+                                 <td>
+                                     @if ($task->account && !empty($task->account->attachments))
+                                         <div class="attachment-grid">
+                                             @foreach ((array) $task->account->attachments as $url)
+                                                 @php
+                                                     $fileUrl = Str::startsWith($url, ['http://', 'https://'])
+                                                         ? $url
+                                                         : asset('storage/' . $url);
+                                                     $ext = strtolower(
+                                                         pathinfo(
+                                                             parse_url($fileUrl, PHP_URL_PATH),
+                                                             PATHINFO_EXTENSION,
+                                                         ),
+                                                     );
+                                                     $fileName = basename($url);
+                                                 @endphp
+
+                                                 <div class="attachment-item text-center">
+                                                     @if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                                         <a href="{{ $fileUrl }}" target="_blank">
+                                                             <img src="{{ $fileUrl }}" alt="Image"
+                                                                 style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px;">
+                                                         </a>
+                                                     @elseif (in_array($ext, ['mp4', 'mov', 'avi', 'webm']))
+                                                         <video src="{{ $fileUrl }}" controls
+                                                             style="width: 100%; height: 100px; border-radius: 8px;"></video>
+                                                     @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
+                                                         <audio controls style="width: 100%;">
+                                                             <source src="{{ $fileUrl }}"
+                                                                 type="audio/{{ $ext }}">
+                                                         </audio>
+                                                     @elseif (in_array($ext, ['pdf']))
+                                                         <a href="{{ $fileUrl }}" target="_blank"
+                                                             title="{{ $fileName }}">
+                                                             <img src="https://img.icons8.com/color/48/000000/pdf.png"
+                                                                 alt="PDF" style="height: 48px;">
+                                                             <div style="font-size: 12px; color: #f5f5f5;">
+                                                                 {{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                         </a>
+                                                     @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
+                                                         <a href="{{ $fileUrl }}" target="_blank"
+                                                             title="{{ $fileName }}">
+                                                             <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
+                                                                 alt="Excel" style="height: 48px;">
+                                                             <div style="font-size: 12px; color: #f5f5f5;">
+                                                                 {{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                         </a>
+                                                     @elseif (in_array($ext, ['doc', 'docx']))
+                                                         <a href="{{ $fileUrl }}" target="_blank"
+                                                             title="{{ $fileName }}">
+                                                             <img src="https://img.icons8.com/color/48/000000/ms-word.png"
+                                                                 alt="Word" style="height: 48px;">
+                                                             <div style="font-size: 12px; color: #f5f5f5;">
+                                                                 {{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                         </a>
+                                                     @else
+                                                         <a href="{{ $fileUrl }}" target="_blank"
+                                                             title="{{ $fileName }}">
+                                                             <img src="https://img.icons8.com/fluency/48/000000/file.png"
+                                                                 alt="File" style="height: 48px;">
+                                                             <div style="font-size: 12px; color: #f5f5f5;">
+                                                                 {{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                         </a>
+                                                     @endif
+                                                 </div>
+                                             @endforeach
+                                         </div>
+                                     @else
+                                         <span class="text-muted">No Attachments</span>
+                                     @endif
+                                 </td>
+                             @else
+                                 <td>
+                                     @if ($task->account)
+                                         <div><strong>Client:</strong> {{ $task->account->clientname }}</div>
+                                         <div><strong>Email:</strong> {{ $task->account->email }}</div>
+                                         <div><strong>Due:</strong> {{ $task->account->due_date }}</div>
+                                         <div><strong>Business:</strong> {{ $task->account->nature_of_business }}</div>
+                                         <div><strong>Priority:</strong> {{ ucfirst($task->account->priority) }}</div>
+                                         @if ($task->account && !empty($task->account->attachments))
+                                             <div class="attachment-grid">
+                                                 @foreach ((array) $task->account->attachments as $url)
+                                                     @php $ext = strtolower(pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION)); @endphp
+                                                     <div class="attachment-item">
+                                                         @if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                                             <img src="{{ asset('storage/' . $url) }}" alt="Attachment">
+                                                         @elseif (in_array($ext, ['mp4', 'mov', 'avi', 'webm']))
+                                                             <video controls src="{{ asset('storage/' . $url) }}"></video>
+                                                         @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
+                                                             <audio controls src="{{ asset('storage/' . $url) }}"></audio>
+                                                         @else
+                                                             <a href="{{ asset('storage/' . $url) }}" target="_blank"
+                                                                 class="btn btn-outline-light btn-sm w-100">View</a>
+                                                         @endif
+                                                     </div>
+                                                 @endforeach
+                                             </div>
+                                         @else
+                                             <span class="text-muted">No Attachments</span>
+                                         @endif
+                                     @else
+                                         <span class="text-muted">No Account Info</span>
+                                     @endif
+                                 </td>
+                             @endif
+                             <!-- View -->
+                             <td>
+                                 <a href="{{ route('project_manager.my_task_detail', $task->id) }}"
+                                     class="btn btn-sm btn-success">View</a>
+                             </td>
+                             <!-- Chat -->
+
+                             
+                          
+                             <td>{{ $task->projectManager->name ?? 'N/A' }}</td>
+
+                           
+                            
+                             <td>
+                                 <a href="{{ route('chat.group', $task->id) }}"
+                                     class="btn btn-outline-primary btn-sm">Group
+                                     Chat</a>
+                             </td>
+                         </tr>
+                     @empty
+                         <tr>
+                             @if ($tasks->pluck('account')->filter()->isNotEmpty())
+                                 <td colspan="14" class="text-center text-muted">No Tasks Found</td>
+                             @else
+                                 <td colspan="8" class="text-center text-muted">No Tasks Found</td>
+                             @endif
+                         </tr>
+                     @endforelse
+                 </tbody>
+             </table>
+         </div>
+     </div>
+ @endsection

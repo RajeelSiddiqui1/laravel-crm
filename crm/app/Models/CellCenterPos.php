@@ -2,47 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CellCenterPos extends Model
 {
-    use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'comment',
-        'name',
-        'business_name',
-        'business_number',
-        'personal_number',
-        'personal_email',
-        'business_email',
-        'address',
-        'provider',
-        'category_pos',
-        'pos_type',
-        'debut',
-        'credit',
-        'rental',
-        'business_type',
-        'date',
-        'time',
-        'status',
-        'attachments',
-    ];
+    protected $table = 'cell_center_pos';
+   
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'comment' => 'array',
+        'status' => 'array',
+        'attachments' => 'array',
         'name' => 'array',
         'business_name' => 'array',
         'business_number' => 'array',
@@ -53,14 +24,21 @@ class CellCenterPos extends Model
         'provider' => 'array',
         'category_pos' => 'array',
         'pos_type' => 'array',
-        'debut' => 'array',
+        'debt' => 'array',
         'credit' => 'array',
         'rental' => 'array',
         'business_type' => 'array',
         'date' => 'array',
         'time' => 'array',
-        'status' => 'array',
-        'attachments' => 'array',
     ];
 
+    public function subtask()
+    {
+        return $this->belongsTo(Subtask::class);
+    }
+
+    public function employeeSubtask()
+    {
+        return $this->hasOne(EmployeeSubtask::class);
+    }
 }
