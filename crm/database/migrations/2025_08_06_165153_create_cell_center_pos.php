@@ -6,16 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up()
+    public function up(): void
     {
         Schema::create('cell_center_pos', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('subtask_id')->nullable();
-            $table->foreign('subtask_id')->references('id')->on('subtasks')->onDelete('cascade');
-            $table->integer('lead_index');
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade'); // Add foreign key
             $table->json('comment')->nullable();
             $table->json('name')->nullable();
             $table->json('business_name')->nullable();
@@ -39,7 +34,7 @@ return new class extends Migration
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('cell_center_pos');
     }

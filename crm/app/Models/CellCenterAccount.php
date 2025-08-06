@@ -5,34 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class CellCenterPos extends Model
+class CellCenterAccount extends Model
 {
     protected $fillable = [
         'employee_id',
         'subtask_id',
-        'comment',
-        'name',
-        'business_name',
-        'business_number',
-        'personal_number',
-        'personal_email',
-        'business_email',
-        'address',
-        'provider',
-        'category_pos',
-        'pos_type',
-        'debt',
-        'credit',
-        'rental',
-        'business_type',
-        'date',
-        'time',
+        'driving_license',
+        'email',
+        'phone',
+        'bussiness_number',
+        'corpuration_number',
+        'corpuration_email',
+        'corpuration_documents',
+        'pervious_history',
+        'fees',
         'status',
+        'comments',
         'attachments',
     ];
 
-  
-
+   
     public function subtask(): BelongsTo
     {
         return $this->belongsTo(Subtask::class);

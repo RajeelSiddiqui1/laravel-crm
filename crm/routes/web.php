@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Employee;
+use App\Http\Controllers\EmployeeTasks;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectOnwer;
 use Illuminate\Support\Facades\Route;
@@ -144,14 +145,35 @@ Route::controller(Employee::class)->group(function () {
         Route::get('/employee/task-detail/{id}', 'teamlead_task_detail')->name('employee.task_detail');
         Route::get('/employee/subtasks',  'subtasks_list')->name('employee.subtasks');
         Route::patch('/employee/subtask-update/{id}', 'subtask_status_update')->name('employee.subtask.update_status');
-        Route::get('/employee/subtask/{id}/edit', 'edit_subtask')->name('employee.subtask.edit');
-       Route::post('/employee/subtasks/{id}',  'update_employee_task')->name('employee.subtask.update');
+
         Route::get('employee/team-lead/', 'fetch_team_leads')->name('team_lead.teamleads');
         Route::get('employee/message/{id}/team-lead', 'message_teamlead')->name('employee.message.teamlead');
         Route::post('employee/message/send',  'send_message')
             ->name('employee.message.send');
     });
 });
+
+Route::controller(EmployeeTasks::class)->group(function () {
+    
+    // ✅ View a subtask form (GET request)
+    Route::get('employee/subtask/{subtaskId}', 'employee_task_view')->name('employee.subtask.view');
+
+    // ✅ Update POS subtask (PUT request)
+    Route::put('employee/subtask/pos/{id}', 'update_subtask')->name('employee.subtask.pos.update');
+
+    // ✅ Update Account subtask (PUT request)
+    Route::put('employee/subtask/account/{id}', 'update_subtask')->name('employee.subtask.account.update');
+
+    // 🛡️ Optional: fallback GET routes to prevent 405 errors if user accidentally visits a PUT route
+    Route::get('employee/subtask/pos/{id}', function () {
+        abort(405, 'GET method not allowed. Use the subtask view page instead.');
+    });
+
+    Route::get('employee/subtask/account/{id}', function () {
+        abort(405, 'GET method not allowed. Use the subtask view page instead.');
+    });
+});
+
 
 Route::get('/chat/group/{ownerTaskId}', [GroupChatController::class, 'index'])->name('chat.group');
 Route::post('/chat/group/send', [GroupChatController::class, 'send'])->name('chat.group.send');
@@ -162,4 +184,4 @@ Route::get('/admin/notifications', [NotificationController::class, 'showAllForAd
 
 
 Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])
-      ->name('notifications.unread-count');
+    ->name('notifications.unread-count');

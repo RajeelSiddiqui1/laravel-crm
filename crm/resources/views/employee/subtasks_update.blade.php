@@ -95,6 +95,13 @@
                 $c = $employeeSubtask->comments[$i] ?? '';
                 $s = $employeeSubtask->statuses[$i] ?? 'pending';
                 $a = $employeeSubtask->attachments[$i] ?? [];
+                // Ensure $a is an array
+                if (!is_array($a)) {
+                    $a = is_string($a) && !empty($a) ? [$a] : [];
+                }
+                // Fetch POS and Account data
+                $posData = $employeeSubtask->cell_center_pos_data[$i] ?? [];
+                $accountData = $employeeSubtask->cell_center_account_data[$i] ?? [];
             @endphp
 
             <div class="card mb-3">
@@ -103,7 +110,7 @@
                     <button form="form{{ $lead }}" type="submit" class="btn btn-primary btn-sm">Save</button>
                 </div>
 
-                <form id="form{{ $lead }}" action="{{ route('employee.subtask.update', ['id' => $subtask->id]) }}" method="POST" enctype="multipart/form-data">
+                <form id="form{{ $lead }}" action="{{ route($isCallCenterPos ? 'employee.subtask.pos.update' : ($isCallCenterAccount ? 'employee.subtask.account.update' : 'employee.subtask.update'), ['id' => $subtask->id]) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <input type="hidden" name="lead" value="{{ $lead }}">
@@ -129,142 +136,111 @@
                             <textarea name="comment" class="form-control form-control-sm" rows="2">{{ old('comment', $c) }}</textarea>
                         </div>
 
-                        @if($isCallCenter)
+                        @if($isCallCenterPos)
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Name</label>
-                                <input
-                                    name="name"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('name', $employeeSubtask->name) }}"
-                                >
+                                <input name="name" class="form-control form-control-sm" value="{{ old('name', $posData['name'] ?? '') }}">
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Business Name</label>
-                                <input
-                                    name="business_name"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('business_name', $employeeSubtask->business_name) }}"
-                                >
+                                <input name="business_name" class="form-control form-control-sm" value="{{ old('business_name', $posData['business_name'] ?? '') }}">
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Business Number</label>
-                                <input
-                                    name="business_num"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('business_num', $employeeSubtask->business_num) }}"
-                                >
+                                <input name="business_number" class="form-control form-control-sm" value="{{ old('business_number', $posData['business_number'] ?? '') }}">
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Personal Number</label>
-                                <input
-                                    name="personal_num"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('personal_num', $employeeSubtask->personal_num) }}"
-                                >
+                                <input name="personal_number" class="form-control form-control-sm" value="{{ old('personal_number', $posData['personal_number'] ?? '') }}">
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Personal Email</label>
-                                <input
-                                    type="email"
-                                    name="personal_email"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('personal_email', $employeeSubtask->personal_email) }}"
-                                >
+                                <input type="email" name="personal_email" class="form-control form-control-sm" value="{{ old('personal_email', $posData['personal_email'] ?? '') }}">
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Business Email</label>
-                                <input
-                                    type="email"
-                                    name="business_email"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('business_email', $employeeSubtask->business_email) }}"
-                                >
+                                <input type="email" name="business_email" class="form-control form-control-sm" value="{{ old('business_email', $posData['business_email'] ?? '') }}">
                             </div>
                             <div class="col-12 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Address</label>
-                                <textarea
-                                    name="address"
-                                    class="form-control form-control-sm"
-                                    rows="2"
-                                >{{ old('address', $employeeSubtask->address) }}</textarea>
+                                <textarea name="address" class="form-control form-control-sm" rows="2">{{ old('address', $posData['address'] ?? '') }}</textarea>
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Provider</label>
-                                <input
-                                    name="provider"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('provider', $employeeSubtask->provider) }}"
-                                >
+                                <input name="provider" class="form-control form-control-sm" value="{{ old('provider', $posData['provider'] ?? '') }}">
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Category POS</label>
-                                <input
-                                    name="category_pos"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('category_pos', $employeeSubtask->category_pos) }}"
-                                >
+                                <input name="category_pos" class="form-control form-control-sm" value="{{ old('category_pos', $posData['category_pos'] ?? '') }}">
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">POS Type</label>
-                                <input
-                                    name="pos_type"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('pos_type', $employeeSubtask->pos_type) }}"
-                                >
+                                <input name="pos_type" class="form-control form-control-sm" value="{{ old('pos_type', $posData['pos_type'] ?? '') }}">
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Debt</label>
-                                <input
-                                    name="debt"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('debt', $employeeSubtask->debt) }}"
-                                >
+                                <input name="debt" class="form-control form-control-sm" value="{{ old('debt', $posData['debt'] ?? '') }}">
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Credit</label>
-                                <input
-                                    name="credit"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('credit', $employeeSubtask->credit) }}"
-                                >
+                                <input name="credit" class="form-control form-control-sm" value="{{ old('credit', $posData['credit'] ?? '') }}">
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
-                                <label class="form-label mb-1">Rentle</label>
-                                <input
-                                    name="rentle"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('rentle', $employeeSubtask->rentle) }}"
-                                >
+                                <label class="form-label mb-1">Rental</label>
+                                <input name="rental" class="form-control form-control-sm" value="{{ old('rental', $posData['rental'] ?? '') }}">
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Business Type</label>
-                                <input
-                                    name="bussiness_type"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('bussiness_type', $employeeSubtask->bussiness_type) }}"
-                                >
+                                <input name="business_type" class="form-control form-control-sm" value="{{ old('business_type', $posData['business_type'] ?? '') }}">
                             </div>
                             <div class="col-md-3 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Date</label>
-                                <input
-                                    type="date"
-                                    name="date"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('date', $employeeSubtask->date) }}"
-                                >
+                                <input type="date" name="date" class="form-control form-control-sm" value="{{ old('date', $posData['date'] ?? '') }}">
                             </div>
                             <div class="col-md-3 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Time</label>
-                                <input
-                                    type="time"
-                                    name="time"
-                                    class="form-control form-control-sm"
-                                    value="{{ old('time', $employeeSubtask->time) }}"
-                                >
+                                <input type="time" name="time" class="form-control form-control-sm" value="{{ old('time', $posData['time'] ?? '') }}">
+                            </div>
+                        @elseif($isCallCenterAccount)
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Driving License</label>
+                                <input name="driving_license" class="form-control form-control-sm" value="{{ old('driving_license', $accountData['driving_license'] ?? '') }}">
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Email</label>
+                                <input type="email" name="email" class="form-control form-control-sm" value="{{ old('email', $accountData['email'] ?? '') }}">
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Phone</label>
+                                <input name="phone" class="form-control form-control-sm" value="{{ old('phone', $accountData['phone'] ?? '') }}">
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Business Number</label>
+                                <input name="business_number" class="form-control form-control-sm" value="{{ old('business_number', $accountData['business_number'] ?? '') }}">
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Corporation Number</label>
+                                <input name="corporation_number" class="form-control form-control-sm" value="{{ old('corporation_number', $accountData['corporation_number'] ?? '') }}">
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Corporation Email</label>
+                                <input type="email" name="corporation_email" class="form-control form-control-sm" value="{{ old('corporation_email', $accountData['corporation_email'] ?? '') }}">
+                            </div>
+                            <div class="col-12 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Corporation Documents</label>
+                                <textarea name="corporation_documents" class="form-control form-control-sm" rows="2">{{ old('corporation_documents', $accountData['corporation_documents'] ?? '') }}</textarea>
+                            </div>
+                            <div class="col-12 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Previous History</label>
+                                <textarea name="previous_history" class="form-control form-control-sm" rows="2">{{ old('previous_history', $accountData['previous_history'] ?? '') }}</textarea>
+                            </div>
+                            <div class="col-md-6 hidden row2{{ $lead }}">
+                                <label class="form-label mb-1">Fees</label>
+                                <input name="fees" class="form-control form-control-sm" value="{{ old('fees', $accountData['fees'] ?? '') }}">
                             </div>
                         @endif
 
-                        @if(count($a))
+                        @if(is_array($a) && count($a) > 0)
                             <div class="col-12">
                                 <label class="form-label mb-1">Attachments</label>
                                 <div class="attachment-grid">

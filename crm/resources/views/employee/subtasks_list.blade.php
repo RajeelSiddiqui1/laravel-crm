@@ -23,20 +23,20 @@
                             <td>
                                 <span
                                     class="badge 
-        @if ($subtask->status == 'pending') bg-secondary
-        @elseif ($subtask->status == 'in_progress') bg-warning
-        @elseif ($subtask->status == 'completed') bg-success
-        @elseif ($subtask->status == 'reject') bg-danger
-        @elseif ($subtask->status == 'late') bg-dark
-        @else bg-light text-dark @endif">
+                                    @if ($subtask->status == 'pending') bg-secondary
+                                    @elseif ($subtask->status == 'in_progress') bg-warning
+                                    @elseif ($subtask->status == 'completed') bg-success
+                                    @elseif ($subtask->status == 'reject') bg-danger
+                                    @elseif ($subtask->status == 'late') bg-dark
+                                    @else bg-light text-dark @endif">
                                     {{ ucfirst(str_replace('_', ' ', $subtask->status)) }}
                                 </span>
                             </td>
 
-                         
+
 
                             <td>
-                                <a href="{{ route('employee.subtask.edit', $subtask->id) }}" class="btn btn-sm btn-primary">
+                                <a href="{{ route('employee.subtask.view', $subtask->id) }}" class="btn btn-sm btn-primary">
                                     Info
                                 </a>
                             </td>
