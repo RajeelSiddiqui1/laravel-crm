@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CellCenterAccount;
+use App\Models\CellCenterPos;
 use App\Models\Subtask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -200,134 +202,236 @@ class Employee extends Controller
         return view('employee.subtasks_list', compact('subtasks'));
     }
 
-    function subtask_status_update(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,in_progress,completed',
-        ]);
 
-        $subtask = Subtask::findOrFail($id);
-        $subtask->status = $request->status;
-        $subtask->save();
-        return back()->with('success_swal', 'Subtask status updated successfully.');
-    }
 
+public function employee_task_view($subtaskId)
+{
+    $subtask = Subtask::with(['employeeSubtask', 'task'])->findOrFail($subtaskId);
     
-  
+    // Check if employeeSubtask exists
+    if (!$subtask->employeeSubtask) {
+        return redirect()->back()->with('error_swal', 'No employee subtask found.');
+    }
+    
+    $employeeSubtask = $subtask->employeeSubtask;
 
+    $leadCount = (int) $subtask->lead ?? 1;
+    $leadValues = range(1, $leadCount);
 
-    public function update_subtask(Request $request, $id)
-    {
-        $leadIndex = (int) $request->input('lead') - 1;
+    // Check task type
+    $isCallCenterPos = $subtask->task_type === 'cell_center_pos';
+    $isCallCenterAccount = $subtask->task_type === 'cell_center_accounts';
 
-        $request->validate([
-            'comment' => 'required|string',
-            'status' => 'required|string',
-        ]);
+    return view('employee.subtasks_update', compact('subtask', 'employeeSubtask', 'leadValues', 'isCallCenterPos', 'isCallCenterAccount'));
+}
 
-        $subtask = Subtask::with('task')->findOrFail($id);
-        $employeeSubtask = $subtask->employeeSubtask;
+public function updatePos(Request $request, $id)
+{
+    $subtask = Subtask::findOrFail($id);
+    
+    // Check if employeeSubtask exists
+    if (!$subtask->employeeSubtask) {
+        return redirect()->back()->with('error_swal', 'No employee subtask found.');
+    }
+    
+    $employeeSubtask = $subtask->employeeSubtask;
 
-        if (!$employeeSubtask) {
-            $employeeSubtask = $subtask->employeeSubtask()->create([
-                'comments' => [],
-                'statuses' => [],
-                'attachments' => [],
+    // Validate the request
+    $validator = Validator::make($request->all(), [
+        'lead' => 'required|integer|min:1',
+        'status' => 'required|in:pending,in_progress,completed',
+        'comment' => 'nullable|string',
+        'name' => 'nullable|string|max:255',
+        'business_name' => 'nullable|string|max:255',
+        'business_number' => 'nullable|string|max:20',
+        'personal_number' => 'nullable|string|max:20',
+        'personal_email' => 'nullable|email|max:255',
+        'business_email' => 'nullable|email|max:255',
+        'address' => 'nullable|string',
+        'provider' => 'nullable|string|max:255',
+        'category_pos' => 'nullable|string|max:255',
+        'pos_type' => 'nullable|string|max:255',
+        'debt' => 'nullable|numeric',
+        'credit' => 'nullable|numeric',
+        'rental' => 'nullable|numeric',
+        'business_type' => 'nullable|string|max:255',
+        'date' => 'nullable|date',
+        'time' => 'nullable|date_format:H:i',
+        'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm,mp3,wav,ogg,pdf|max:10240',
+    ]);
+
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput()->with('error_swal', 'Validation failed. Please check your inputs.');
+    }
+
+    $lead = $request->input('lead');
+
+    // Validate lead number
+    if ($lead < 1 || $lead > ($subtask->lead ?? 1)) {
+        return redirect()->back()->with('error_swal', 'Invalid lead number.');
+    }
+
+    // Update EmployeeSubtask
+    $employeeSubtask->comment = $request->input('comment');
+    $employeeSubtask->status = $request->input('status');
+    $employeeSubtask->save();
+
+    // Update or create CellCenterPos record
+    $posData = CellCenterPos::updateOrCreate(
+        ['subtask_id' => $subtask->id, 'lead' => $lead],
+        [
+            'name' => $request->input('name'),
+            'comment' => $request->input('comment'),
+            'status' => $request->input('status'),
+            'business_name' => $request->input('business_name'),
+            'business_number' => $request->input('business_number'),
+            'personal_number' => $request->input('personal_number'),
+            'personal_email' => $request->input('personal_email'),
+            'business_email' => $request->input('business_email'),
+            'address' => $request->input('address'),
+            'provider' => $request->input('provider'),
+            'category_pos' => $request->input('category_pos'),
+            'pos_type' => $request->input('pos_type'),
+            'debt' => $request->input('debt'),
+            'credit' => $request->input('credit'),
+            'rental' => $request->input('rental'),
+            'business_type' => $request->input('business_type'),
+            'date' => $request->input('date'),
+            'time' => $request->input('time'),
+            'employee_id' => Auth::guard('employee')->user()->id, // Fixed to use ID
+        ]
+    );
+
+    if ($request->hasFile('attachments')) {
+        $uploadedFiles = $posData->attachments ?? [];
+        foreach ($request->file('attachments') as $file) {
+            $uploadedFile = Cloudinary::upload($file->getRealPath(), [
+                'folder' => 'subtask_attachments',
+                'resource_type' => in_array($file->getClientOriginalExtension(), ['mp4', 'mov', 'avi', 'webm']) ? 'video' : (in_array($file->getClientOriginalExtension(), ['mp3', 'wav', 'ogg']) ? 'raw' : 'image'),
             ]);
+            $uploadedFiles[] = $uploadedFile->getSecurePath();
         }
+        $posData->attachments = $uploadedFiles; // Fixed to store in posData
+        $posData->save();
+    }
 
-        $comments = $employeeSubtask->comments ?? [];
-        $statuses = $employeeSubtask->statuses ?? [];
-        $attachments = $employeeSubtask->attachments ?? [];
+    // Update cell_center_pos_ids array in Subtask
+    $posIds = $subtask->cell_center_pos_ids ?? [];
+    $posIds[$lead - 1] = $posData->id; // Store ID at lead index (0-based)
+    $subtask->cell_center_pos_ids = array_values(array_filter($posIds)); // Remove nulls and reindex
+    $subtask->save();
 
-        $comments[$leadIndex] = $request->input('comment');
-        $statuses[$leadIndex] = $request->input('status');
+    return redirect()->back()->with('success_swal', 'Subtask updated successfully!');
+}
 
-        if ($request->hasFile("attachments")) {
-            foreach ($request->file("attachments") as $file) {
-                $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                    'public_id' => 'employee_subtask/' . uniqid() . '_' . $file->getClientOriginalName(),
-                    'resource_type' => 'auto',
-                ]);
-                $attachments[$leadIndex][] = $uploaded['secure_url'];
-            }
-        }
+public function updateAccount(Request $request, $id)
+{
+    $subtask = Subtask::findOrFail($id);
+    
+    // Check if employeeSubtask exists
+    if (!$subtask->employeeSubtask) {
+        return redirect()->back()->with('error_swal', 'No employee subtask found.');
+    }
+    
+    $employeeSubtask = $subtask->employeeSubtask;
 
-        $updateData = [
-            'comments' => $comments,
-            'statuses' => $statuses,
-            'attachments' => $attachments,
-        ];
+    // Validate the request
+    $validator = Validator::make($request->all(), [
+        'lead' => 'required|integer|min:1',
+        'status' => 'required|in:pending,in_progress,completed',
+        'comment' => 'nullable|string',
+        'driving_license' => 'nullable|string|max:255',
+        'email' => 'nullable|email|max:255',
+        'phone' => 'nullable|string|max:20',
+        'business_number' => 'nullable|string|max:20',
+        'corporation_number' => 'nullable|string|max:20',
+        'corporation_email' => 'nullable|email|max:255',
+        'corporation_documents' => 'nullable|string',
+        'previous_history' => 'nullable|string',
+        'fees' => 'nullable|numeric',
+        'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm,mp3,wav,ogg,pdf|max:10240',
+    ]);
 
-        // If Call Center, include these fields:
-        if ($subtask->task->department_id == 2) {
-            $updateData = array_merge($updateData, $request->only([
-                'name',
-                'business_name',
-                'business_num',
-                'personal_num',
-                'personal_email',
-                'business_email',
-                'address',
-                'provider',
-                'category_pos',
-                'pos_type',
-                'debt',
-                'credit',
-                'rentle',
-                'bussiness_type',
-                'date',
-                'time'
-            ]));
-        }
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput()->with('error_swal', 'Validation failed. Please check your inputs.');
+    }
 
-        $employeeSubtask->update($updateData);
+    $lead = $request->input('lead');
 
-        // Notify Team Lead
-        $teamLead = TeamLead::find($subtask->task->team_lead_id);
-        if ($teamLead) {
-            Notification::create([
-                'title' => 'Subtask Updated by Employee',
-                'message' => 'The subtask "' . $subtask->title . '" has been updated.',
-                'user_id' => $teamLead->id,
-                'user_type' => 'team_lead',
+    // Validate lead number
+    if ($lead < 1 || $lead > ($subtask->lead ?? 1)) {
+        return redirect()->back()->with('error_swal', 'Invalid lead number.');
+    }
+
+    // Update EmployeeSubtask
+    $employeeSubtask->comment = $request->input('comment');
+    $employeeSubtask->status = $request->input('status');
+    $employeeSubtask->save();
+
+    // Update or create CellCenterAccount record
+    $accountData = CellCenterAccount::updateOrCreate(
+        ['subtask_id' => $subtask->id, 'lead' => $lead],
+        [
+            'comment' => $request->input('comment'),
+            'status' => $request->input('status'),
+            'driving_license' => $request->input('driving_license'),
+            'email' => $request->input('email'),
+            'phone' => $request->input('phone'),
+            'business_number' => $request->input('business_number'),
+            'corporation_number' => $request->input('corporation_number'),
+            'corporation_email' => $request->input('corporation_email'),
+            'corporation_documents' => $request->input('corporation_documents'),
+            'previous_history' => $request->input('previous_history'),
+            'fees' => $request->input('fees'),
+            'employee_id' => Auth::guard('employee')->user()->id, // Fixed to use ID
+        ]
+    );
+
+    if ($request->hasFile('attachments')) {
+        $uploadedFiles = $accountData->attachments ?? [];
+        foreach ($request->file('attachments') as $file) {
+            $uploadedFile = Cloudinary::upload($file->getRealPath(), [
+                'folder' => 'subtask_attachments',
+                'resource_type' => in_array($file->getClientOriginalExtension(), ['mp4', 'mov', 'avi', 'webm']) ? 'video' : (in_array($file->getClientOriginalExtension(), ['mp3', 'wav', 'ogg']) ? 'raw' : 'image'),
             ]);
+            $uploadedFiles[] = $uploadedFile->getSecurePath();
         }
-
-        return redirect()->back()->with([
-            'success_swal' => 'Subtask assignment sent successfully.',
-            'updated_lead' => $request->input('lead'),
-        ]);
+        $accountData->attachments = $uploadedFiles; // Fixed to store in accountData
+        $accountData->save();
     }
 
+    // Update cell_center_account_ids array in Subtask
+    $accountIds = $subtask->cell_center_account_ids ?? [];
+    $accountIds[$lead - 1] = $accountData->id; // Store ID at lead index (0-based)
+    $subtask->cell_center_account_ids = array_values(array_filter($accountIds)); // Remove nulls and reindex
+    $subtask->save();
 
-    protected function getCloudinaryPublicId($url)
-    {
-        $parts = explode('/', $url);
-        $uploadIndex = array_search('upload', $parts);
-        if ($uploadIndex !== false && isset($parts[$uploadIndex + 2])) {
-            $folderParts = array_slice($parts, $uploadIndex + 2);
-            return implode('/', array_map(function ($part) {
-                return pathinfo($part, PATHINFO_FILENAME);
-            }, $folderParts));
-        }
-        return null;
+    return redirect()->back()->with('success_swal', 'Subtask updated successfully!');
+}
+
+protected function getCloudinaryPublicId($url)
+{
+    $parts = explode('/', $url);
+    $uploadIndex = array_search('upload', $parts);
+    if ($uploadIndex !== false && isset($parts[$uploadIndex + 2])) {
+        $folderParts = array_slice($parts, $uploadIndex + 2);
+        return implode('/', array_map(function ($part) {
+            return pathinfo($part, PATHINFO_FILENAME);
+        }, $folderParts));
     }
+    return null;
+}
 
+public function fetch_team_leads()
+{
+    $employee = Auth::guard('employee')->user();
 
+    $teamLeads = TeamLead::where('department_id', $employee->department_id)
+        ->with('department')
+        ->get();
 
-    #message
-    public function fetch_team_leads()
-    {
-        $employee = Auth::guard('employee')->user();
-
-        $teamLeads = TeamLead::where('department_id', $employee->department_id)
-            ->with('department')
-            ->get();
-
-        return view('employee.team_leads', compact('employee', 'teamLeads'));
-    }
-
+    return view('employee.team_leads', compact('employee', 'teamLeads'));
+}
     public function message_teamlead($id)
     {
         $teamlead = TeamLead::findOrFail($id);

@@ -26,6 +26,9 @@ class OnwerTask extends Model
         'start_date',
         'deadline',
         'account_id',
+        'account_t2_id',     
+        'account_hst_id',
+        'account_t1_id'  
     ];
 
     protected $casts = [
@@ -49,10 +52,20 @@ class OnwerTask extends Model
         return $this->belongsTo(Department::class);
     }
 
-   public function account()
-{
-    return $this->belongsTo(Account::class, 'account_id');
-}
+    public function accountT2()
+    {
+        return $this->belongsTo(AccountT2::class, 'account_t2_id');
+    }
+
+    public function accountT1()
+    {
+        return $this->belongsTo(AccountT1::class, 'account_t1_id');
+    }
+
+    public function accountHst()
+    {
+        return $this->belongsTo(AccountHST::class, 'account_hst_id'); // ✅ new relation
+    }
 
     public function employee()
     {

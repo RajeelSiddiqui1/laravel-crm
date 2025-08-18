@@ -146,6 +146,12 @@ Route::controller(Employee::class)->group(function () {
         Route::get('/employee/subtasks',  'subtasks_list')->name('employee.subtasks');
         Route::patch('/employee/subtask-update/{id}', 'subtask_status_update')->name('employee.subtask.update_status');
 
+
+        Route::get('employee/subtask/{subtaskId}',  'employee_task_view')->name('employee.subtask.view');
+        Route::put('employee/subtask/pos/update/{id}',  'updatePos')->name('employee.subtask.pos.update');
+        Route::put('employee/subtask/account/update/{id}',  'updateAccount')->name('employee.subtask.account.update');
+        Route::put('employee/subtask/update/{id}',  'update')->name('employee.subtask.update');
+
         Route::get('employee/team-lead/', 'fetch_team_leads')->name('team_lead.teamleads');
         Route::get('employee/message/{id}/team-lead', 'message_teamlead')->name('employee.message.teamlead');
         Route::post('employee/message/send',  'send_message')
@@ -153,26 +159,26 @@ Route::controller(Employee::class)->group(function () {
     });
 });
 
-Route::controller(EmployeeTasks::class)->group(function () {
-    
-    // ✅ View a subtask form (GET request)
-    Route::get('employee/subtask/{subtaskId}', 'employee_task_view')->name('employee.subtask.view');
+// Route::controller(EmployeeTasks::class)->group(function () {
 
-    // ✅ Update POS subtask (PUT request)
-    Route::put('employee/subtask/pos/{id}', 'update_subtask')->name('employee.subtask.pos.update');
+//     // ✅ View a subtask form (GET request)
+//     Route::get('employee/subtask/{subtaskId}', 'employee_task_view')->name('employee.subtask.view');
 
-    // ✅ Update Account subtask (PUT request)
-    Route::put('employee/subtask/account/{id}', 'update_subtask')->name('employee.subtask.account.update');
+//     // ✅ Update POS subtask (PUT request)
+//     Route::put('employee/subtask/pos/{id}', 'update_subtask')->name('employee.subtask.pos.update');
 
-    // 🛡️ Optional: fallback GET routes to prevent 405 errors if user accidentally visits a PUT route
-    Route::get('employee/subtask/pos/{id}', function () {
-        abort(405, 'GET method not allowed. Use the subtask view page instead.');
-    });
+//     // ✅ Update Account subtask (PUT request)
+//     Route::put('employee/subtask/account/{id}', 'update_subtask')->name('employee.subtask.account.update');
 
-    Route::get('employee/subtask/account/{id}', function () {
-        abort(405, 'GET method not allowed. Use the subtask view page instead.');
-    });
-});
+//     // 🛡️ Optional: fallback GET routes to prevent 405 errors if user accidentally visits a PUT route
+//     Route::get('employee/subtask/pos/{id}', function () {
+//         abort(405, 'GET method not allowed. Use the subtask view page instead.');
+//     });
+
+//     Route::get('employee/subtask/account/{id}', function () {
+//         abort(405, 'GET method not allowed. Use the subtask view page instead.');
+//     });
+// });
 
 
 Route::get('/chat/group/{ownerTaskId}', [GroupChatController::class, 'index'])->name('chat.group');

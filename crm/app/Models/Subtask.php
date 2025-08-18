@@ -28,6 +28,8 @@ class Subtask extends Model
 
     protected $casts = [
         'attachments' => 'array',
+        'cell_center_pos_ids' => 'array',
+        'cell_center_account_ids' => 'array',
     ];
 
     public function task()
