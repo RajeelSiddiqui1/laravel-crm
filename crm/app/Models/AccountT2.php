@@ -24,7 +24,5 @@ class AccountT2 extends Model
         'attachments',
     ];
 
-    protected $casts = [
-        'attachments' => 'array',
-    ];
+  
 }

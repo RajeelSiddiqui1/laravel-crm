@@ -196,7 +196,7 @@ class TeamLeadController extends Controller
     // {
     //     $teamLead = Auth::guard('team_lead')->user();
     //     $departmentId = $teamLead->department_id;
-       
+
     //     $tasks = OnwerTask::with(['teamLead', 'department'])
     //         ->where('team_lead_id', $teamLead->id)
     //         ->get();
@@ -204,28 +204,37 @@ class TeamLeadController extends Controller
     //     return view('team_lead.manager_tasks', compact('tasks', 'employees'));
     // }
 
-     public function manager_tasks()
+    public function manager_tasks()
     {
         $teamLead = Auth::guard('team_lead')->user();
         $departmentId = $teamLead->department_id;
 
-        // Fetch tasks with 'account' relation only for this team lead and department
-        $tasks = OnwerTask::with(['department', 'account'])
+        // For Share Dropdown (optional)
+        $otherTeamLeads = TeamLead::where('id', '!=', $teamLead->id)
+            ->pluck('name', 'id');
+
+        // Fetch tasks with required relations for this team lead, only for Accounts department, excluding Call Center
+        $tasks = OnwerTask::with(['department', 'teamLead', 'accountT1', 'accountT2', 'accountHst'])
             ->where('team_lead_id', $teamLead->id)
             ->where('department_id', $departmentId)
+            ->whereHas('department', function ($query) {
+                $query->where('name', '=', 'Accounts')
+                    ->where('name', '!=', 'Call Center');
+            })
             ->get()
             ->map(function ($task) {
-                // Optional: Rename department if needed like in manager logic
+                // Rename "Call Center" to "Call Operator" if needed
                 if ($task->department && $task->department->name === 'Call Center') {
                     $task->department->name = 'Call operator';
                 }
                 return $task;
             });
 
-             $employees = Employee::where('department_id', $departmentId)->get();
+        $employees = Employee::where('department_id', $departmentId)->get();
 
-        return view('team_lead.manager_tasks', compact('tasks','employees'));
+        return view('team_lead.manager_tasks', compact('tasks', 'employees', 'otherTeamLeads'));
     }
+
 
     public function assignEmployees(Request $request, OnwerTask $task)
     {
@@ -324,8 +333,22 @@ class TeamLeadController extends Controller
 
     function manager_tasks_detail($id)
     {
-        $task = OnwerTask::findOrFail($id);
-        return view('team_lead.manager_tasks_detail', compact('task'));
+        $task = OnwerTask::with(['department', 'teamLead', 'accountT1', 'accountT2', 'accountHST'])->findOrFail($id);
+
+        // Determine account type
+        $accountType = null;
+        $account = null;
+        if ($task->account_t1_id) {
+            $accountType = 'AccountT1';
+            $account = $task->accountT1;
+        } elseif ($task->account_t2_id) {
+            $accountType = 'AccountT2';
+            $account = $task->accountT2;
+        } elseif ($task->account_hst_id) {
+            $accountType = 'AccountHST';
+            $account = $task->accountHST;
+        }
+        return view('team_lead.manager_tasks_detail', compact('task', 'accountType', 'account'));
     }
 
 
@@ -345,7 +368,7 @@ class TeamLeadController extends Controller
 
         $teamLeadDepartmentName = $teamLead->department->name ?? '';
 
-        return view('team_lead.create_subtask', compact('task', 'assignedEmployees', 'cellCenterPos','teamLeadDepartmentName'));
+        return view('team_lead.create_subtask', compact('task', 'assignedEmployees', 'cellCenterPos', 'teamLeadDepartmentName'));
     }
 
     public function subtask_store(Request $request)

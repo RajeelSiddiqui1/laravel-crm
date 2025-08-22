@@ -161,7 +161,7 @@
 
                                     <div class="form-group">
                                         <label class="form-label mb-1">Add Attachments</label>
-                                        <input type="file" name="attachments_t2[]" class="form-control" multiple>
+                                     <input type="file" name="attachments_t2" class="form-control" >
                                     </div>
                                 </div>
 

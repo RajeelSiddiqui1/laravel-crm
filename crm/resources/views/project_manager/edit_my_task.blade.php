@@ -156,7 +156,7 @@
 
                             <div class="form-group">
                                 <label class="text-white">Add Attachments</label>
-                                <input type="file" name="attachments_t2[]" class="form-control text-white" multiple>
+                                <input type="file" name="attachments_t2" class="form-control text-white">
                                 @error('attachments_t2.*') <span class="text-danger">{{ $message }}</span> @enderror
                             </div>
                         @elseif ($accountType === 'AccountHST')
