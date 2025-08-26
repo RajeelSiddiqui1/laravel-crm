@@ -101,12 +101,7 @@
                 <h2 class="text-center mb-4 fw-bold">My Tasks Dashboard</h2>
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-12 d-flex justify-content-end">
-                <a href="{{ route('project_manager.mytask_create') }}" class="btn btn-primary mb-3">Create Task</a>
-            </div>
-        </div>
-
+        
         @if($tasks->whereNotNull('accountT1')->count() > 0)
         <h3 class="account-type-header">T1 Tasks</h3>
         <div class="table-responsive">

@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
         <h2>Owner Tasks</h2>
-         @if (session('success_swal'))
+        @if (session('success_swal'))
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     Swal.fire({
@@ -34,14 +34,9 @@
                 <tr>
                     <th>No</th>
                     <th>Client Name</th>
-                    <th>Priority</th>
-                    <th>Start Date</th>
-                    <th>Deadline</th>
-                    <th>Teamlead Status</th>
-                    <th>Team Lead</th>
-                    <th>Shared Task</th>
-                    <th>View</th>
-                    <th>Group Chat</th>
+                    <th>Audio</th>
+                    <th>Group chat</th>
+                    <th>craete task</th>
                 </tr>
             </thead>
             <tbody>
@@ -49,75 +44,29 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $task->client_name }}</td>
-                        <td>{{ $task->priority }}</td>
-                        <td>{{ $task->start_date->format('Y-m-d') }}</td>
-                        <td>{{ $task->deadline->format('Y-m-d') }}</td>
                         <td>
-                            <span
-                                class="badge bg-{{ $task->status == 'completed' ? 'success' : ($task->status == 'in_progress' ? 'warning' : 'secondary') }}">
-                                {{ ucfirst(str_replace('_', ' ', $task->status)) }}
-                            </span>
-                        </td>
-                        <td>
-                            @if ($task->teamLead)
-                                {{ $task->teamLead->name }}
+                            @if ($task->audio_url)
+                                <audio controls class="w-100">
+                                    <source src="{{ $task->audio_url }}" type="audio/webm">
+                                    Your browser does not support the audio element.
+                                </audio>
                             @else
-                                <form method="POST"
-                                    action="{{ route('project_manager.tasks.assign_team_lead', $task->id) }}">
-                                    @csrf
-                                    <select name="team_lead_id" class="form-control form-select-sm"
-                                        onchange="this.form.submit()">
-                                        <option value="">Select</option>
-                                        @foreach ($teamLeads as $lead)
-                                            @if ($lead->department_id == $task->department_id)
-                                                <option value="{{ $lead->id }}">{{ $lead->name }}</option>
-                                            @endif
-                                        @endforeach
-                                    </select>
-                                </form>
+                                No Audio
                             @endif
                         </td>
-                          <td>
-                                @php
-                                    // already shared with this manager?
-                                    $shared = \App\Models\SharedTask::where('owner_task_id', $task->id)
-                                        ->where('assigned_by', auth()->guard('project_manager')->id())
-                                        ->first();
-                                @endphp
-
-                                <form action="{{ route('project_manager.share_task') }}" method="POST"
-                                    style="display:inline;">
-                                    @csrf
-                                    <input type="hidden" name="task_id" value="{{ $task->id }}">
-                                    <input type="hidden" name="department_id" value="{{ $task->department_id }}">
-
-                                    <select name="assigned_to" class="form-control form-select-sm"
-                                        onchange="this.form.submit();">
-                                        <option value="">Share with…</option>
-                                        @foreach ($otherManagers as $id => $name)
-                                            <option value="{{ $id }}"
-                                                {{ optional($shared)->assigned_to == $id ? 'selected' : '' }}>
-                                                {{ $name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </form>
-                            </td>
                         <td>
-                            <a href="{{ route('project_manager.tasks.detail', $task->id) }}"
-                                class="btn btn-sm btn-primary">View</a>
+                            <a href="{{ route('chat.group', $task->id) }}" class="btn btn-primary btn-sm">Group Chat</a>
                         </td>
-                      
                         <td>
-                            <a href="{{ route('chat.group', $task->id) }}" class="btn btn-success btn-sm">Group
-                                Chat</a>
 
+                            <a href="{{ route('project_manager.mytask_create', parameters: $task->id) }}"
+                                class="btn btn-sm btn-success">craete</a>
                         </td>
-                      
+
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted">No tasks found.</td>
+                        <td colspan="4" class="text-center text-muted">No tasks found.</td>
                     </tr>
                 @endforelse
             </tbody>

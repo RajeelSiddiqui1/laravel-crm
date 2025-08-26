@@ -17,7 +17,7 @@
                                         <th scope="col">Name</th>
                                         <th scope="col">Email</th>
                                         <th scope="col">Phone</th>
-                                        <th scope="col">Departments</th>
+                                        {{-- <th scope="col">Departments</th> --}}
                                         <th scope="col">Image</th>
                                     </tr>
                                 </thead>
@@ -28,15 +28,16 @@
                                             <td>{{ $manager->name }}</td>
                                             <td>{{ $manager->email }}</td>
                                             <td>{{ $manager->phone }}</td>
-                                            <td>
-                                                @if ($manager->departments->count())
-                                                    @foreach ($manager->departments as $dept)
-                                                        <span class="badge badge-info">{{ $dept->name }}</span>
-                                                    @endforeach
-                                                @else
-                                                    <span class="text-muted">N/A</span>
-                                                @endif
-                                            </td>
+                                            
+                                               {{-- <td>
+    @if ($manager->departments && $manager->departments->isNotEmpty())
+        @foreach ($manager->departments as $dept)
+            <span class="badge bg-info">{{ $dept->name }}</span>
+        @endforeach
+    @else
+        <span class="text-muted">N/A</span>
+    @endif
+</td> --}}
                                             <td>
                                                 <img src="{{ asset('images/project_managers/' . $manager->image) }}"
                                                     class="img-circle" alt="user avatar" width="50" height="50"

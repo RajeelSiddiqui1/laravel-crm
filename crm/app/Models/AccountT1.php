@@ -16,8 +16,6 @@ class AccountT1 extends Model
         'year'
     ];
 
-    protected $casts = [
-        'attachments' => 'array',
-    ];
+  
 
 }

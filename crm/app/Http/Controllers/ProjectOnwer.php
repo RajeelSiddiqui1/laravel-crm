@@ -15,6 +15,8 @@ use App\Models\Subtask;
 use App\Models\TeamLead;
 use App\Notifications\OwnerTaskAssign;
 use App\Notifications\OwnerTaskEdit;
+use Cloudinary\Cloudinary as CloudinaryCloudinary;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -74,7 +76,6 @@ class ProjectOnwer extends Controller
         $validator = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:team_leads,email,' . $owner->id,
-            'password' => 'nullable|string|min:6',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg',
         ]);
 
@@ -84,7 +85,6 @@ class ProjectOnwer extends Controller
 
         $owner->name = $request->name;
         $owner->email = $request->email;
-        $owner->password = $request->password;
 
         if ($request->hasFile('image')) {
             $oldImage = public_path('images/project_owner/' . $owner->image);
@@ -123,7 +123,7 @@ class ProjectOnwer extends Controller
 
     function employee_view()
     {
-        $employees = Employee::with('department')->get();
+        $employees = Employee::with('departments')->get();
         return view('project_owner.employees', ['employees' => $employees]);
     }
 
@@ -221,12 +221,21 @@ class ProjectOnwer extends Controller
 
 
 
-    function tasks_createview()
-    {
-        $departments = Department::all();
-        $managers = ProjectManager::all();
-        return view('project_owner.tasks_create', compact('departments', 'managers'));
-    }
+   public function tasks_createview()
+{
+    
+    
+        $managers = ProjectManager::all()->map(function ($manager) {
+            return [
+                'id' => $manager->id,
+                'name' => $manager->name ?? 'Manager ' . $manager->id,
+            ];
+        })->toArray();
+
+     
+
+    return view('project_owner.tasks_create', compact('managers'));
+}
     public function getProjectManagers($departmentId)
     {
         $managers = ProjectManager::whereJsonContains('department_ids', (string) $departmentId)
@@ -239,116 +248,119 @@ class ProjectOnwer extends Controller
 
     function tasks_create(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'client_name' => 'required',
-            'description' => 'required',
-            'client_email' => 'required|email',
-            'client_contact' => 'required',
-            'department_id' => 'required|exists:departments,id',
-            'project_manager_id' => 'required|exists:project_managers,id',
-            'start_date' => 'required|date',
-            'deadline' => 'required|date|after_or_equal:start_date',
-            'priority' => 'required|in:Low,Medium,High',
+       $validated = $request->validate([
+        'client_name' => 'required|string|max:255',
+        'managers' => 'nullable|array',
+        'managers.*' => 'exists:project_managers,id', // Validate manager IDs exist
+        'audio_file' => 'nullable|string', // Base64 audio data
+    ]);
+
+    $task = new OnwerTask();
+    $task->client_name = $validated['client_name'];
+    $task->managers = json_encode($validated['managers'] ?? []); // Store manager IDs as JSON array
+
+    if ($request->filled('audio_file')) {
+    try {
+        // Extract base64 data (format: data:audio/webm;base64,...)
+        [, $data] = explode(';', $request->audio_file);
+        [, $base64Data] = explode(',', $data);
+        $binary = base64_decode($base64Data);
+
+        // Create a temporary file for upload
+        $tempPath = tempnam(sys_get_temp_dir(), 'audio_');
+        file_put_contents($tempPath, $binary);
+
+        // Upload to Cloudinary (treat audio as video for best processing)
+        $uploaded = Cloudinary::uploadApi()->upload($tempPath, [
+            'folder' => 'task_audio',
+            'resource_type' => 'video', // ⚡ use video for audio files
+            'public_id' => 'task_audio/' . uniqid('audio_')
         ]);
 
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
+        $task->audio_url = $uploaded['secure_url'];
 
-        $task = new OnwerTask();
-        $task->name = $request->name;
-        $task->client_name = $request->client_name;
-        $task->description = $request->description;
-        $task->client_email = $request->client_email;
-        $task->client_contact = $request->client_contact;
-        $task->department_id = $request->department_id;
-        $task->project_manager_id = $request->project_manager_id;
+        // Clean up temp file
+        unlink($tempPath);
+    } catch (\Exception $e) {
+        Log::error('Cloudinary audio upload failed: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Audio upload failed')->withInput();
+    }
+}
 
-        $projectManager = ProjectManager::find($request->project_manager_id);
-        $task->manager_email = $projectManager->email;
-        $task->start_date = $request->start_date;
-        $task->deadline = $request->deadline;
-        $task->priority = $request->priority;
-        $task->status = 'pending';
+    $task->save();
 
-        if ($task->save()) {
-
-            // ✅ Send email
-            Mail::to($projectManager->email)->send(new TaskAssignedMail($task));
-
-            // ✅ Create notification
-            Notification::create([
-                'title' => 'New Task Assigned',
-                'message' => 'You have been assigned a new task: ' . $task->name,
-                'user_id' => $projectManager->id,
-                'user_type' => 'project_manager',
-            ]);
-
-            return redirect()->route('project_owner.task')->with('success_swal', 'Task created and notification sent.');
-        }
-
-        return redirect()->route('project_owner.task')->with('error_swal', 'Task creation failed.');
+    return redirect()->back()->with('success_swal', 'Task created successfully!');
     }
 
 
-    public function edit($id)
+   public function edit($id)
     {
         $task = OnwerTask::findOrFail($id);
-        $departments = Department::all();
+        $managers = ProjectManager::all()->map(function ($manager) {
+            return [
+                'id' => $manager->id,
+                'name' => $manager->name ?? 'Manager ' . $manager->id,
+            ];
+        })->toArray();
 
-        // Get managers whose department_ids JSON contains this task's department_id
-        $managers = ProjectManager::whereJsonContains('department_ids', (string) $task->department_id)
-            ->get(['id', 'name', 'email']);
-
-        return view('project_owner.task_edit', compact('task', 'departments', 'managers'));
+        return view('project_owner.task_edit', compact('task', 'managers'));
     }
 
-
+    // Update an existing task
     public function update(Request $request, $id)
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'name'               => 'required|string|max:255',
-                'client_name'        => 'required|string|max:255',
-                'description'        => 'required|string',
-                'client_email'       => 'required|email',
-                'client_contact'     => 'required|string|max:20',
-                'project_manager_id' => 'required|exists:project_managers,id',
-                'department_id'      => 'required|exists:departments,id',
-                'manager_email'      => 'required|email',
-                'start_date'         => 'required|date',
-                'deadline'           => 'required|date|after_or_equal:start_date',
-                'priority'           => 'required|in:Low,Medium,High',
-            ]);
+        $task = OnwerTask::findOrFail($id);
 
-            if ($validator->fails()) {
-                return redirect()->back()->withErrors($validator)->withInput();
-            }
+        $validated = $request->validate([
+            'client_name' => 'required|string|max:255',
+            'managers' => 'nullable|array',
+            'managers.*' => 'exists:project_managers,id',
+            'audio_file' => 'nullable|string',
+        ]);
 
-            $task = OnwerTask::findOrFail($id);
+        $task->client_name = $validated['client_name'];
+        $task->managers = json_encode($validated['managers'] ?? []);
+        $task->status = $task->status; // Preserve existing status
 
-            $task->update([
-                'name'               => $request->name,
-                'client_name'        => $request->client_name,
-                'description'        => $request->description,
-                'client_email'       => $request->client_email,
-                'client_contact'     => $request->client_contact,
-                'project_manager_id' => $request->project_manager_id,
-                'department_id'      => $request->department_id,
-                'manager_email'      => $request->manager_email,
-                'start_date'         => $request->start_date,
-                'deadline'           => $request->deadline,
-                'priority'           => $request->priority,
-            ]);
+       if ($request->filled('audio_file')) {
+    try {
+        // Extract base64 data
+        [, $data] = explode(';', $request->audio_file);
+        [, $base64Data] = explode(',', $data);
+        $binary = base64_decode($base64Data);
 
-            return redirect()->route('project_owner.task', $id)->with('success_swal', 'Task updated successfully.');
-        } catch (\Exception $e) {
-            Log::error('Update Task Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return redirect()->back()->with('error_swal', 'Failed to update task: ' . $e->getMessage());
-        }
+        // Create a temporary file for upload
+        $tempPath = tempnam(sys_get_temp_dir(), 'audio_');
+        file_put_contents($tempPath, $binary);
+
+        // Use task ID as the Cloudinary public_id to overwrite same file
+        $publicId = 'task_audio/task_' . $task->id;
+
+        // Upload to Cloudinary (overwrite enabled)
+        $uploaded = Cloudinary::uploadApi()->upload($tempPath, [
+            'folder' => 'task_audio',
+            'resource_type' => 'video',
+            'public_id' => $publicId,
+            'overwrite' => true,   // ⚡ ensures old file is replaced
+        ]);
+
+        $task->audio_url = $uploaded['secure_url'];
+
+        // Clean up temp file
+        unlink($tempPath);
+    } catch (\Exception $e) {
+        Log::error('Cloudinary audio upload failed: ' . $e->getMessage());
+        return redirect()->back()->with('error_swal', 'Audio upload failed')->withInput();
+    }
+}
+
+
+        $task->save();
+
+        return redirect()->route('project_owner.task')->with('success_swal', 'Task updated successfully!');
     }
 
+    // Delete a task
     public function destroy($id)
     {
         try {
@@ -376,6 +388,11 @@ class ProjectOnwer extends Controller
         return view('project_owner.subtask', compact('subtasks'));
     }
 
+    function manager_task($id)
+    {
+        $tasks = OnwerTask::find($id);
+        return view('project_owner.project_manager_tasks', compact('tasks'));
+    }
     public function subtask_detail($id)
     {
         $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);

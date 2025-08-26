@@ -11,24 +11,11 @@ class OnwerTask extends Model
     protected $fillable = [
         'name',
         'client_name',
-        'description',
-        'client_email',
-        'client_contact',
-        'department_id',
-        'project_manager_id',
-        'project_manager_task',
-        'team_lead_id',
-        'employee_id',
-        'manager_email',
-        'priority',
-        'status',
-        'status2',
-        'start_date',
-        'deadline',
-        'account_id',
-        'account_t2_id',     
+        'audio_file',
+        'managers',
+        'account_t1_id',
+        'account_t2_id',
         'account_hst_id',
-        'account_t1_id'  
     ];
 
     protected $casts = [

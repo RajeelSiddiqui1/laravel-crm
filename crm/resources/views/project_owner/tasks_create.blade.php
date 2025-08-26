@@ -14,7 +14,7 @@
         position: relative;
     }
 
-    .form-control {
+    .form-control, select.form-control {
         height: 2.5rem;
         font-size: 0.95rem;
         border-radius: 0.25rem;
@@ -22,13 +22,34 @@
         color: #fff;
         border: 1px solid #555;
         transition: border-color 0.2s;
+        width: 100%;
+        padding: 0.5rem;
     }
 
-    .form-control:focus {
+    .form-control:focus, select.form-control:focus {
         border-color: #007bff;
         background-color: #333;
         box-shadow: none;
         outline: none;
+    }
+
+    .checkbox-group {
+        max-height: 6rem;
+        overflow-y: auto;
+        padding: 0.5rem;
+        background-color: #222;
+        border: 1px solid #555;
+        border-radius: 0.25rem;
+    }
+
+    .checkbox-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #fff;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        margin-right: 0.5rem;
     }
 
     textarea.form-control {
@@ -72,23 +93,6 @@
         font-size: 1.5rem;
         margin-bottom: 1.5rem;
         color: #fff;
-    }
-
-    .custom-select {
-        border-radius: 0.25rem;
-        padding: 0.5rem;
-        border: 1px solid #555;
-        background-color: #222;
-        color: #fff;
-        font-size: 0.95rem;
-    }
-
-    .custom-select:focus {
-        border-color: #007bff;
-        background-color: #333;
-        color: #fff;
-        outline: none;
-        box-shadow: none;
     }
 
     .required::after {
@@ -177,59 +181,6 @@
                             @csrf
 
                             <fieldset>
-                                <legend class="text-white mb-3" style="font-size: 1.1rem;">Task Details</legend>
-                                <div class="form-group">
-                                    <label class="text-white required" for="name">Task Name</label>
-                                    <input type="text" name="name" id="name" class="form-control" value="{{ old('name') }}"
-                                        aria-required="true" required>
-                                    @error('name')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="text-white required" for="description">Description</label>
-                                    <textarea name="description" id="description" class="form-control" maxlength="500">{{ old('description') }}</textarea>
-                                    <div class="char-count" id="descCount">0/500 characters</div>
-                                    @error('description')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="text-white required" for="start_date">Start Date</label>
-                                    <input type="date" name="start_date" id="start_date" class="form-control"
-                                        value="{{ old('start_date') }}" aria-required="true" required>
-                                    @error('start_date')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="text-white required" for="deadline">Deadline</label>
-                                    <input type="date" name="deadline" id="deadline" class="form-control"
-                                        value="{{ old('deadline') }}" aria-required="true" required>
-                                    @error('deadline')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="text-white required" for="priority">Priority</label>
-                                    <select name="priority" id="priority" class="form-control custom-select" aria-required="true" required>
-                                        <option value="">Select Priority</option>
-                                        <option value="Low" {{ old('priority') == 'Low' ? 'selected' : '' }}>Low</option>
-                                        <option value="Medium" {{ old('priority') == 'Medium' ? 'selected' : '' }}>Medium</option>
-                                        <option value="High" {{ old('priority') == 'High' ? 'selected' : '' }}>High</option>
-                                    </select>
-                                    @error('priority')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </fieldset>
-
-                            <fieldset>
-                                <legend class="text-white mb-3" style="font-size: 1.1rem;">Client Details</legend>
                                 <div class="form-group">
                                     <label class="text-white" for="client_name">Client Name</label>
                                     <input type="text" name="client_name" id="client_name" class="form-control"
@@ -238,51 +189,39 @@
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
+                            </fieldset>
 
+                            <fieldset>
                                 <div class="form-group">
-                                    <label class="text-white" for="client_email">Client Email</label>
-                                    <input type="email" name="client_email" id="client_email" class="form-control"
-                                        value="{{ old('client_email') }}">
-                                    @error('client_email')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="text-white" for="client_contact">Client Contact</label>
-                                    <input type="text" name="client_contact" id="client_contact" class="form-control"
-                                        value="{{ old('client_contact') }}" placeholder="e.g., +1234567890">
-                                    @error('client_contact')
+                                    <label class="text-white required" for="managers">Managers (Select Multiple)</label>
+                                    <div class="checkbox-group">
+                                        @foreach ($managers as $manager)
+                                            <label>
+                                                <input type="checkbox" name="managers[]" value="{{ $manager['id'] }}"
+                                                    {{ in_array($manager['id'], old('managers', [])) ? 'checked' : '' }}>
+                                                {{ $manager['name'] }}
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    @error('managers')
                                         <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
                             </fieldset>
 
                             <fieldset>
-                                <legend class="text-white mb-3" style="font-size: 1.1rem;">Assignment</legend>
-                                <div class="form-group">
-                                    <label class="text-white required" for="department_id">Department</label>
-                                    <select name="department_id" id="department_id" class="form-control custom-select" aria-required="true" required>
-                                        <option value="">Select Department</option>
-                                        @foreach ($departments as $department)
-                                            <option value="{{ $department->id }}" {{ old('department_id') == $department->id ? 'selected' : '' }}>
-                                                {{ $department->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('department_id')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="text-white required" for="project_manager_id">Project Manager</label>
-                                    <select name="project_manager_id" id="project_manager_id" class="form-control custom-select" aria-required="true" required>
-                                        <option value="">Select Project Manager</option>
-                                    </select>
-                                    @error('project_manager_id')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
+                                <div class="form-group text-center mt-3">
+                                    <label class="text-white d-block">Record Audio (Admin)</label>
+                                    <div id="recorderControls">
+                                        <button type="button" id="startRecord" class="btn btn-danger">🎤 Start</button>
+                                        <button type="button" id="stopRecord" class="btn btn-warning" disabled>⏹ Stop</button>
+                                    </div>
+                                    <audio id="audioPlayback" controls class="mt-3 d-none"></audio>
+                                    <div id="saveCancelBtns" class="mt-3 d-none">
+                                        <button type="button" id="saveAudio" class="btn btn-success">✔ Save</button>
+                                        <button type="button" id="cancelAudio" class="btn btn-danger">✖ Cancel</button>
+                                    </div>
+                                    <input type="hidden" name="audio_file" id="audioFileInput">
                                 </div>
                             </fieldset>
 
@@ -299,82 +238,73 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        $(document).ready(function() {
-            // AJAX for project managers
-            $('#department_id').on('change', function() {
-                let departmentId = $(this).val();
-                let $projectManagerSelect = $('#project_manager_id');
-                $projectManagerSelect.prop('disabled', true).addClass('loading');
+        // Audio Recording (unchanged)
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob;
 
-                if (departmentId) {
-                    $.ajax({
-                        url: '/get-project-managers/' + departmentId,
-                        type: 'GET',
-                        dataType: 'json',
-                        success: function(data) {
-                            $projectManagerSelect.empty().append('<option value="">Select Project Manager</option>');
-                            $.each(data, function(key, manager) {
-                                $projectManagerSelect.append('<option value="' + manager.id + '">' + manager.name + '</option>');
-                            });
-                        },
-                        error: function() {
-                            Swal.fire({
-                                title: 'Error!',
-                                text: 'Failed to load project managers.',
-                                icon: 'error',
-                                confirmButtonText: 'OK',
-                                background: '#1a1a1a',
-                                color: '#fff'
-                            });
-                        },
-                        complete: function() {
-                            $projectManagerSelect.prop('disabled', false).removeClass('loading');
-                        }
-                    });
-                } else {
-                    $projectManagerSelect.empty().append('<option value="">Select Project Manager</option>').prop('disabled', false).removeClass('loading');
-                }
+        const startBtn = document.getElementById("startRecord");
+        const stopBtn = document.getElementById("stopRecord");
+        const audioPlayback = document.getElementById("audioPlayback");
+        const saveCancelBtns = document.getElementById("saveCancelBtns");
+        const audioFileInput = document.getElementById("audioFileInput");
+
+        if (startBtn && stopBtn) {
+            startBtn.addEventListener("click", async () => {
+                let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+                    let audioURL = URL.createObjectURL(audioBlob);
+                    audioPlayback.src = audioURL;
+                    audioPlayback.classList.remove("d-none");
+                    saveCancelBtns.classList.remove("d-none");
+                };
+
+                mediaRecorder.start();
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
             });
 
-            // Character counter for description
-            $('#description').on('input', function() {
-                let count = $(this).val().length;
-                $('#descCount').text(`${count}/500 characters`);
+            stopBtn.addEventListener("click", () => {
+                mediaRecorder.stop();
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
             });
 
-            // Real-time validation feedback
-            $('#taskForm input, #taskForm select, #taskForm textarea').on('input change', function() {
-                let $input = $(this);
-                let $error = $input.next('.text-danger');
-                if ($input[0].checkValidity()) {
-                    $input.css('border-color', '#555');
-                    if ($error.length) $error.remove();
-                } else {
-                    $input.css('border-color', '#dc3545');
-                }
-            });
+            document.getElementById("saveAudio").addEventListener("click", () => {
+                let reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = () => {
+                    audioFileInput.value = reader.result;
+                };
 
-            // Form submission validation
-            $('#taskForm').on('submit', function(e) {
-                let isValid = true;
-                $(this).find('[required]').each(function() {
-                    if (!this.checkValidity()) {
-                        $(this).css('border-color', '#dc3545');
-                        isValid = false;
-                    }
+                Swal.fire({
+                    title: 'Saved!',
+                    text: 'Audio recording saved temporarily.',
+                    icon: 'success',
+                    background: '#1a1a1a',
+                    color: '#fff'
                 });
-                if (!isValid) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Validation Error',
-                        text: 'Please fill all required fields correctly.',
-                        icon: 'warning',
-                        confirmButtonText: 'OK',
-                        background: '#1a1a1a',
-                        color: '#fff'
-                    });
-                }
             });
-        });
+
+            document.getElementById("cancelAudio").addEventListener("click", () => {
+                audioPlayback.src = "";
+                audioPlayback.classList.add("d-none");
+                saveCancelBtns.classList.add("d-none");
+                audioFileInput.value = "";
+
+                Swal.fire({
+                    title: 'Cancelled!',
+                    text: 'Audio recording discarded.',
+                    icon: 'warning',
+                    background: '#1a1a1a',
+                    color: '#fff'
+                });
+            });
+        }
     </script>
 @endsection

@@ -9,7 +9,6 @@ class CellCenterAccount extends Model
 {
     protected $fillable = [
         'employee_id',
-        'subtask_id',
         'driving_license',
         'email',
         'phone',

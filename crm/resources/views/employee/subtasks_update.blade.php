@@ -102,18 +102,23 @@
             @php
                 $c = $employeeSubtask->comment ?? '';
                 $s = $employeeSubtask->status ?? 'pending';
-                // Fetch POS and Account data, default to null to avoid array property access
-                $posData = isset($subtask->cell_center_pos_ids[$lead - 1])
-                    ? App\Models\CellCenterPos::find($subtask->cell_center_pos_ids[$lead - 1])
+                $posRecord = $isCallCenterPos && isset($employeeSubtask->cell_center_pos_ids[$lead - 1])
+                    ? ($posData[$employeeSubtask->cell_center_pos_ids[$lead - 1]] ?? null)
                     : null;
-                $accountData = isset($subtask->cell_center_account_ids[$lead - 1])
-                    ? App\Models\CellCenterAccount::find($subtask->cell_center_account_ids[$lead - 1])
+                $accountRecord = $isCallCenterAccount && isset($employeeSubtask->cell_center_account_ids[$lead - 1])
+                    ? ($accountData[$employeeSubtask->cell_center_account_ids[$lead - 1]] ?? null)
                     : null;
-                // Use attachments from posData or accountData
-                $a = $isCallCenterPos ? ($posData->attachments ?? []) : ($isCallCenterAccount ? ($accountData->attachments ?? []) : []);
+                $a = $isCallCenterPos ? ($posRecord ? ($posRecord->attachments ?? []) : []) : ($isCallCenterAccount ? ($accountRecord ? ($accountRecord->attachments ?? []) : []) : []);
                 // Ensure $a is an array
-                if (!is_array($a)) {
-                    $a = is_string($a) && !empty($a) ? [$a] : [];
+                if (is_string($a)) {
+                    try {
+                        $decoded = json_decode($a, true);
+                        $a = is_array($decoded) ? $decoded : (!empty($a) ? [$a] : []);
+                    } catch (\Exception $e) {
+                        $a = !empty($a) ? [$a] : [];
+                    }
+                } elseif (!is_array($a)) {
+                    $a = [];
                 }
             @endphp
 
@@ -122,17 +127,18 @@
                     <span>Lead {{ $lead }}</span>
                     <button form="form{{ $lead }}" type="submit" class="btn btn-primary btn-sm">Save</button>
                 </div>
-
                 <form id="form{{ $lead }}" action="{{ route($isCallCenterPos ? 'employee.subtask.pos.update' : 'employee.subtask.account.update', ['id' => $subtask->id]) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
-                    <input type="hidden" name="lead" value="{{ $lead }}">
                     <div class="card-body row g-3">
+                        <input type="hidden" name="lead" value="{{ $lead }}">
+                        <input type="hidden" name="employee_id" value="{{ Auth::guard('employee')->user()->id ?? '' }}">
+                        <input type="hidden" name="subtask_id" value="{{ $subtask->id }}">
+
                         <div class="col-md-8">
                             <label class="form-label mb-1">Title</label>
                             <input class="form-control form-control-sm" value="{{ $subtask->title }}" readonly>
                         </div>
-                      
                         <div class="col-12">
                             <label class="form-label mb-1">Description</label>
                             <textarea class="form-control form-control-sm" rows="2" readonly>{{ $subtask->description }}</textarea>
@@ -159,112 +165,112 @@
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Name</label>
-                                <input name="name" class="form-control form-control-sm @error('name') is-invalid @enderror" value="{{ old('name', $posData->name ?? '') }}">
+                                <input name="name" class="form-control form-control-sm @error('name') is-invalid @enderror" value="{{ old('name', $posRecord->name ?? '') }}">
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Business Name</label>
-                                <input name="business_name" class="form-control form-control-sm @error('business_name') is-invalid @enderror" value="{{ old('business_name', $posData->business_name ?? '') }}">
+                                <input name="business_name" class="form-control form-control-sm @error('business_name') is-invalid @enderror" value="{{ old('business_name', $posRecord->business_name ?? '') }}">
                                 @error('business_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Business Number</label>
-                                <input name="business_number" class="form-control form-control-sm @error('business_number') is-invalid @enderror" value="{{ old('business_number', $posData->business_number ?? '') }}">
+                                <input name="business_number" class="form-control form-control-sm @error('business_number') is-invalid @enderror" value="{{ old('business_number', $posRecord->business_number ?? '') }}">
                                 @error('business_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Personal Number</label>
-                                <input name="personal_number" class="form-control form-control-sm @error('personal_number') is-invalid @enderror" value="{{ old('personal_number', $posData->personal_number ?? '') }}">
+                                <input name="personal_number" class="form-control form-control-sm @error('personal_number') is-invalid @enderror" value="{{ old('personal_number', $posRecord->personal_number ?? '') }}">
                                 @error('personal_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Personal Email</label>
-                                <input type="email" name="personal_email" class="form-control form-control-sm @error('personal_email') is-invalid @enderror" value="{{ old('personal_email', $posData->personal_email ?? '') }}">
+                                <input type="email" name="personal_email" class="form-control form-control-sm @error('personal_email') is-invalid @enderror" value="{{ old('personal_email', $posRecord->personal_email ?? '') }}">
                                 @error('personal_email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Business Email</label>
-                                <input type="email" name="business_email" class="form-control form-control-sm @error('business_email') is-invalid @enderror" value="{{ old('business_email', $posData->business_email ?? '') }}">
+                                <input type="email" name="business_email" class="form-control form-control-sm @error('business_email') is-invalid @enderror" value="{{ old('business_email', $posRecord->business_email ?? '') }}">
                                 @error('business_email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-12 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Address</label>
-                                <textarea name="address" class="form-control form-control-sm @error('address') is-invalid @enderror" rows="2">{{ old('address', $posData->address ?? '') }}</textarea>
+                                <textarea name="address" class="form-control form-control-sm @error('address') is-invalid @enderror" rows="2">{{ old('address', $posRecord->address ?? '') }}</textarea>
                                 @error('address')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Provider</label>
-                                <input name="provider" class="form-control form-control-sm @error('provider') is-invalid @enderror" value="{{ old('provider', $posData->provider ?? '') }}">
+                                <input name="provider" class="form-control form-control-sm @error('provider') is-invalid @enderror" value="{{ old('provider', $posRecord->provider ?? '') }}">
                                 @error('provider')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Category POS</label>
-                                <input name="category_pos" class="form-control form-control-sm @error('category_pos') is-invalid @enderror" value="{{ old('category_pos', $posData->category_pos ?? '') }}">
+                                <input name="category_pos" class="form-control form-control-sm @error('category_pos') is-invalid @enderror" value="{{ old('category_pos', $posRecord->category_pos ?? '') }}">
                                 @error('category_pos')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">POS Type</label>
-                                <input name="pos_type" class="form-control form-control-sm @error('pos_type') is-invalid @enderror" value="{{ old('pos_type', $posData->pos_type ?? '') }}">
+                                <input name="pos_type" class="form-control form-control-sm @error('pos_type') is-invalid @enderror" value="{{ old('pos_type', $posRecord->pos_type ?? '') }}">
                                 @error('pos_type')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Debt</label>
-                                <input name="debt" class="form-control form-control-sm @error('debt') is-invalid @enderror" value="{{ old('debt', $posData->debt ?? '') }}">
+                                <input name="debt" class="form-control form-control-sm @error('debt') is-invalid @enderror" value="{{ old('debt', $posRecord->debt ?? '') }}">
                                 @error('debt')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Credit</label>
-                                <input name="credit" class="form-control form-control-sm @error('credit') is-invalid @enderror" value="{{ old('credit', $posData->credit ?? '') }}">
+                                <input name="credit" class="form-control form-control-sm @error('credit') is-invalid @enderror" value="{{ old('credit', $posRecord->credit ?? '') }}">
                                 @error('credit')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-4 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Rental</label>
-                                <input name="rental" class="form-control form-control-sm @error('rental') is-invalid @enderror" value="{{ old('rental', $posData->rental ?? '') }}">
+                                <input name="rental" class="form-control form-control-sm @error('rental') is-invalid @enderror" value="{{ old('rental', $posRecord->rental ?? '') }}">
                                 @error('rental')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Business Type</label>
-                                <input name="business_type" class="form-control form-control-sm @error('business_type') is-invalid @enderror" value="{{ old('business_type', $posData->business_type ?? '') }}">
+                                <input name="business_type" class="form-control form-control-sm @error('business_type') is-invalid @enderror" value="{{ old('business_type', $posRecord->business_type ?? '') }}">
                                 @error('business_type')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-3 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Date</label>
-                                <input type="date" name="date" class="form-control form-control-sm @error('date') is-invalid @enderror" value="{{ old('date', $posData->date ?? '') }}">
+                                <input type="date" name="date" class="form-control form-control-sm @error('date') is-invalid @enderror" value="{{ old('date', $posRecord->date ?? '') }}">
                                 @error('date')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-3 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Time</label>
-                                <input type="time" name="time" class="form-control form-control-sm @error('time') is-invalid @enderror" value="{{ old('time', $posData->time ?? '') }}">
+                                <input type="time" name="time" class="form-control form-control-sm @error('time') is-invalid @enderror" value="{{ old('time', $posRecord->time ?? '') }}">
                                 @error('time')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -282,71 +288,71 @@
                                 @enderror
                             </div>
                             <div class="col-md-12 hidden row2{{ $lead }}">
-                                <label class="form-label mb-1">Comment</label>
-                                <textarea name="comment" class="form-control form-control-sm @error('comment') is-invalid @enderror" rows="2">{{ old('comment', $c) }}</textarea>
-                                @error('comment')
+                                <label class="form-label mb-1">Comments</label>
+                                <textarea name="comments" class="form-control form-control-sm @error('comments') is-invalid @enderror" rows="2">{{ old('comments', $c) }}</textarea>
+                                @error('comments')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Driving License</label>
-                                <input name="driving_license" class="form-control form-control-sm @error('driving_license') is-invalid @enderror" value="{{ old('driving_license', $accountData->driving_license ?? '') }}">
+                                <input name="driving_license" class="form-control form-control-sm @error('driving_license') is-invalid @enderror" value="{{ old('driving_license', $accountRecord->driving_license ?? '') }}">
                                 @error('driving_license')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Email</label>
-                                <input type="email" name="email" class="form-control form-control-sm @error('email') is-invalid @enderror" value="{{ old('email', $accountData->email ?? '') }}">
+                                <input type="email" name="email" class="form-control form-control-sm @error('email') is-invalid @enderror" value="{{ old('email', $accountRecord->email ?? '') }}">
                                 @error('email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Phone</label>
-                                <input name="phone" class="form-control form-control-sm @error('phone') is-invalid @enderror" value="{{ old('phone', $accountData->phone ?? '') }}">
+                                <input name="phone" class="form-control form-control-sm @error('phone') is-invalid @enderror" value="{{ old('phone', $accountRecord->phone ?? '') }}">
                                 @error('phone')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Business Number</label>
-                                <input name="business_number" class="form-control form-control-sm @error('business_number') is-invalid @enderror" value="{{ old('business_number', $accountData->business_number ?? '') }}">
+                                <input name="business_number" class="form-control form-control-sm @error('business_number') is-invalid @enderror" value="{{ old('business_number', $accountRecord->business_number ?? '') }}">
                                 @error('business_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Corporation Number</label>
-                                <input name="corporation_number" class="form-control form-control-sm @error('corporation_number') is-invalid @enderror" value="{{ old('corporation_number', $accountData->corporation_number ?? '') }}">
+                                <input name="corporation_number" class="form-control form-control-sm @error('corporation_number') is-invalid @enderror" value="{{ old('corporation_number', $accountRecord->corporation_number ?? '') }}">
                                 @error('corporation_number')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Corporation Email</label>
-                                <input type="email" name="corporation_email" class="form-control form-control-sm @error('corporation_email') is-invalid @enderror" value="{{ old('corporation_email', $accountData->corporation_email ?? '') }}">
+                                <input type="email" name="corporation_email" class="form-control form-control-sm @error('corporation_email') is-invalid @enderror" value="{{ old('corporation_email', $accountRecord->corporation_email ?? '') }}">
                                 @error('corporation_email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-12 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Corporation Documents</label>
-                                <textarea name="corporation_documents" class="form-control form-control-sm @error('corporation_documents') is-invalid @enderror" rows="2">{{ old('corporation_documents', $accountData->corporation_documents ?? '') }}</textarea>
+                                <textarea name="corporation_documents" class="form-control form-control-sm @error('corporation_documents') is-invalid @enderror" rows="2">{{ old('corporation_documents', $accountRecord->corporation_documents ?? '') }}</textarea>
                                 @error('corporation_documents')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-12 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Previous History</label>
-                                <textarea name="previous_history" class="form-control form-control-sm @error('previous_history') is-invalid @enderror" rows="2">{{ old('previous_history', $accountData->previous_history ?? '') }}</textarea>
+                                <textarea name="previous_history" class="form-control form-control-sm @error('previous_history') is-invalid @enderror" rows="2">{{ old('previous_history', $accountRecord->previous_history ?? '') }}</textarea>
                                 @error('previous_history')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
                             <div class="col-md-6 hidden row2{{ $lead }}">
                                 <label class="form-label mb-1">Fees</label>
-                                <input name="fees" class="form-control form-control-sm @error('fees') is-invalid @enderror" value="{{ old('fees', $accountData->fees ?? '') }}">
+                                <input name="fees" class="form-control form-control-sm @error('fees') is-invalid @enderror" value="{{ old('fees', $accountRecord->fees ?? '') }}">
                                 @error('fees')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

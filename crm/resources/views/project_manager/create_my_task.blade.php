@@ -88,6 +88,28 @@
 
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
+
+                <div class="form-group">
+                                    <label class="text-white" for="client_name">Client Name</label>
+                                    <input type="text" name="client_name" id="client_name" class="form-control"
+                                        value="{{ old('client_name', $task->client_name) }}" readonly>
+                                    @error('client_name')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                 <div class="form-group">
+                                    <label class="text-white d-block">Current Audio</label>
+                                    @if ($task->audio_url)
+                                        <audio controls class="w-100">
+                                            <source src="{{ $task->audio_url }}" type="audio/webm" readonly>
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    @else
+                                        <p>No audio available</p>
+                                    @endif
+                                </div>
+                                
                 <div class="card shadow rounded">
                     <div class="card-body">
                         <h2 class="card-title text-center text-white">Create Task</h2>

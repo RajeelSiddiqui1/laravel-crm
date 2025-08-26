@@ -9,7 +9,6 @@ class CellCenterPos extends Model
 {
     protected $fillable = [
         'employee_id',
-        'subtask_id',
         'comment',
         'name',
         'business_name',
