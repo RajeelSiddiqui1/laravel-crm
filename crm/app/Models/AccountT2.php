@@ -15,8 +15,8 @@ class AccountT2 extends Model
         'phone',
         'email',
         'due_date',
-        'corpration_number',
-        'corpration_name',
+        'corporation_name',
+        'corporation_number',
         'nature_of_business',
         'priority',
         'department_id',
@@ -24,5 +24,8 @@ class AccountT2 extends Model
         'attachments',
     ];
 
-  
+    public function ownerTask()
+    {
+        return $this->belongsTo(OnwerTask::class, 'task_id');
+    }
 }

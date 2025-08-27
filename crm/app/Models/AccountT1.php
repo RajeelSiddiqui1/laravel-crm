@@ -13,9 +13,12 @@ class AccountT1 extends Model
         'driving_license',
         'sim_number',
         'bussiness_name',
+        'famliy_name',
         'year'
     ];
 
-  
-
+    public function ownerTask()
+    {
+        return $this->belongsTo(OnwerTask::class, 'task_id');
+    }
 }

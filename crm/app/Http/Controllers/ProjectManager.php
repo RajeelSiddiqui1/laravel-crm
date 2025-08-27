@@ -186,16 +186,16 @@ class ProjectManager extends Controller
         return back()->with('success_swal', 'Profile updated successfullyly!');
     }
 
- public function onwertask()
-{
-    $manager = Auth::guard('project_manager')->user();
+    public function onwertask()
+    {
+        $manager = Auth::guard('project_manager')->user();
 
-    $tasks = OnwerTask::select('id', 'client_name', 'audio_url')
-        ->whereRaw('JSON_CONTAINS(managers, ?)', [json_encode((string)$manager->id)])
-        ->get();
+        $tasks = OnwerTask::select('id', 'client_name', 'audio_url')
+            ->whereRaw('JSON_CONTAINS(managers, ?)', [json_encode((string)$manager->id)])
+            ->get();
 
-    return view('project_manager.owner_tasks', compact('tasks'));
-}
+        return view('project_manager.owner_tasks', compact('tasks'));
+    }
 
 
     public function assignTeamLead(Request $request, OnwerTask $task)
@@ -285,59 +285,56 @@ class ProjectManager extends Controller
     {
         $currentManager = Auth::guard('project_manager')->user();
 
-        // For Share Dropdown
+        // Dusre managers dropdown ke liye
         $otherManagers = ModelsProjectManager::where('id', '!=', $currentManager->id)
             ->pluck('name', 'id');
 
-        // Fetch tasks with required relations
-        $tasks = OnwerTask::with(['department', 'teamLead', 'accountT2', 'accountHst', 'accountT1'])
-            ->where('project_manager_task', $currentManager->id)
-            ->get()
-            ->filter(function ($task) use ($currentManager) {
-                $isCallCenter = $task->department && $task->department->name === 'Call Center';
+        // Sirf current manager ke tasks/accounts laane ke liye
+        $accountst1 = AccountT1::where('project_manager_id', $currentManager->id)->get();
+        $accountst2 = AccountT2::where('project_manager_id', $currentManager->id)->get();
+        $accountsthst = AccountHST::where('project_manager_id', $currentManager->id)->get();
 
-                // For call center: show only if shared
-                if ($isCallCenter) {
-                    return SharedTask::where('owner_task_id', $task->id)
-                        ->where('assigned_by', $currentManager->id)
-                        ->exists();
-                }
-
-                // For other departments: show all
-                return true;
-            })
-            ->map(function ($task) {
-                // Rename "Call Center" to "Call Operator"
-                if ($task->department && $task->department->name === 'Call Center') {
-                    $task->department->name = 'Call operator';
-                }
-                return $task;
-            });
-
-        return view('project_manager.my_task', compact('tasks', 'otherManagers'));
+        return view('project_manager.my_task', compact(
+            'accountst1',
+            'accountst2',
+            'accountsthst',
+            'otherManagers'
+        ));
     }
 
-    public function my_task_detail($id)
-    {
-        $task = OnwerTask::with(['department', 'teamLead', 'accountT1', 'accountT2', 'accountHST'])->findOrFail($id);
 
-        // Determine account type
-        $accountType = null;
-        $account = null;
-        if ($task->account_t1_id) {
-            $accountType = 'AccountT1';
-            $account = $task->accountT1;
-        } elseif ($task->account_t2_id) {
-            $accountType = 'AccountT2';
-            $account = $task->accountT2;
-        } elseif ($task->account_hst_id) {
-            $accountType = 'AccountHST';
-            $account = $task->accountHST;
-        }
+public function my_task_detail($id)
+{
+    // Assuming $manager is available (e.g., via Auth::user() or middleware)
+    $manager = Auth::guard('project_manager')->user(); // Adjust based on how $manager is obtained in your application
+    $deptIds = $manager->department_ids ?? [];
 
-        return view('project_manager.my_task_detail', compact('task', 'accountType', 'account'));
+    if (empty($deptIds)) {
+        return redirect()->route('project_manager.mytask')->with('error_swal', 'No departments assigned to you.');
     }
 
+    $accountT1 = AccountT1::with('ownerTask')->find($id);
+    $accountT2 = AccountT2::with('ownerTask')->find($id);
+    $accountHST = AccountHST::with('ownerTask')->find($id);
+
+    $account = null;
+    $accountType = null;
+
+    if ($accountT1) {
+        $account = $accountT1;
+        $accountType = 'T1';
+    } elseif ($accountT2) {
+        $account = $accountT2;
+        $accountType = 'T2';
+    } elseif ($accountHST) {
+        $account = $accountHST;
+        $accountType = 'HST';
+    } else {
+        return redirect()->route('project_manager.mytask')->with('error_swal', 'Account not found.');
+    }
+
+    return view('project_manager.my_task_detail', compact('account', 'accountType'));
+}
 
 
     public function shareTask(Request $request)
@@ -377,7 +374,6 @@ class ProjectManager extends Controller
 
     public function create_my_task($id)
     {
-
         $task = OnwerTask::findOrFail($id);
 
         $manager = Auth::guard('project_manager')->user();
@@ -388,12 +384,13 @@ class ProjectManager extends Controller
 
         $isAccounts = Department::whereIn('id', $deptIds)->where('name', 'Accounts')->exists();
         $accountsT2 = $isAccounts ? AccountT2::take(1)->get(['id', 'clientname', 'email', 'due_date', 'nature_of_business', 'corporation_name', 'corporation_number', 'attachments', 'priority']) : collect();
-        $accountsHST = $isAccounts ? AccountHST::take(1)->get(['id', 'clientname', 'email', 'due_date', 'nature_of_business', 'corpration_name', 'corpration_number', 'attachments', 'priority']) : collect();
+        $accountsHST = $isAccounts ? AccountHST::take(1)->get(['id', 'clientname', 'email', 'due_date', 'nature_of_business', 'corporation_name', 'corporation_number', 'attachments', 'priority']) : collect();
         $accountsT1 = $isAccounts ? AccountT1::take(1)->get(['id', 'clientname', 'period', 'driving_license', 'sim_number', 'bussiness_name', 'famliy_name', 'year']) : collect();
 
-        return view('project_manager.create_my_task', compact('task','departments', 'team_leads', 'isAccounts', 'accountsT2', 'accountsHST', 'accountsT1'));
+        return view('project_manager.create_my_task', compact('task', 'departments', 'team_leads', 'isAccounts', 'accountsT2', 'accountsHST', 'accountsT1'));
     }
-  public function store_my_task(Request $request)
+
+public function store_my_task(Request $request, $id)
 {
     $manager = Auth::guard('project_manager')->user();
 
@@ -428,6 +425,7 @@ class ProjectManager extends Controller
                 'due_date_t2' => 'required|date',
                 'nature_of_business_t2' => 'required|string',
                 'priority_t2' => 'required|in:low,medium,high',
+                'attachments_t2' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,txt,rtf,mp4,avi,mov,webm,mp3,wav,ogg,zip,rar,7z,js,html,css,php,py,java,c,cpp,dart|max:20480',
             ]);
         } elseif ($request->account_type === 'AccountHST') {
             $rules = array_merge($rules, [
@@ -439,7 +437,7 @@ class ProjectManager extends Controller
                 'due_date_hst' => 'required|date',
                 'nature_of_business_hst' => 'required|string',
                 'priority_hst' => 'required|in:low,medium,high',
-                'attachments_hst.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,txt,rtf,mp4,avi,mov,webm,mp3,wav,ogg,zip,rar,7z,js,html,css,php,py,java,c,cpp,dart|max:20480',
+                'attachments_hst' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,txt,rtf,mp4,avi,mov,webm,mp3,wav,ogg,zip,rar,7z,js,html,css,php,py,java,c,cpp,dart|max:20480',
             ]);
         }
     }
@@ -449,12 +447,13 @@ class ProjectManager extends Controller
         return redirect()->back()->withErrors($validator)->withInput();
     }
 
+    // ✅ First fetch the OwnerTask
+    $task = OnwerTask::findOrFail($id);
+
     $account = null;
 
     if ($isAccounts) {
         if ($request->account_type === 'AccountT1') {
-            
-
             $account = new AccountT1();
             $account->clientname = $request->clientname_t1;
             $account->period = $request->period_t1;
@@ -463,19 +462,21 @@ class ProjectManager extends Controller
             $account->bussiness_name = $request->bussiness_name_t1;
             $account->famliy_name = $request->famliy_name_t1;
             $account->year = $request->year_t1;
+            $account->project_manager_id = $manager->id;
+            $account->task_id = $task->id; // ✅ correct
             $account->save();
         } elseif ($request->account_type === 'AccountT2') {
             $account = new AccountT2();
 
+            $attachments = null;
             if ($request->hasFile('attachments_t2')) {
                 try {
-                    foreach ($request->file('attachments_t2') as $file) {
-                        $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                            'public_id' => 'manager_task/' . uniqid() . '_' . $file->getClientOriginalName(),
-                            'resource_type' => 'auto',
-                        ]);
-                        $attachments = $uploaded['secure_url'];
-                    }
+                    $file = $request->file('attachments_t2');
+                    $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                        'public_id' => 'manager_task/' . uniqid() . '_' . $file->getClientOriginalName(),
+                        'resource_type' => 'auto',
+                    ]);
+                    $attachments = $uploaded['secure_url'];
                 } catch (\Exception $e) {
                     Log::error('Cloudinary upload failed: ' . $e->getMessage());
                     return redirect()->back()->with('error', 'File upload failed')->withInput();
@@ -490,40 +491,44 @@ class ProjectManager extends Controller
             $account->due_date = $request->due_date_t2;
             $account->nature_of_business = $request->nature_of_business_t2;
             $account->priority = $request->priority_t2;
-            $account->attachments = json_encode($attachments);
+            $account->attachments = $attachments;
+            $account->project_manager_id = $manager->id;
+            $account->task_id = $task->id; // ✅ correct
             $account->save();
         } elseif ($request->account_type === 'AccountHST') {
+            $account = new AccountHST();
+
+            $attachments = null;
             if ($request->hasFile('attachments_hst')) {
                 try {
-                    foreach ($request->file('attachments_hst') as $file) {
-                        $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                            'public_id' => 'manager_task/' . uniqid() . '_' . $file->getClientOriginalName(),
-                            'resource_type' => 'auto',
-                        ]);
-                        $attachments = $uploaded['secure_url'];
-                    }
+                    $file = $request->file('attachments_hst');
+                    $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                        'public_id' => 'manager_task/' . uniqid() . '_' . $file->getClientOriginalName(),
+                        'resource_type' => 'auto',
+                    ]);
+                    $attachments = $uploaded['secure_url'];
                 } catch (\Exception $e) {
                     Log::error('Cloudinary upload failed: ' . $e->getMessage());
                     return redirect()->back()->with('error', 'File upload failed')->withInput();
                 }
             }
 
-            $account = new AccountHST();
             $account->clientname = $request->clientname_hst;
             $account->email = $request->email_hst;
             $account->phone = $request->phone_hst;
-            $account->corpration_name = $request->corporation_name_hst;
-            $account->corpration_number = $request->corporation_number_hst;
+            $account->corporation_name = $request->corporation_name_hst;
+            $account->corporation_number = $request->corporation_number_hst;
             $account->due_date = $request->due_date_hst;
             $account->nature_of_business = $request->nature_of_business_hst;
             $account->priority = $request->priority_hst;
-            $account->attachments = json_encode($attachments);
+            $account->attachments = $attachments;
+            $account->project_manager_id = $manager->id;
+            $account->task_id = $task->id; // ✅ correct
             $account->save();
         }
     }
 
-    $task = new OnwerTask();
-    // Removed $task->priority assignment as the column does not exist
+    // ✅ Update the OwnerTask
     $task->department_id = $request->department_id;
     $task->team_lead_id = $request->team_lead_id;
     $task->status = 'pending';
@@ -542,6 +547,7 @@ class ProjectManager extends Controller
 
     $task->save();
 
+    // Notify Team Leads
     foreach (TeamLead::where('department_id', $request->department_id)->get() as $tl) {
         Notification::create([
             'title' => 'New Task Created',
@@ -553,12 +559,11 @@ class ProjectManager extends Controller
 
     return redirect()->route('project_manager.mytask')->with('success_swal', 'Task created and team leads notified.');
 }
+
     public function mytask_edit($id)
     {
         $manager = Auth::guard('project_manager')->user();
-        $task = OnwerTask::with(['department', 'teamLead', 'accountT1', 'accountT2', 'accountHST'])->findOrFail($id);
 
-        // Ensure manager has valid department IDs
         $deptIds = $manager->department_ids ?? [];
         if (empty($deptIds)) {
             return redirect()->route('project_manager.mytask')->with('error_swal', 'No departments assigned to you.');
@@ -567,195 +572,158 @@ class ProjectManager extends Controller
         $departments = Department::whereIn('id', $deptIds)->get(['id', 'name']);
         $team_leads = TeamLead::whereIn('department_id', $deptIds)->get(['id', 'name', 'department_id']);
 
-        // Determine account type
+        $accountT1  = AccountT1::with('ownerTask')->find($id);
+        $accountT2  = AccountT2::with('ownerTask')->find($id);
+        $accountHST = AccountHST::with('ownerTask')->find($id);
+
+        $account     = null;
         $accountType = null;
-        $account = null;
-        if ($task->account_t1_id) {
-            $accountType = 'AccountT1';
-            $account = $task->accountT1;
-        } elseif ($task->account_t2_id) {
-            $accountType = 'AccountT2';
-            $account = $task->accountT2;
-        } elseif ($task->account_hst_id) {
-            $accountType = 'AccountHST';
-            $account = $task->accountHST;
+
+        if ($accountT1) {
+            $account = $accountT1;
+            $accountType = 'T1';
+        } elseif ($accountT2) {
+            $account = $accountT2;
+            $accountType = 'T2';
+        } elseif ($accountHST) {
+            $account = $accountHST;
+            $accountType = 'HST';
+        } else {
+            return redirect()->route('project_manager.mytask')->with('error_swal', 'Task not found.');
         }
 
-        return view('project_manager.edit_my_task', compact('task', 'departments', 'team_leads', 'accountType', 'account'));
+        return view('project_manager.edit_my_task', compact('account', 'accountType', 'departments', 'team_leads'));
     }
+
+
     public function mytask_update(Request $request, $id)
     {
-        $task = OnwerTask::findOrFail($id);
-        $manager = Auth::guard('project_manager')->user();
+        // Try to find the account by ID in each model
+        $accountT1 = AccountT1::find($id);
+        $accountT2 = AccountT2::find($id);
+        $accountHST = AccountHST::find($id);
 
-        // Check if the manager has access to the department
-        if (!in_array($request->department_id, $manager->department_ids ?? [])) {
-            return redirect()->route('project_manager.mytask')->with('error_swal', 'Unauthorized department access.');
-        }
-
-        // Determine account type
+        // Determine the account and type
+        $account = null;
         $accountType = null;
-        if ($task->account_t1_id) {
-            $accountType = 'AccountT1';
-        } elseif ($task->account_t2_id) {
-            $accountType = 'AccountT2';
-        } elseif ($task->account_hst_id) {
-            $accountType = 'AccountHST';
+
+        if ($accountT1) {
+            $account = $accountT1;
+            $accountType = 'T1';
+        } elseif ($accountT2) {
+            $account = $accountT2;
+            $accountType = 'T2';
+        } elseif ($accountHST) {
+            $account = $accountHST;
+            $accountType = 'HST';
+        } else {
+            return redirect()->route('project_manager.mytask')->with('error_swal', 'Task not found.');
         }
 
-        // Validation rules
+        // Define common validation rules
         $rules = [
-            'department_id' => 'required|exists:departments,id',
-            'team_lead_id' => 'required|exists:team_leads,id',
-            'priority' => 'required|in:low,medium,high', // Match case with create/store
+            // 'clientname' => 'required|string|max:255',
+            // 'department_id' => 'required|exists:departments,id',
+            // 'team_lead_id' => 'required|exists:team_leads,id',
+            // 'status' => 'required|in:pending,in_progress,completed',
+            'attachments' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
         ];
 
-        if ($accountType === 'AccountT1') {
+        // Add account type-specific validation rules
+        if ($accountType === 'T1') {
             $rules = array_merge($rules, [
-                'clientname_t1' => 'required|string|max:255',
-                'period_t1' => 'required|string|max:255',
-                'driving_license_t1' => 'required|string|max:255',
-                'sim_number_t1' => 'required|string|max:255',
-                'bussiness_name_t1' => 'required|string|max:255',
-                'famliy_name_t1' => 'required|string|max:255',
-                'year_t1' => 'required|string|max:255',
-                'attachments_t1.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,csv,txt,rtf,mp4,avi,mov,webm,mp3,wav,ogg,zip,rar,7z,js,html,css,php,py,java,c,cpp,dart|max:20480',
+                'period' => 'required|string|max:255',
+                'driving_license' => 'required|string|max:255',
+                'sim_number' => 'required|string|max:255',
+                // 'business_name' => 'required|string|max:255',
+                // 'family_name' => 'required|string|max:255',
+                'year' => 'required|string|max:4',
             ]);
-        } elseif ($accountType === 'AccountT2') {
+        } elseif ($accountType === 'T2' || $accountType === 'HST') {
             $rules = array_merge($rules, [
-
-                'phone_accountt2' => 'nullable|string|max:20',
-                'corporation_name_accountt2' => 'nullable|string|max:255',
-                'corporation_number_accountt2' => 'nullable|string|max:255',
-
-            ]);
-        } elseif ($accountType === 'AccountHST') {
-            $rules = array_merge($rules, [
-                'clientname_hst' => 'required|string|max:255',
-                'email_hst' => 'required|email|max:255',
-                'phone_hst' => 'nullable|string|max:20',
-                'corporation_name_hst' => 'nullable|string|max:255',
-                'corporation_number_hst' => 'nullable|string|max:255',
-                'due_date_hst' => 'required|date',
-                'nature_of_business_hst' => 'required|string',
-                'priority_hst' => 'required|in:low,medium,high',
+                'phone' => 'required|string|max:20',
+                'email' => 'required|email|max:255',
+                'due_date' => 'required|date',
+                'corpration_number' => 'nullable|string|max:255', // Note: 'corpration' seems to be a typo, should be 'corporation'
+                'corpration_name' => 'required|string|max:255',
+                'nature_of_business' => 'required|string|max:255',
+                'priority' => 'required|in:low,medium,high',
             ]);
         }
 
-
-
+        // Validate the request
         $validator = Validator::make($request->all(), $rules);
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Update task
-        $task->department_id = $request->department_id;
-        $task->team_lead_id = $request->team_lead_id;
-        $task->priority = $request->priority;
-        $task->save();
+        // Update common fields
+        // $account->clientname = $request->input('clientname');
+        // $account->department_id = $request->input('department_id');
+        // $account->team_lead_id = $request->input('team_lead_id');
+        // $account->status = $request->input('status');
 
-        // Update account
-        if ($accountType) {
-            $account = null;
-            $attachments = [];
-
-            if ($accountType === 'AccountT1') {
-                $account = AccountT1::find($task->account_t1_id);
-                if ($account) {
-                    $account->clientname = $request->clientname_t1;
-                    $account->period = $request->period_t1;
-                    $account->driving_license = $request->driving_license_t1;
-                    $account->sim_number = $request->sim_number_t1;
-                    $account->bussiness_name = $request->bussiness_name_t1;
-                    $account->famliy_name = $request->famliy_name_t1;
-                    $account->year = $request->year_t1;
-                    if ($request->hasFile('attachments_t1')) {
-                        try {
-                            foreach ($request->file('attachments_t1') as $file) {
-                                $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                                    'public_id' => 'manager_task/' . uniqid() . '_' . $file->getClientOriginalName(),
-                                    'resource_type' => 'auto',
-                                ]);
-                                $attachments = $uploaded['secure_url'];
-                            }
-                            $account->attachments = $attachments; // Store as array
-                        } catch (\Exception $e) {
-                            Log::error('Cloudinary upload failed: ' . $e->getMessage());
-                            return redirect()->back()->with('error', 'File upload failed')->withInput();
-                        }
-                    }
-                    $account->save();
-                }
-            } elseif ($accountType === 'AccountT2') {
-                $account = AccountT2::find($task->account_t2_id);
-                if ($account) {
-                    $account->clientname = $request->clientname_t2;
-                    $account->email = $request->email_t2;
-                    $account->phone = $request->phone_t2;
-                    $account->corporation_name = $request->corporation_name_t2;
-                    $account->corporation_number = $request->corporation_number_t2;
-                    $account->due_date = $request->due_date_t2;
-                    $account->nature_of_business = $request->nature_of_business_t2;
-                    $account->priority = $request->priority_t2;
-                    if ($request->hasFile('attachments_t2')) {
-                        $file = $request->file('attachments_t2'); // no foreach, just one file
-                        if ($file->isValid()) {
-                            $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                                'public_id' => 'manager_task/' . uniqid() . '_' . $file->getClientOriginalName(),
-                                'resource_type' => 'auto',
-                            ]);
-
-                            // Store single file URL in varchar column
-                            $account->attachments = $uploaded['secure_url'];
-                        }
-                    }
-                    $account->save();
-
-                    $account->save();
-                }
-            } elseif ($accountType === 'AccountHST') {
-                $account = AccountHST::find($task->account_hst_id);
-                if ($account) {
-                    $account->clientname = $request->clientname_hst;
-                    $account->email = $request->email_hst;
-                    $account->phone = $request->phone_hst;
-                    $account->corporation_name = $request->corporation_name_hst;
-                    $account->corporation_number = $request->corporation_number_hst;
-                    $account->due_date = $request->due_date_hst;
-                    $account->nature_of_business = $request->nature_of_business_hst;
-                    $account->priority = $request->priority_hst;
-                    if ($request->hasFile('attachments_hst')) {
-                        $attachments = [];
-                        foreach ($request->file('attachments_hst') as $file) {
-                            if ($file->isValid()) {
-                                $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                                    'public_id' => 'manager_task/' . uniqid() . '_' . $file->getClientOriginalName(),
-                                    'resource_type' => 'auto',
-                                ]);
-                                $attachments = $uploaded['secure_url'];
-                            }
-                        }
-                        $account->attachments = $attachments;
-                    }
-                    $account->save();
-                }
-            }
+        // Update account type-specific fields
+        if ($accountType === 'T1') {
+            $account->period = $request->input('period');
+            $account->driving_license = $request->input('driving_license');
+            $account->sim_number = $request->input('sim_number');
+            $account->bussiness_name = $request->input('business_name');
+            $account->famliy_name = $request->input('family_name');
+            $account->year = $request->input('year');
+        } elseif ($accountType === 'T2' || $accountType === 'HST') {
+            $account->phone = $request->input('phone');
+            $account->email = $request->input('email');
+            $account->due_date = $request->input('due_date');
+            $account->corporation_number = $request->input('corpration_number');
+            $account->corporation_name = $request->input('corpration_name');
+            $account->nature_of_business = $request->input('nature_of_business');
+            $account->priority = $request->input('priority');
         }
 
-        // Notify team leads
-        foreach (TeamLead::where('department_id', $request->department_id)->get() as $teamLead) {
+        // Handle file upload to Cloudinary
+        if ($request->hasFile('attachments')) {
+            // Delete old attachment from Cloudinary if it exists
+            if ($account->attachment_path) {
+                $publicId = $this->getCloudinaryPublicId($account->attachment_path);
+                if ($publicId) {
+                    Cloudinary::destroy($publicId);
+                }
+            }
+            // Upload new attachment to Cloudinary
+            $uploadedFile = $request->file('attachments');
+            $uploadResult = Cloudinary::upload($uploadedFile->getRealPath(), [
+                'folder' => 'attachments',
+                'resource_type' => 'auto',
+            ]);
+            $account->attachment_path = $uploadResult->getSecurePath();
+        }
+
+        // Save the updated account
+        $account->save();
+
+        // Notify related team leads
+        foreach (TeamLead::where('department_id', $account->department_id)->get() as $teamLead) {
             Notification::create([
                 'title' => 'Task Updated',
-                'message' => 'Task has been updated in your department.', // Removed $task->name
+                'message' => 'Task has been updated in your department.',
                 'user_id' => $teamLead->id,
                 'user_type' => 'team_lead',
             ]);
         }
 
+        // Redirect with success message
         return redirect()->route('project_manager.mytask')->with('success_swal', 'Task updated and team leads notified.');
     }
-    function getCloudinaryPublicId($url)
+
+    /**
+     * Extract Cloudinary public ID from URL
+     *
+     * @param string $url
+     * @return string|null
+     */
+    protected function getCloudinaryPublicId($url)
     {
         $parts = explode('/', $url);
         $uploadIndex = array_search('upload', $parts);
@@ -769,40 +737,39 @@ class ProjectManager extends Controller
     }
 
 
+    public function my_task_destroy($id)
+    {
+        $currentManager = Auth::guard('project_manager')->user();
 
-   public function my_task_destroy($id)
-{
-    $currentManager = Auth::guard('project_manager')->user();
+        $task = OnwerTask::where('id', $id)
+            ->where('project_manager_task', $currentManager->id)
+            ->first();
 
-    $task = OnwerTask::where('id', $id)
-        ->where('project_manager_task', $currentManager->id)
-        ->first();
-
-    if (!$task) {
-        return redirect()->route('project_manager.mytask')
-            ->with('error_swal', 'Task not found or you are not authorized to delete it.');
-    }
-
-    try {
-        if ($task->attachments) {
-            $attachments = json_decode($task->attachments, true) ?? [$task->attachments];
-            foreach ($attachments as $attachment) {
-                $publicId = pathinfo(parse_url($attachment, PHP_URL_PATH), PATHINFO_FILENAME);
-                Cloudinary::uploadApi()->destroy('manager_task/' . $publicId, ['resource_type' => 'auto']);
-            }
+        if (!$task) {
+            return redirect()->route('project_manager.mytask')
+                ->with('error_swal', 'Task not found or you are not authorized to delete it.');
         }
 
-        SharedTask::where('owner_task_id', $task->id)->delete();
-        $task->delete();
+        try {
+            if ($task->attachments) {
+                $attachments = json_decode($task->attachments, true) ?? [$task->attachments];
+                foreach ($attachments as $attachment) {
+                    $publicId = pathinfo(parse_url($attachment, PHP_URL_PATH), PATHINFO_FILENAME);
+                    Cloudinary::uploadApi()->destroy('manager_task/' . $publicId, ['resource_type' => 'auto']);
+                }
+            }
 
-        return redirect()->route('project_manager.mytask')
-            ->with('success_swal', 'Task deleted successfully.');
-    } catch (\Exception $e) {
-        Log::error('Task deletion failed: ' . $e->getMessage());
-        return redirect()->route('project_manager.mytask')
-            ->with('error_swal', 'Failed to delete task. Please try again.');
+            SharedTask::where('owner_task_id', $task->id)->delete();
+            $task->delete();
+
+            return redirect()->route('project_manager.mytask')
+                ->with('success_swal', 'Task deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Task deletion failed: ' . $e->getMessage());
+            return redirect()->route('project_manager.mytask')
+                ->with('error_swal', 'Failed to delete task. Please try again.');
+        }
     }
-}
 
 
     function subtask()

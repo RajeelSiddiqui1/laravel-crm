@@ -113,7 +113,7 @@
                 <div class="card shadow rounded">
                     <div class="card-body">
                         <h2 class="card-title text-center text-white">Create Task</h2>
-                        <form method="POST" action="{{ route('project_manager.mytask_store') }}" enctype="multipart/form-data">
+                        <form method="POST" action="{{ route('project_manager.mytask_store', $task->id) }}" enctype="multipart/form-data">
                             @csrf
 
                             @if ($isAccounts)
@@ -244,7 +244,7 @@
 
                                     <div class="form-group">
                                         <label class="form-label mb-1">Add Attachments</label>
-                                        <input type="file" name="attachments_hst[]" class="form-control" multiple>
+                                        <input type="file" name="attachments_hst" class="form-control" multiple>
                                     </div>
                                 </div>
 

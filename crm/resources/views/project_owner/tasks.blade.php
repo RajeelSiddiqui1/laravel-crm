@@ -75,7 +75,7 @@
                                 @endif
                             </td>
                        
-                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-primary btn-sm">Group Chat</a>
+                              <td>  <a href="{{ route('chat.group', $task->id) }}" class="btn btn-primary btn-sm">Group Chat</a>
                             </td>
                             <td>
                                 <a href="{{ route('project_owner.tasks.edit', $task->id) }}"

@@ -39,7 +39,7 @@ Route::controller(ProjectManager::class)->group(function () {
             Route::get('/project-manager/mytasks', 'manager_task_list')->name('project_manager.mytask');
             Route::get('/project-manager/mytasks/detail/{id}', 'my_task_detail')->name('project_manager.my_task_detail');
             Route::get('/project-manager/mytasks/create/{id}', 'create_my_task')->name('project_manager.mytask_create');
-            Route::post('/project-manager/mytasks/store', 'store_my_task')->name('project_manager.mytask_store');
+            Route::post('/project-manager/mytasks/store/{id}', 'store_my_task')->name('project_manager.mytask_store');
             Route::get('/project-manager/mytask/edit/{id}', 'mytask_edit')->name('project_manager.mytask_edit');
             Route::put('/project-manager/mytask/edit/{id}', 'mytask_update')->name('project_manager.mytask_update');
             Route::delete('/project-manager/mytask/delete/{id}', 'my_task_destroy')->name('project_manager.mytask_delete');

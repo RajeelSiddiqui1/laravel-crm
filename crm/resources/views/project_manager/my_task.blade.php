@@ -99,85 +99,54 @@
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <h2 class="text-center mb-4 fw-bold">My Tasks Dashboard</h2>
+                <!-- Other Managers Dropdown -->
+                {{-- @if($otherManagers->isNotEmpty())
+                    <div class="mb-4">
+                        <form method="POST" action="{{ route('project_manager.reassign_task') }}" class="d-inline">
+                            @csrf
+                            <select name="manager_id" class="form-select form-select-sm w-auto d-inline-block">
+                                <option value="">Select Manager to Reassign</option>
+                                @foreach($otherManagers as $id => $name)
+                                    <option value="{{ $id }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm">Reassign Selected Tasks</button>
+                        </form>
+                    </div>
+                @endif --}}
             </div>
         </div>
-        
-        @if($tasks->whereNotNull('accountT1')->count() > 0)
+
+        <!-- T1 Accounts -->
+        @if($accountst1->isNotEmpty())
         <h3 class="account-type-header">T1 Tasks</h3>
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
                 <thead>
                     <tr class="text-center align-middle">
                         <th>#</th>
-                        <th>Department</th>
-                        <th>Team Lead</th>
-                        <th>Team Lead Status</th>
-                        <th>Your Status</th>
-                        <th>Shared</th>
-                        <th>Account Type</th>
                         <th>Client Name</th>
                         <th>Email</th>
                         <th>Year</th>
                         <th>Business</th>
                         <th>View</th>
-                        <th>Chat</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($tasks->whereNotNull('accountT1') as $task)
-                        @php
-                            $account = $task->accountT1;
-                            $accountType = 'T1';
-                            $dueDateOrYear = $account->year ?? 'N/A';
-                            $business = $account->bussiness_name ?? 'N/A';
-                        @endphp
+                    @forelse ($accountst1 as $account)
                         <tr class="align-middle text-center">
                             <td>{{ $loop->iteration }}</td>
-                            <td>
-                                @if ($task->department && $task->department->name === 'Call operator')
-                                    <span class="badge badge-info">Call Operator</span>
-                                @else
-                                    {{ $task->department->name ?? 'No Department' }}
-                                @endif
-                            </td>
-                            <td>{{ $task->teamLead->name ?? 'N/A' }}</td>
-                            <td>
-                                <span class="badge badge-{{ $task->status == 'completed' ? 'success' : ($task->status == 'in_progress' ? 'warning' : 'secondary') }}">
-                                    {{ ucfirst(str_replace('_', ' ', $task->status)) }}
-                                </span>
-                            </td>
-                            <td>
-                                <form method="POST" action="{{ route('project_manager.update_status2', $task->id) }}" class="d-inline">
-                                    @csrf @method('PATCH')
-                                    <select name="status2" class="form-control form-select-sm" onchange="this.form.submit()">
-                                        <option value="pending" {{ $task->status2 == 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="approved" {{ $task->status2 == 'approved' ? 'selected' : '' }}>Approved</option>
-                                        <option value="rejected" {{ $task->status2 == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                                        <option value="late" {{ $task->status2 == 'late' ? 'selected' : '' }}>Late</option>
-                                    </select>
-                                </form>
-                            </td>
-                            <td>
-                                <span class="badge badge-{{ $task->is_shared ? 'info' : 'secondary' }}">
-                                    {{ $task->is_shared ? 'Yes' : 'No' }}
-                                </span>
-                            </td>
-                            <td>{{ $accountType }}</td>
                             <td>{{ $account->clientname ?? 'N/A' }}</td>
                             <td>{{ $account->email ?? 'N/A' }}</td>
-                            <td>{{ $dueDateOrYear }}</td>
-                            <td>{{ $business }}</td>
-                           
+                            <td>{{ $account->year ?? 'N/A' }}</td>
+                            <td>{{ $account->bussiness_name ?? 'N/A' }}</td>
                             <td>
-                                <a href="{{ route('project_manager.my_task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
+                                <a href="{{ route('project_manager.my_task_detail', $account->id) }}" class="btn btn-sm btn-success">View</a>
                             </td>
                             <td>
-                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-sm btn-primary">Chat</a>
-                            </td>
-                            <td>
-                                <a href="{{ route('project_manager.mytask_edit', $task->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="{{ route('project_manager.mytask_delete', $task->id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                <a href="{{ route('project_manager.mytask_edit', $account->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="{{ route('project_manager.mytask_delete', $account->id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this task?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
@@ -186,7 +155,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="15" class="text-center text-muted">No T1 Tasks Found</td>
+                            <td colspan="7" class="text-center text-muted">No T1 Tasks Found</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -194,19 +163,14 @@
         </div>
         @endif
 
-        @if($tasks->whereNotNull('accountT2')->count() > 0)
+        <!-- T2 Accounts -->
+        @if($accountst2->isNotEmpty())
         <h3 class="account-type-header">T2 Tasks</h3>
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
                 <thead>
                     <tr class="text-center align-middle">
                         <th>#</th>
-                        <th>Department</th>
-                        <th>Team Lead</th>
-                        <th>Team Lead Status</th>
-                        <th>Your Status</th>
-                        <th>Shared</th>
-                        <th>Account Type</th>
                         <th>Client Name</th>
                         <th>Email</th>
                         <th>Due Date</th>
@@ -214,50 +178,17 @@
                         <th>Priority</th>
                         <th>Attachments</th>
                         <th>View</th>
-                        <th>Chat</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($tasks->whereNotNull('accountT2') as $task)
+                    @forelse ($accountst2 as $account)
                         @php
-                            $account = $task->accountT2;
-                            $accountType = 'T2';
                             $dueDateOrYear = $account->due_date ? \Carbon\Carbon::parse($account->due_date)->format('M d, Y') : 'N/A';
                             $business = $account->nature_of_business ?? 'N/A';
                         @endphp
                         <tr class="align-middle text-center">
                             <td>{{ $loop->iteration }}</td>
-                            <td>
-                                @if ($task->department && $task->department->name === 'Call operator')
-                                    <span class="badge badge-info">Call Operator</span>
-                                @else
-                                    {{ $task->department->name ?? 'No Department' }}
-                                @endif
-                            </td>
-                            <td>{{ $task->teamLead->name ?? 'N/A' }}</td>
-                            <td>
-                                <span class="badge badge-{{ $task->status == 'completed' ? 'success' : ($task->status == 'in_progress' ? 'warning' : 'secondary') }}">
-                                    {{ ucfirst(str_replace('_', ' ', $task->status)) }}
-                                </span>
-                            </td>
-                            <td>
-                                <form method="POST" action="{{ route('project_manager.update_status2', $task->id) }}" class="d-inline">
-                                    @csrf @method('PATCH')
-                                    <select name="status2" class="form-control form-select-sm" onchange="this.form.submit()">
-                                        <option value="pending" {{ $task->status2 == 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="approved" {{ $task->status2 == 'approved' ? 'selected' : '' }}>Approved</option>
-                                        <option value="rejected" {{ $task->status2 == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                                        <option value="late" {{ $task->status2 == 'late' ? 'selected' : '' }}>Late</option>
-                                    </select>
-                                </form>
-                            </td>
-                            <td>
-                                <span class="badge badge-{{ $task->is_shared ? 'info' : 'secondary' }}">
-                                    {{ $task->is_shared ? 'Yes' : 'No' }}
-                                </span>
-                            </td>
-                            <td>{{ $accountType }}</td>
                             <td>{{ $account->clientname ?? 'N/A' }}</td>
                             <td>{{ $account->email ?? 'N/A' }}</td>
                             <td>{{ $dueDateOrYear }}</td>
@@ -330,14 +261,11 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('project_manager.my_task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
+                                <a href="{{ route('project_manager.my_task_detail', $account->id) }}" class="btn btn-sm btn-success">View</a>
                             </td>
                             <td>
-                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-sm btn-primary">Chat</a>
-                            </td>
-                            <td>
-                                <a href="{{ route('project_manager.mytask_edit', $task->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="{{ route('project_manager.mytask_delete', $task->id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                <a href="{{ route('project_manager.mytask_edit', $account->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="{{ route('project_manager.mytask_delete', $account->id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this task?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
@@ -346,7 +274,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="16" class="text-center text-muted">No T2 Tasks Found</td>
+                            <td colspan="9" class="text-center text-muted">No T2 Tasks Found</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -354,19 +282,14 @@
         </div>
         @endif
 
-        @if($tasks->whereNotNull('accountHst')->count() > 0)
+        <!-- HST Accounts -->
+        @if($accountsthst->isNotEmpty())
         <h3 class="account-type-header">HST Tasks</h3>
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
                 <thead>
                     <tr class="text-center align-middle">
                         <th>#</th>
-                        <th>Department</th>
-                        <th>Team Lead</th>
-                        <th>Team Lead Status</th>
-                        <th>Your Status</th>
-                        <th>Shared</th>
-                        <th>Account Type</th>
                         <th>Client Name</th>
                         <th>Email</th>
                         <th>Due Date</th>
@@ -374,50 +297,17 @@
                         <th>Priority</th>
                         <th>Attachments</th>
                         <th>View</th>
-                        <th>Chat</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($tasks->whereNotNull('accountHst') as $task)
+                    @forelse ($accountsthst as $account)
                         @php
-                            $account = $task->accountHst;
-                            $accountType = 'HST';
                             $dueDateOrYear = $account->due_date ? \Carbon\Carbon::parse($account->due_date)->format('M d, Y') : 'N/A';
                             $business = $account->nature_of_business ?? 'N/A';
                         @endphp
                         <tr class="align-middle text-center">
                             <td>{{ $loop->iteration }}</td>
-                            <td>
-                                @if ($task->department && $task->department->name === 'Call operator')
-                                    <span class="badge badge-info">Call Operator</span>
-                                @else
-                                    {{ $task->department->name ?? 'No Department' }}
-                                @endif
-                            </td>
-                            <td>{{ $task->teamLead->name ?? 'N/A' }}</td>
-                            <td>
-                                <span class="badge badge-{{ $task->status == 'completed' ? 'success' : ($task->status == 'in_progress' ? 'warning' : 'secondary') }}">
-                                    {{ ucfirst(str_replace('_', ' ', $task->status)) }}
-                                </span>
-                            </td>
-                            <td>
-                                <form method="POST" action="{{ route('project_manager.update_status2', $task->id) }}" class="d-inline">
-                                    @csrf @method('PATCH')
-                                    <select name="status2" class="form-control form-select-sm" onchange="this.form.submit()">
-                                        <option value="pending" {{ $task->status2 == 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="approved" {{ $task->status2 == 'approved' ? 'selected' : '' }}>Approved</option>
-                                        <option value="rejected" {{ $task->status2 == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                                        <option value="late" {{ $task->status2 == 'late' ? 'selected' : '' }}>Late</option>
-                                    </select>
-                                </form>
-                            </td>
-                            <td>
-                                <span class="badge badge-{{ $task->is_shared ? 'info' : 'secondary' }}">
-                                    {{ $task->is_shared ? 'Yes' : 'No' }}
-                                </span>
-                            </td>
-                            <td>{{ $accountType }}</td>
                             <td>{{ $account->clientname ?? 'N/A' }}</td>
                             <td>{{ $account->email ?? 'N/A' }}</td>
                             <td>{{ $dueDateOrYear }}</td>
@@ -490,14 +380,11 @@
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('project_manager.my_task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
+                                <a href="{{ route('project_manager.my_task_detail', $account->id) }}" class="btn btn-sm btn-success">View</a>
                             </td>
                             <td>
-                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-sm btn-primary">Chat</a>
-                            </td>
-                            <td>
-                                <a href="{{ route('project_manager.mytask_edit', $task->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="{{ route('project_manager.mytask_delete', $task->id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                <a href="{{ route('project_manager.mytask_edit', $account->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="{{ route('project_manager.mytask_delete', $account->id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this task?');">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
@@ -506,102 +393,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="16" class="text-center text-muted">No HST Tasks Found</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-        @endif
-
-        @if($tasks->whereNull('accountT1')->whereNull('accountT2')->whereNull('accountHst')->count() > 0)
-        <h3 class="account-type-header">Other Tasks</h3>
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr class="text-center align-middle">
-                        <th>#</th>
-                        <th>Department</th>
-                        <th>Team Lead</th>
-                        <th>Team Lead Status</th>
-                        <th>Your Status</th>
-                        <th>Shared</th>
-                        <th>Account Type</th>
-                        <th>Client Name</th>
-                        <th>Email</th>
-                        <th>Due Date/Year</th>
-                        <th>Business</th>
-                        <th>Attachments</th>
-                        <th>View</th>
-                        <th>Chat</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($tasks->whereNull('accountT1')->whereNull('accountT2')->whereNull('accountHst') as $task)
-                        @php
-                            $account = null;
-                            $accountType = 'N/A';
-                            $dueDateOrYear = 'N/A';
-                            $business = 'N/A';
-                        @endphp
-                        <tr class="align-middle text-center">
-                            <td>{{ $loop->iteration }}</td>
-                            <td>
-                                @if ($task->department && $task->department->name === 'Call operator')
-                                    <span class="badge badge-info">Call Operator</span>
-                                @else
-                                    {{ $task->department->name ?? 'No Department' }}
-                                @endif
-                            </td>
-                            <td>{{ $task->teamLead->name ?? 'N/A' }}</td>
-                            <td>
-                                <span class="badge badge-{{ $task->status == 'completed' ? 'success' : ($task->status == 'in_progress' ? 'warning' : 'secondary') }}">
-                                    {{ ucfirst(str_replace('_', ' ', $task->status)) }}
-                                </span>
-                            </td>
-                            <td>
-                                <form method="POST" action="{{ route('project_manager.update_status2', $task->id) }}" class="d-inline">
-                                    @csrf @method('PATCH')
-                                    <select name="status2" class="form-control form-select-sm" onchange="this.form.submit()">
-                                        <option value="pending" {{ $task->status2 == 'pending' ? 'selected' : '' }}>Pending</option>
-                                        <option value="approved" {{ $task->status2 == 'approved' ? 'selected' : '' }}>Approved</option>
-                                        <option value="rejected" {{ $task->status2 == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                                        <option value="late" {{ $task->status2 == 'late' ? 'selected' : '' }}>Late</option>
-                                    </select>
-                                </form>
-                            </td>
-                            <td>
-                                <span class="badge badge-{{ $task->is_shared ? 'info' : 'secondary' }}">
-                                    {{ $task->is_shared ? 'Yes' : 'No' }}
-                                </span>
-                            </td>
-                            <td>{{ $accountType }}</td>
-                            <td>N/A</td>
-                            <td>N/A</td>
-                            <td>N/A</td>
-                            <td>N/A</td>
-                            <td>
-                                <span class="text-muted">No Attachments</span>
-                            </td>
-                            <td>
-                                <a href="{{ route('project_manager.my_task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
-                            </td>
-                            <td>
-                                <a href="{{ route('chat.group', $task->id) }}" class="btn btn-sm btn-primary">Chat</a>
-                            </td>
-                            <td>
-                                <a href="{{ route('project_manager.mytask_edit', $task->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="{{ route('project_manager.mytask_delete', $task->id) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this task?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="15" class="text-center text-muted">No Other Tasks Found</td>
+                            <td colspan="9" class="text-center text-muted">No HST Tasks Found</td>
                         </tr>
                     @endforelse
                 </tbody>
