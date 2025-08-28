@@ -109,29 +109,46 @@
                     <li class="sidebar-header">MAIN NAVIGATION</li>
                     <li>
                         <a href="{{ url('/project-manager/profile') }}">
-                            <i class="icon-wallet mr-2"></i> <span>Profile</span>
+                            <i class="zmdi zmdi-account-circle mr-2"></i> <span>Profile</span>
                         </a>
                     </li>
+
                     <li>
                         <a href="{{ route('project_manager.logout') }}">
-                            <i class="icon-power mr-2"></i> <span>Logout</span>
+                            <i class="zmdi zmdi-power mr-2"></i> <span>Logout</span>
                         </a>
                     </li>
+
                     <li>
                         <a href="{{ route('project_manager.tasks') }}">
-                            <i class="zmdi zmdi-city mr-2"></i> <span>Owner Tasks</span>
+                            <i class="zmdi zmdi-assignment mr-2"></i> <span>Owner Tasks</span>
                         </a>
                     </li>
+
                     <li>
                         <a href="{{ route('project_manager.mytask') }}">
-                            <i class="zmdi zmdi-city mr-2"></i> <span>My Tasks</span>
+                            <i class="zmdi zmdi-check-square mr-2"></i> <span>My Tasks</span>
                         </a>
                     </li>
+
                     <li>
                         <a href="{{ route('project_manager.subtask') }}">
-                            <i class="zmdi zmdi-city mr-2"></i> <span>Subtask</span>
+                            <i class="zmdi zmdi-format-list-bulleted mr-2"></i> <span>Subtask</span>
                         </a>
                     </li>
+
+                    <li>
+                        <a href="{{ route('project_manager.teamleads') }}">
+                            <i class="zmdi zmdi-accounts-alt mr-2"></i> <span>TeamLeads</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('project_manager.employee') }}">
+                            <i class="zmdi zmdi-accounts mr-2"></i> <span>Employees</span>
+                        </a>
+                    </li>
+
                     {{-- 🔔 Notification Icon --}}
                     <li class="nav-item">
                         <a class="nav-link position-relative d-flex align-items-center"

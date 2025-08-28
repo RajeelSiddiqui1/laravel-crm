@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\AssignedTeamLeaderTask;
 use App\Models\AccountHST;
 use App\Models\Department;
+use App\Models\Employee;
 use App\Models\OnwerTask;
 use App\Models\ProjectManager as ModelsProjectManager;
 use App\Models\ProjectOwner;
@@ -596,126 +597,102 @@ public function store_my_task(Request $request, $id)
     }
 
 
-    public function mytask_update(Request $request, $id)
-    {
-        // Try to find the account by ID in each model
-        $accountT1 = AccountT1::find($id);
-        $accountT2 = AccountT2::find($id);
-        $accountHST = AccountHST::find($id);
+ public function mytask_update(Request $request, $id)
+{
+    $accountT1 = AccountT1::find($id);
+    $accountT2 = AccountT2::find($id);
+    $accountHST = AccountHST::find($id);
 
-        // Determine the account and type
-        $account = null;
-        $accountType = null;
+    $account = null;
+    $accountType = null;
 
-        if ($accountT1) {
-            $account = $accountT1;
-            $accountType = 'T1';
-        } elseif ($accountT2) {
-            $account = $accountT2;
-            $accountType = 'T2';
-        } elseif ($accountHST) {
-            $account = $accountHST;
-            $accountType = 'HST';
-        } else {
-            return redirect()->route('project_manager.mytask')->with('error_swal', 'Task not found.');
-        }
+    if ($accountT1) {
+        $account = $accountT1;
+        $accountType = 'T1';
+    } elseif ($accountT2) {
+        $account = $accountT2;
+        $accountType = 'T2';
+    } elseif ($accountHST) {
+        $account = $accountHST;
+        $accountType = 'HST';
+    } else {
+        return redirect()->route('project_manager.mytask')->with('error_swal', 'Task not found.');
+    }
 
-        // Define common validation rules
+    $rules = [];
+
+    if ($accountType === 'T1') {
         $rules = [
-            // 'clientname' => 'required|string|max:255',
-            // 'department_id' => 'required|exists:departments,id',
-            // 'team_lead_id' => 'required|exists:team_leads,id',
-            // 'status' => 'required|in:pending,in_progress,completed',
+            'period' => 'required|string|max:255',
+            'driving_license' => 'required|string|max:255',
+            'sim_number' => 'required|string|max:255',
+            'year' => 'required|string|max:4',
+        ];
+    } elseif ($accountType === 'T2' || $accountType === 'HST') {
+        $rules = [
+            'phone' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
+            'due_date' => 'required|date',
+            'corpration_number' => 'nullable|string|max:255',
+            'corpration_name' => 'required|string|max:255',
+            'nature_of_business' => 'required|string|max:255',
+            'priority' => 'required|in:low,medium,high',
             'attachments' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:2048',
         ];
+    }
 
-        // Add account type-specific validation rules
-        if ($accountType === 'T1') {
-            $rules = array_merge($rules, [
-                'period' => 'required|string|max:255',
-                'driving_license' => 'required|string|max:255',
-                'sim_number' => 'required|string|max:255',
-                // 'business_name' => 'required|string|max:255',
-                // 'family_name' => 'required|string|max:255',
-                'year' => 'required|string|max:4',
-            ]);
-        } elseif ($accountType === 'T2' || $accountType === 'HST') {
-            $rules = array_merge($rules, [
-                'phone' => 'required|string|max:20',
-                'email' => 'required|email|max:255',
-                'due_date' => 'required|date',
-                'corpration_number' => 'nullable|string|max:255', // Note: 'corpration' seems to be a typo, should be 'corporation'
-                'corpration_name' => 'required|string|max:255',
-                'nature_of_business' => 'required|string|max:255',
-                'priority' => 'required|in:low,medium,high',
-            ]);
-        }
+    $validator = Validator::make($request->all(), $rules);
 
-        // Validate the request
-        $validator = Validator::make($request->all(), $rules);
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput();
+    }
 
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
+    if ($accountType === 'T1') {
+        $account->period = $request->input('period');
+        $account->driving_license = $request->input('driving_license');
+        $account->sim_number = $request->input('sim_number');
+        $account->bussiness_name = $request->input('business_name');
+        $account->famliy_name = $request->input('family_name');
+        $account->year = $request->input('year');
+    } elseif ($accountType === 'T2' || $accountType === 'HST') {
+        $account->phone = $request->input('phone');
+        $account->email = $request->input('email');
+        $account->due_date = $request->input('due_date');
+        $account->corporation_number = $request->input('corpration_number');
+        $account->corporation_name = $request->input('corpration_name');
+        $account->nature_of_business = $request->input('nature_of_business');
+        $account->priority = $request->input('priority');
 
-        // Update common fields
-        // $account->clientname = $request->input('clientname');
-        // $account->department_id = $request->input('department_id');
-        // $account->team_lead_id = $request->input('team_lead_id');
-        // $account->status = $request->input('status');
-
-        // Update account type-specific fields
-        if ($accountType === 'T1') {
-            $account->period = $request->input('period');
-            $account->driving_license = $request->input('driving_license');
-            $account->sim_number = $request->input('sim_number');
-            $account->bussiness_name = $request->input('business_name');
-            $account->famliy_name = $request->input('family_name');
-            $account->year = $request->input('year');
-        } elseif ($accountType === 'T2' || $accountType === 'HST') {
-            $account->phone = $request->input('phone');
-            $account->email = $request->input('email');
-            $account->due_date = $request->input('due_date');
-            $account->corporation_number = $request->input('corpration_number');
-            $account->corporation_name = $request->input('corpration_name');
-            $account->nature_of_business = $request->input('nature_of_business');
-            $account->priority = $request->input('priority');
-        }
-
-        // Handle file upload to Cloudinary
         if ($request->hasFile('attachments')) {
-            // Delete old attachment from Cloudinary if it exists
-            if ($account->attachment_path) {
-                $publicId = $this->getCloudinaryPublicId($account->attachment_path);
+            if ($account->attachments) {
+                $publicId = $this->getCloudinaryPublicId($account->attachments);
                 if ($publicId) {
                     Cloudinary::destroy($publicId);
                 }
             }
-            // Upload new attachment to Cloudinary
             $uploadedFile = $request->file('attachments');
-            $uploadResult = Cloudinary::upload($uploadedFile->getRealPath(), [
+            $uploadResult = Cloudinary::uploadApi()->upload($uploadedFile->getRealPath(), [
                 'folder' => 'attachments',
                 'resource_type' => 'auto',
             ]);
-            $account->attachment_path = $uploadResult->getSecurePath();
+            $account->attachments = $uploadResult['secure_url'];
         }
-
-        // Save the updated account
-        $account->save();
-
-        // Notify related team leads
-        foreach (TeamLead::where('department_id', $account->department_id)->get() as $teamLead) {
-            Notification::create([
-                'title' => 'Task Updated',
-                'message' => 'Task has been updated in your department.',
-                'user_id' => $teamLead->id,
-                'user_type' => 'team_lead',
-            ]);
-        }
-
-        // Redirect with success message
-        return redirect()->route('project_manager.mytask')->with('success_swal', 'Task updated and team leads notified.');
     }
+
+    $account->save();
+
+    foreach (TeamLead::where('department_id', $account->department_id)->get() as $teamLead) {
+        Notification::create([
+            'title' => 'Task Updated',
+            'message' => 'Task has been updated in your department.',
+            'user_id' => $teamLead->id,
+            'user_type' => 'team_lead',
+        ]);
+    }
+
+    return redirect()->route('project_manager.mytask')->with('success_swal', 'Task updated and team leads notified.');
+}
+
 
     /**
      * Extract Cloudinary public ID from URL
@@ -823,5 +800,129 @@ public function store_my_task(Request $request, $id)
 
 
         return view('project_manager.subtask_detail', compact('subtask', 'employeeSubtasks', 'attachments'));
+    }
+
+
+    public function teamleads()
+    {
+        $manager = Auth::guard('project_manager')->user();
+        $teamleads = $manager->teamleads; 
+
+        return view('project_manager.teamleads', compact('teamleads'));
+    }
+
+    public function create_teamlead_view(){
+      
+        $manager = Auth::guard('project_manager')->user();
+        $deptIds = $manager->department_ids;
+
+        $departments = Department::whereIn('id', $deptIds)->get(['id', 'name']);
+        return view('project_manager.create_teamlead', compact('departments'));
+    }
+
+    public function create_teamlead(Request $request){
+        $manager = Auth::guard('project_manager')->user();
+        $deptIds = $manager->department_ids;
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:team_leads',
+            'phone' => 'required|string|max:15',
+            'password' => 'required|string|min:3|confirmed',
+            'department_id' => '    exists:departments,id|in:' . implode(',', $deptIds),
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $teamLead = new TeamLead();
+        $teamLead->name = $request->name;
+        $teamLead->email = $request->email;
+        $teamLead->phone = $request->phone;
+        $teamLead->password = bcrypt($request->password);
+        $teamLead->department_id = $request->department_id;
+        $teamLead->manager_id = $manager->id;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('images/team_leads'), $imageName);
+            $teamLead->image = $imageName;
+        } else {
+            $randomId = rand(1, 30);
+            $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
+            if ($imageContent !== false) {
+                $imageName = time() . '_auto.jpg';
+                file_put_contents(public_path("images/team_leads/$imageName"), $imageContent);
+                $teamLead->image = $imageName;
+            }
+        }
+
+        if ($teamLead->save()) {
+            session()->flash('success_swal', 'Team Lead created successfully.');
+            return redirect()->route('project_manager.teamleads');
+        }
+
+        session()->flash('error_swal', 'Failed to create Team Lead.');
+        return redirect()->back()->withInput();
+    }
+    public function employees()
+    {
+        $manager = Auth::guard('project_manager')->user();
+        $employees = $manager->employees; 
+
+        return view('project_manager.employees', compact('employees'));
+    }
+
+    public function create_employee_view(){
+      
+        $manager = Auth::guard('project_manager')->user();
+        $deptIds = $manager->department_ids;
+
+        $departments = Department::whereIn('id', $deptIds)->get(['id', 'name']);
+        return view('project_manager.create_employee', compact('departments'));
+    }
+
+    public function create_employee(Request $request){
+        $manager = Auth::guard('project_manager')->user();
+        $deptIds = $manager->department_ids;
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:team_leads',
+            'phone' => 'required|string|max:15',
+            'password' => 'required|string|min:3|confirmed',
+            'department_id' => 'exists:departments,id|in:' . implode(',', $deptIds),
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $employee = new Employee();
+        $employee->name = $request->name;
+        $employee->email = $request->email;
+        $employee->phone = $request->phone;
+        $employee->password = bcrypt($request->password);
+        $employee->department_id = $request->department_id;
+        $employee->manager_id = $manager->id;
+
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('images/employees'), $imageName);
+            $employee->image = $imageName;
+        } else {
+            $randomId = rand(1, 30);
+            $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
+            if ($imageContent !== false) {
+                $imageName = time() . '_auto.jpg';
+                file_put_contents(public_path("images/team_leads/$imageName"), $imageContent);
+                $employee->image = $imageName;
+            }
+        }
+
+        if ($employee->save()) {
+            session()->flash('success_swal', 'Team Lead created successfully.');
+            return redirect()->route('project_manager.employee');
+        }
+
+        session()->flash('error_swal', 'Failed to create Team Lead.');
+        return redirect()->back()->withInput();
     }
 }

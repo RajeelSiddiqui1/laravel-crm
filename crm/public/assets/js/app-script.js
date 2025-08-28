@@ -1,154 +1,90 @@
-
-$(function() {
+$(function () {
     "use strict";
-     
-	 
-//sidebar menu js
-$.sidebarMenu($('.sidebar-menu'));
 
-// === toggle-menu js
-$(".toggle-menu").on("click", function(e) {
+    // Sidebar menu js
+    $.sidebarMenu($('.sidebar-menu'));
+
+    // Toggle menu js
+    $(".toggle-menu").on("click", function (e) {
         e.preventDefault();
         $("#wrapper").toggleClass("toggled");
-    });	 
-	   
-// === sidebar menu activation js
-
-$(function() {
-        for (var i = window.location, o = $(".sidebar-menu a").filter(function() {
-            return this.href == i;
-        }).addClass("active").parent().addClass("active"); ;) {
-            if (!o.is("li")) break;
-            o = o.parent().addClass("in").parent().addClass("active");
-        }
-    }), 	   
-	   
-
-/* Top Header */
-
-$(document).ready(function(){ 
-    $(window).on("scroll", function(){ 
-        if ($(this).scrollTop() > 60) { 
-            $('.topbar-nav .navbar').addClass('bg-dark'); 
-        } else { 
-            $('.topbar-nav .navbar').removeClass('bg-dark'); 
-        } 
     });
 
- });
+    // Sidebar menu activation js
+    for (var i = window.location, o = $(".sidebar-menu a").filter(function () {
+        return this.href == i;
+    }).addClass("active").parent().addClass("active"); ;) {
+        if (!o.is("li")) break;
+        o = o.parent().addClass("in").parent().addClass("active");
+    }
 
+    /* Top Header */
+    $(window).on("scroll", function () {
+        if ($(this).scrollTop() > 60) {
+            $('.topbar-nav .navbar').addClass('bg-dark');
+        } else {
+            $('.topbar-nav .navbar').removeClass('bg-dark');
+        }
+    });
 
-/* Back To Top */
+    /* Back To Top */
+    $(window).on("scroll", function () {
+        if ($(this).scrollTop() > 300) {
+            $('.back-to-top').fadeIn();
+        } else {
+            $('.back-to-top').fadeOut();
+        }
+    });
 
-$(document).ready(function(){ 
-    $(window).on("scroll", function(){ 
-        if ($(this).scrollTop() > 300) { 
-            $('.back-to-top').fadeIn(); 
-        } else { 
-            $('.back-to-top').fadeOut(); 
-        } 
-    }); 
+    $('.back-to-top').on("click", function () {
+        $("html, body").animate({ scrollTop: 0 }, 600);
+        return false;
+    });
 
-    $('.back-to-top').on("click", function(){ 
-        $("html, body").animate({ scrollTop: 0 }, 600); 
-        return false; 
-    }); 
-});	   
-	    
-   
-$(function () {
-  $('[data-toggle="popover"]').popover()
-})
+    // Popover and Tooltip
+    $('[data-toggle="popover"]').popover();
+    $('[data-toggle="tooltip"]').tooltip();
 
-
-$(function () {
-  $('[data-toggle="tooltip"]').tooltip()
-})
-
-
-	 // theme setting
-	 $(".switcher-icon").on("click", function(e) {
+    // Theme setting
+    $(".switcher-icon").on("click", function (e) {
         e.preventDefault();
         $(".right-sidebar").toggleClass("right-toggled");
     });
-	
-	$('#theme1').click(theme1);
-    $('#theme2').click(theme2);
-    $('#theme3').click(theme3);
-    $('#theme4').click(theme4);
-    $('#theme5').click(theme5);
-    $('#theme6').click(theme6);
-    $('#theme7').click(theme7);
-    $('#theme8').click(theme8);
-    $('#theme9').click(theme9);
-    $('#theme10').click(theme10);
-    $('#theme11').click(theme11);
-    $('#theme12').click(theme12);
-    $('#theme13').click(theme13);
-    $('#theme14').click(theme14);
-    $('#theme15').click(theme15);
 
-    function theme1() {
-      $('body').attr('class', 'bg-theme bg-theme1');
+    // Load theme from local storage on page load
+    function loadTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            $('body').attr('class', 'bg-theme ' + savedTheme);
+        } else {
+            // Default theme if none is saved
+            $('body').attr('class', 'bg-theme bg-theme1');
+        }
     }
 
-    function theme2() {
-      $('body').attr('class', 'bg-theme bg-theme2');
-    }
+    // Call loadTheme on page load
+    loadTheme();
 
-    function theme3() {
-      $('body').attr('class', 'bg-theme bg-theme3');
-    }
+    // Theme click handlers
+    $('#theme1').click(function () { applyTheme('bg-theme1'); });
+    $('#theme2').click(function () { applyTheme('bg-theme2'); });
+    $('#theme3').click(function () { applyTheme('bg-theme3'); });
+    $('#theme4').click(function () { applyTheme('bg-theme4'); });
+    $('#theme5').click(function () { applyTheme('bg-theme5'); });
+    $('#theme6').click(function () { applyTheme('bg-theme6'); });
+    $('#theme7').click(function () { applyTheme('bg-theme7'); });
+    $('#theme8').click(function () { applyTheme('bg-theme8'); });
+    $('#theme9').click(function () { applyTheme('bg-theme9'); });
+    $('#theme10').click(function () { applyTheme('bg-theme10'); });
+    $('#theme11').click(function () { applyTheme('bg-theme11'); });
+    $('#theme12').click(function () { applyTheme('bg-theme12'); });
+    $('#theme13').click(function () { applyTheme('bg-theme13'); });
+    $('#theme14').click(function () { applyTheme('bg-theme14'); });
+    $('#theme15').click(function () { applyTheme('bg-theme15'); });
 
-    function theme4() {
-      $('body').attr('class', 'bg-theme bg-theme4');
+    // Function to apply and save theme
+    function applyTheme(themeClass) {
+        $('body').attr('class', 'bg-theme ' + themeClass);
+        localStorage.setItem('theme', themeClass);
     }
-	
-	function theme5() {
-      $('body').attr('class', 'bg-theme bg-theme5');
-    }
-	
-	function theme6() {
-      $('body').attr('class', 'bg-theme bg-theme6');
-    }
-
-    function theme7() {
-      $('body').attr('class', 'bg-theme bg-theme7');
-    }
-
-    function theme8() {
-      $('body').attr('class', 'bg-theme bg-theme8');
-    }
-
-    function theme9() {
-      $('body').attr('class', 'bg-theme bg-theme9');
-    }
-
-    function theme10() {
-      $('body').attr('class', 'bg-theme bg-theme10');
-    }
-
-    function theme11() {
-      $('body').attr('class', 'bg-theme bg-theme11');
-    }
-
-    function theme12() {
-      $('body').attr('class', 'bg-theme bg-theme12');
-    }
-	
-	function theme13() {
-      $('body').attr('class', 'bg-theme bg-theme13');
-    }
-	
-	function theme14() {
-      $('body').attr('class', 'bg-theme bg-theme14');
-    }
-	
-	function theme15() {
-      $('body').attr('class', 'bg-theme bg-theme15');
-    }
-
-
-
-
 });

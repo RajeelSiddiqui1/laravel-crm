@@ -50,6 +50,7 @@
                         <th>owner task</th>
                         <th>Group Chats</th>
                         <th>Action</th>
+                        <th>Manager Tasks</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -91,6 +92,10 @@
                             <td>
                                 <a href="{{ route('project_owner.tasks.view', $task->id) }}"
                                     class="btn btn-sm btn-info">View</a>
+                            </td>
+                            
+                            <td>
+                                <a href="{{route('project_owner.tasks.view',$task->id)}}" class="btn btn-sm btn-success"> View</a>
                             </td>
                         </tr>
                     @empty

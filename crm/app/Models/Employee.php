@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable; // Or just Model if not an authenticatable user
 use Illuminate\Notifications\Notifiable;
+
 class Employee extends Authenticatable // Or extends Model
 {
     use HasFactory;
-      use Notifiable;
+    use Notifiable;
 
     protected $fillable = [
         'name',
@@ -24,11 +25,15 @@ class Employee extends Authenticatable // Or extends Model
     /**
      * An Employee belongs to one Department.
      */
-   public function department()
-{
-    return $this->belongsTo(Department::class);
-}
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 
+    public function manager()
+    {
+        return $this->belongsTo(ProjectManager::class, 'manager_id');
+    }
 
     /**
      * An Employee can be assigned to many Owner Tasks.

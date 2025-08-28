@@ -115,15 +115,35 @@ class ProjectOnwer extends Controller
         return view('project_owner.home');
     }
 
-    function project_manager_view()
-    {
-        $managers = ProjectManager::with('department')->get();
-        return view('project_owner.project_managers', ['managers' => $managers]);
+function project_manager_view()
+{
+    $managers = ProjectManager::all();
+
+    foreach ($managers as $manager) {
+        $deptIds = $manager->department_ids; // field ka naam departments_ids hai
+
+        // Ensure hamesha array mile
+        if (is_string($deptIds)) {
+            $deptIds = json_decode($deptIds, true);
+        }
+
+        if (empty($deptIds)) {
+            $deptIds = [];
+        }
+
+        // Departments fetch karo
+        $departments = Department::whereIn('id', $deptIds)->pluck('name')->toArray();
+
+        // Extra property set kar dete hain
+        $manager->departments_list = $departments;
     }
+
+    return view('project_owner.project_managers', compact('managers'));
+}
 
     function employee_view()
     {
-        $employees = Employee::with('departments')->get();
+        $employees = Employee::all();
         return view('project_owner.employees', ['employees' => $employees]);
     }
 
@@ -375,6 +395,10 @@ class ProjectOnwer extends Controller
     }
 
 
+    public function manager_task($id){
+        $tasks = OnwerTask::find($id);
+        return view('project_owner.project_manager_tasks', compact('tasks'));
+    }
 
     public function taskFullDetails($id)
     {
@@ -388,11 +412,6 @@ class ProjectOnwer extends Controller
         return view('project_owner.subtask', compact('subtasks'));
     }
 
-    function manager_task($id)
-    {
-        $tasks = OnwerTask::find($id);
-        return view('project_owner.project_manager_tasks', compact('tasks'));
-    }
     public function subtask_detail($id)
     {
         $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);

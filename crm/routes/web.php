@@ -50,7 +50,14 @@ Route::controller(ProjectManager::class)->group(function () {
                 ->name('project_manager.update_status2');
             Route::patch('project-manager/owner-tasks/{id}/status3', 'updateStatus3')
                 ->name('project_manager.update_status3');
+            Route::get('/project-manager/teamleads', 'teamleads')->name('project_manager.teamleads');
+            Route::get('/project-manager/teamleads/create', 'create_teamlead_view')->name('project_manager.create_teamlead_view');
+            Route::post('/project-manager/teamleads/create', 'create_teamlead')->name('project_manager.create_teamlead');
+            Route::get('/project-manager/employee', 'employees')->name('project_manager.employee');
+            Route::get('/project-manager/employee/create', 'create_employee_view')->name('project_manager.create_employee_view');
+            Route::post('/project-manager/employee/create', 'create_employee')->name('project_manager.create_employee');
         }
+
     );
 
     Route::middleware('check.roles')->group(function () {

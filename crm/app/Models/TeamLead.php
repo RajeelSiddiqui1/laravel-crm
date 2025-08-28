@@ -30,6 +30,10 @@ class TeamLead extends Authenticatable
         return $this->belongsTo(Department::class, 'department_id');
     }
 
+      public function manager()
+    {
+        return $this->belongsTo(ProjectManager::class, 'manager_id');
+    }
 
 
 

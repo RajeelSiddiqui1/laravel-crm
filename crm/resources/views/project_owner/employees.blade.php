@@ -9,7 +9,7 @@
             <div class="col-lg-12">
                 <div class="card">
                     <div class="card-body">
-                        
+
                         <div class="table-responsive">
                             <table class="table">
                                 <thead>
@@ -30,24 +30,27 @@
                                             <td>{{ $employee->email }}</td>
                                             <td>{{ $employee->phone }}</td>
                                             <td>
-                                                 @if ($employee->department)
+                                                @if ($employee->department->name)
                                                     <span class="badge badge-info">{{ $employee->department->name }}</span>
                                                 @else
                                                     <span class="text-muted">No Team Lead</span>
                                                 @endif
-                                               
-                                            </td>
-                                            <td>
-                                                <img src="{{ asset('images/employees/' . $employee->image) }}"
-                                                    class="img-circle" alt="user avatar" width="50" height="50"
-                                                    style="border-radius: 50%">
-                                            </td>
-                                        </tr>
-                                    @endforeach
 
-                                    @if($employees->isEmpty())
-                                        <tr>
-                                            <td colspan="6" class="text-center text-muted">No Project employee Found</td>
+                                            </td>
+
+                                            <td>
+                                                <img src="{{ $employee->image ? asset('images/employees/' . $employee->image) : 'https://avatar.iran.liara.run/public/28' }}"
+                                                    width="50" height="50" style="border-radius: 50%"
+                                                    alt="Employee\">
+                            </td>
+                                        </tr>
+@endforeach
+
+                                    @if ($employees->isEmpty())
+<tr>
+                                            <td colspan="6"
+                                                    class="text-center text-muted">No Project employee Found
+                                            </td>
                                         </tr>
                                     @endif
                                 </tbody>

@@ -7,64 +7,97 @@
     <style>
         :root {
             --body-bg: #0d0d11;
-            --table-bg: #d1d1d1;
-            --accent: #7b68ee;
+            --accent: #0d0d11;
             --text: #0d0d11;
         }
+
         body {
             background: var(--body-bg);
             color: var(--text);
             font-family: 'Inter', sans-serif;
         }
+
         .table {
-            background: var(--table-bg);
+            background: transparent !important; /* Make entire table transparent */
             border: none;
             border-radius: .75rem;
             overflow: hidden;
         }
+
         .table thead {
-            background: linear-gradient(90deg, var(--accent), #8a5cf5);
-            color: #fff;
+            background: #000     !important; /* Make thead transparent */
+            color: #fff; /* Keep text readable */
             font-weight: 600;
         }
-        .table th, .table td {
+
+        .table th,
+        .table td {
             vertical-align: middle;
             padding: 0.75rem;
             text-align: center;
+            border: 1px solid #3a3c4f; /* Add border to maintain table structure visibility */
         }
+
+        /* Transparent tbody */
+        .table tbody,
+        .table tbody tr,
+        .table tbody td {
+            background: transparent !important;
+        }
+
         .btn-primary {
             background: var(--accent);
             border: none;
             border-radius: 0.5rem;
         }
+
         .btn-primary:hover {
             background: #5a4fcf;
         }
-        .btn-success, .btn-warning, .btn-danger {
+
+        .btn-success,
+        .btn-warning,
+        .btn-danger {
             border-radius: 0.5rem;
         }
+
         .form-control,
         .form-select {
-            background: #252837;
+            background: transparent;
             border: 1px solid #3a3c4f;
             color: var(--text);
             border-radius: 0.5rem;
         }
+
         .form-control:focus,
         .form-select:focus {
             background: #252837;
             border-color: var(--accent);
             box-shadow: 0 0 0 .2rem rgba(123, 104, 238, .25);
         }
+
         .badge {
             font-size: 0.85rem;
             padding: 0.5rem 1rem;
             border-radius: 50px;
         }
-        .badge-info { background: #17a2b8; }
-        .badge-success { background: #28a745; }
-        .badge-warning { background: #ffc107; }
-        .badge-secondary { background: #6c757d; }
+
+        .badge-info {
+            background: #17a2b8;
+        }
+
+        .badge-success {
+            background: #28a745;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+        }
+
+        .badge-secondary {
+            background: #6c757d;
+        }
+
         .attachment-item img,
         .attachment-item video,
         .attachment-item audio {
@@ -73,17 +106,21 @@
             object-fit: cover;
             border-radius: .5rem;
         }
+
         .attachment-item a {
             display: inline-block;
             text-decoration: none;
         }
+
         .attachment-item img.icon {
             height: 48px;
         }
+
         .attachment-item div {
             font-size: 12px;
             color: var(--text);
         }
+
         .account-type-header {
             margin-top: 2rem;
             margin-bottom: 1rem;
@@ -92,6 +129,7 @@
             color: var(--text);
         }
     </style>
+
 @endsection
 
 @section('content')

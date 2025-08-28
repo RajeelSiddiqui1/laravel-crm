@@ -28,25 +28,25 @@
                                             <td>{{ $manager->name }}</td>
                                             <td>{{ $manager->email }}</td>
                                             <td>{{ $manager->phone }}</td>
-                                            
-                                               {{-- <td>
-    @if ($manager->departments && $manager->departments->isNotEmpty())
-        @foreach ($manager->departments as $dept)
-            <span class="badge bg-info">{{ $dept->name }}</span>
-        @endforeach
-    @else
-        <span class="text-muted">N/A</span>
-    @endif
-</td> --}}
-                                            <td>
-                                                <img src="{{ asset('images/project_managers/' . $manager->image) }}"
-                                                    class="img-circle" alt="user avatar" width="50" height="50"
-                                                    style="border-radius: 50%">
-                                            </td>
+                                           <td>
+                @if (!empty($manager->departments_list))
+                    @foreach ($manager->departments_list as $dept)
+                        <span class="badge bg-info">{{ $dept }}</span>
+                    @endforeach
+                @else
+                    <span class="text-muted">N/A</span>
+                @endif
+            </td>
+              <td>
+                                <img src="{{ $manager->image ? asset('images/project_managers/' . $manager->image) : 'https://avatar.iran.liara.run/public/28' }}"
+                                    width="50" height="50" style="border-radius: 50%"
+                                    alt="Manager\">
+                            </td>
+
                                         </tr>
                                     @endforeach
 
-                                    @if($managers->isEmpty())
+                                    @if ($managers->isEmpty())
                                         <tr>
                                             <td colspan="6" class="text-center text-muted">No Project Manager Found</td>
                                         </tr>
