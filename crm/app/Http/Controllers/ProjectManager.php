@@ -451,6 +451,18 @@ public function store_my_task(Request $request, $id)
     // ✅ First fetch the OwnerTask
     $task = OnwerTask::findOrFail($id);
 
+    if ($request->account_type === 'AccountT1' && $task->account_t1_id) {
+    return redirect()->back()->with('error_swal', 'Task already exists with AccountT1');
+}
+
+if ($request->account_type === 'AccountT2' && $task->account_t2_id) {
+    return redirect()->back()->with('error_swal', 'Task already exists with AccountT2');
+}
+
+if ($request->account_type === 'AccountHST' && $task->account_hst_id) {
+    return redirect()->back()->with('error_swal', 'Task already exists with AccountHST');
+}
+
     $account = null;
 
     if ($isAccounts) {
@@ -714,42 +726,68 @@ public function store_my_task(Request $request, $id)
     }
 
 
-    public function my_task_destroy($id)
-    {
-        $currentManager = Auth::guard('project_manager')->user();
-
-        $task = OnwerTask::where('id', $id)
-            ->where('project_manager_task', $currentManager->id)
-            ->first();
-
-        if (!$task) {
-            return redirect()->route('project_manager.mytask')
-                ->with('error_swal', 'Task not found or you are not authorized to delete it.');
-        }
-
-        try {
-            if ($task->attachments) {
-                $attachments = json_decode($task->attachments, true) ?? [$task->attachments];
-                foreach ($attachments as $attachment) {
-                    $publicId = pathinfo(parse_url($attachment, PHP_URL_PATH), PATHINFO_FILENAME);
-                    Cloudinary::uploadApi()->destroy('manager_task/' . $publicId, ['resource_type' => 'auto']);
-                }
+public function my_task_destroy($id)
+{
+    try {
+        // Handle AccountT1
+        $taskT1 = AccountT1::find($id);
+        if ($taskT1) {
+            // Delete attachment from Cloudinary
+            if ($taskT1->attachments) {
+                $publicId = pathinfo(parse_url($taskT1->attachments, PHP_URL_PATH), PATHINFO_FILENAME);
+                Cloudinary::uploadApi()->destroy('manager_task/' . $publicId, ['resource_type' => 'auto']);
             }
-
-            SharedTask::where('owner_task_id', $task->id)->delete();
-            $task->delete();
-
+            // Set account_t1_id to null in OwnerTask
+            OnwerTask::where('account_t1_id', $id)->update(['account_t1_id' => null]);
+            // Delete the AccountT1 task
+            $taskT1->delete();
             return redirect()->route('project_manager.mytask')
-                ->with('success_swal', 'Task deleted successfully.');
-        } catch (\Exception $e) {
-            Log::error('Task deletion failed: ' . $e->getMessage());
-            return redirect()->route('project_manager.mytask')
-                ->with('error_swal', 'Failed to delete task. Please try again.');
+                ->with('success_swal', 'AccountT1 task deleted and foreign key cleared successfully.');
         }
+
+        // Handle AccountT2
+        $taskT2 = AccountT2::find($id);
+        if ($taskT2) {
+            // Delete attachment from Cloudinary
+            if ($taskT2->attachments) {
+                $publicId = pathinfo(parse_url($taskT2->attachments, PHP_URL_PATH), PATHINFO_FILENAME);
+                Cloudinary::uploadApi()->destroy('manager_task/' . $publicId, ['resource_type' => 'auto']);
+            }
+            // Set account_t2_id to null in OwnerTask
+            OnwerTask::where('account_t2_id', $id)->update(['account_t2_id' => null]);
+            // Delete the AccountT2 task
+            $taskT2->delete();
+            return redirect()->route('project_manager.mytask')
+                ->with('success_swal', 'AccountT2 task deleted and foreign key cleared successfully.');
+        }
+
+        // Handle AccountHST
+        $taskHST = AccountHST::find($id);
+        if ($taskHST) {
+            // Delete attachment from Cloudinary
+            if ($taskHST->attachments) {
+                $publicId = pathinfo(parse_url($taskHST->attachments, PHP_URL_PATH), PATHINFO_FILENAME);
+                Cloudinary::uploadApi()->destroy('manager_task/' . $publicId, ['resource_type' => 'auto']);
+            }
+            // Set account_hst_id to null in OwnerTask
+            OnwerTask::where('account_hst_id', $id)->update(['account_hst_id' => null]);
+            // Delete the AccountHST task
+            $taskHST->delete();
+            return redirect()->route('project_manager.mytask')
+                ->with('success_swal', 'AccountHST task deleted and foreign key cleared successfully.');
+        }
+
+        // If no task found
+        return redirect()->route('project_manager.mytask')
+            ->with('error_swal', 'Task not found.');
+
+    } catch (\Exception $e) {
+        Log::error('Task deletion failed: ' . $e->getMessage());
+        return redirect()->route('project_manager.mytask')
+            ->with('error_swal', 'Failed to delete task. Please try again.');
     }
 
-
-    function subtask()
+}    function subtask()
     {
         $manager = Auth::guard('project_manager')->user();
 
