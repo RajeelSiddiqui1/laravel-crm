@@ -88,41 +88,45 @@
 
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
-
-                <div class="form-group">
-                                    <label class="text-white" for="client_name">Client Name</label>
-                                    <input type="text" name="client_name" id="client_name" class="form-control"
-                                        value="{{ old('client_name', $task->client_name) }}" readonly>
-                                    @error('client_name')
-                                        <span class="text-danger">{{ $message }}</span>
-                                    @enderror
-                                </div>
-
-                                 <div class="form-group">
-                                    <label class="text-white d-block">Current Audio</label>
-                                    @if ($task->audio_url)
-                                        <audio controls class="w-100">
-                                            <source src="{{ $task->audio_url }}" type="audio/webm" readonly>
-                                            Your browser does not support the audio element.
-                                        </audio>
-                                    @else
-                                        <p>No audio available</p>
-                                    @endif
-                                </div>
-                                
                 <div class="card shadow rounded">
                     <div class="card-body">
                         <h2 class="card-title text-center text-white">Create Task</h2>
                         <form method="POST" action="{{ route('project_manager.mytask_store', $task->id) }}" enctype="multipart/form-data">
                             @csrf
 
-                            @if ($isAccounts)
+                            <div class="form-group">
+                                <label class="text-white" for="client_name">Client Name</label>
+                                <input type="text" name="client_name" id="client_name" class="form-control"
+                                    value="{{ old('client_name', $task->client_name) }}" readonly>
+                                @error('client_name')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label class="text-white d-block">Current Audio</label>
+                                @if ($task->audio_url)
+                                    <audio controls class="w-100">
+                                        <source src="{{ $task->audio_url }}" type="audio/webm" readonly>
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                @else
+                                    <p>No audio available</p>
+                                @endif
+                            </div>
+
+                            @if ($isAccounts || $isOperation)
                                 <div class="form-group">
-                                    <label class="text-white" for="account_type">Account Type</label>
+                                    <label class="text-white" for="account_type">Task Type</label>
                                     <select name="account_type" id="account_type" class="form-control custom-select text-white" onchange="toggleAccountForm()">
-                                        <option value="AccountT2" {{ old('account_type', 'AccountT2') == 'AccountT2' ? 'selected' : '' }}>AccountT2</option>
-                                        <option value="AccountHST" {{ old('account_type') == 'AccountHST' ? 'selected' : '' }}>AccountHST</option>
-                                        <option value="AccountT1" {{ old('account_type') == 'AccountT1' ? 'selected' : '' }}>AccountT1</option>
+                                        @if ($isAccounts)
+                                            <option value="AccountT2" {{ old('account_type', 'AccountT2') == 'AccountT2' ? 'selected' : '' }}>AccountT2</option>
+                                            <option value="AccountHST" {{ old('account_type') == 'AccountHST' ? 'selected' : '' }}>AccountHST</option>
+                                            <option value="AccountT1" {{ old('account_type') == 'AccountT1' ? 'selected' : '' }}>AccountT1</option>
+                                        @endif
+                                        @if ($isOperation)
+                                            <option value="operation" {{ old('account_type') == 'operation' ? 'selected' : '' }}>Operation</option>
+                                        @endif
                                     </select>
                                 </div>
 
@@ -183,7 +187,7 @@
 
                                     <div class="form-group">
                                         <label class="form-label mb-1">Add Attachments</label>
-                                     <input type="file" name="attachments_t2" class="form-control" >
+                                        <input type="file" name="attachments_t2" class="form-control">
                                     </div>
                                 </div>
 
@@ -294,10 +298,31 @@
                                         <input type="text" name="year_t1" class="form-control text-white"
                                             value="{{ old('year_t1', optional($accT1)->year) }}">
                                     </div>
+                                </div>
 
-                                    
+                                <!-- Operation Form -->
+                                <div id="operation_form" style="{{ old('account_type') == 'operation' ? '' : 'display: none;' }}">
+                                    <h5 class="text-white mt-4">Operation Details</h5>
+                                    @php $operationRecord = $operation->first(); @endphp
 
-                                    
+                                    <div class="form-group">
+                                        <label class="text-white">Description</label>
+                                        <textarea name="description_op" class="form-control text-white">{{ old('description_op', optional($operationRecord)->description) }}</textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label mb-1">Add Attachments</label>
+                                        <input type="file" name="attachments_op" class="form-control" multiple>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label mb-1">Priority</label>
+                                        <select name="priority_op" class="form-control">
+                                            <option value="low" {{ old('priority_op', optional($operationRecord)->priority) == 'low' ? 'selected' : '' }}>Low</option>
+                                            <option value="medium" {{ old('priority_op', optional($operationRecord)->priority) == 'medium' ? 'selected' : '' }}>Medium</option>
+                                            <option value="high" {{ old('priority_op', optional($operationRecord)->priority) == 'high' ? 'selected' : '' }}>High</option>
+                                        </select>
+                                    </div>
                                 </div>
                             @endif
 
@@ -338,16 +363,18 @@
             </div>
         </div>
 
-    <script>
-        function toggleAccountForm() {
-            const accountType = document.getElementById('account_type').value;
-            const accountT2Form = document.getElementById('accountT2_form');
-            const accountHSTForm = document.getElementById('accountHST_form');
-            const accountT1Form = document.getElementById('accountT1_form');
+        <script>
+            function toggleAccountForm() {
+                const accountType = document.getElementById('account_type').value;
+                const accountT2Form = document.getElementById('accountT2_form');
+                const accountHSTForm = document.getElementById('accountHST_form');
+                const accountT1Form = document.getElementById('accountT1_form');
+                const operationForm = document.getElementById('operation_form');
 
-            accountT2Form.style.display = accountType === 'AccountT2' ? 'block' : 'none';
-            accountHSTForm.style.display = accountType === 'AccountHST' ? 'block' : 'none';
-            accountT1Form.style.display = accountType === 'AccountT1' ? 'block' : 'none';
-        }
-    </script>
-@endsection
+                accountT2Form.style.display = accountType === 'AccountT2' ? 'block' : 'none';
+                accountHSTForm.style.display = accountType === 'AccountHST' ? 'block' : 'none';
+                accountT1Form.style.display = accountType === 'AccountT1' ? 'block' : 'none';
+                operationForm.style.display = accountType === 'operation' ? 'block' : 'none';
+            }
+        </script>
+    @endsection
