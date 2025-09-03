@@ -56,6 +56,10 @@
             outline: none;
             box-shadow: none;
         }
+
+        audio.w-100 {
+            width: 100%;
+        }
     </style>
 @endsection
 
@@ -73,7 +77,16 @@
                         }));
                     </script>
                 @endif
-
+                @if (session('error_swal'))
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => Swal.fire({
+                            title: 'Error!',
+                            text: "{{ session('error_swal') }}",
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        }));
+                    </script>
+                @endif
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <ul class="mb-0">
@@ -91,12 +104,13 @@
                 <div class="card shadow rounded">
                     <div class="card-body">
                         <h2 class="card-title text-center text-white">Create Task</h2>
-                        <form method="POST" action="{{ route('project_manager.mytask_store', $task->id) }}" enctype="multipart/form-data">
+                        <form method="POST" action="{{ route('project_manager.mytask_store', $task->id) }}"
+                            enctype="multipart/form-data">
                             @csrf
 
                             <div class="form-group">
                                 <label class="text-white" for="client_name">Client Name</label>
-                                <input type="text" name="client_name" id="client_name" class="form-control"
+                                <input type="text" name="client_name" id="client_name" class="form-control text-white"
                                     value="{{ old('client_name', $task->client_name) }}" readonly>
                                 @error('client_name')
                                     <span class="text-danger">{{ $message }}</span>
@@ -107,7 +121,7 @@
                                 <label class="text-white d-block">Current Audio</label>
                                 @if ($task->audio_url)
                                     <audio controls class="w-100">
-                                        <source src="{{ $task->audio_url }}" type="audio/webm" readonly>
+                                        <source src="{{ $task->audio_url }}" type="audio/webm">
                                         Your browser does not support the audio element.
                                     </audio>
                                 @else
@@ -118,210 +132,298 @@
                             @if ($isAccounts || $isOperation)
                                 <div class="form-group">
                                     <label class="text-white" for="account_type">Task Type</label>
-                                    <select name="account_type" id="account_type" class="form-control custom-select text-white" onchange="toggleAccountForm()">
+                                    <select name="account_type" id="account_type"
+                                        class="form-control custom-select text-white" onchange="toggleAccountForm()">
                                         @if ($isAccounts)
-                                            <option value="AccountT2" {{ old('account_type', 'AccountT2') == 'AccountT2' ? 'selected' : '' }}>AccountT2</option>
-                                            <option value="AccountHST" {{ old('account_type') == 'AccountHST' ? 'selected' : '' }}>AccountHST</option>
-                                            <option value="AccountT1" {{ old('account_type') == 'AccountT1' ? 'selected' : '' }}>AccountT1</option>
+                                            <option value="AccountT2"
+                                                {{ old('account_type', 'AccountT2') == 'AccountT2' ? 'selected' : '' }}>
+                                                AccountT2</option>
+                                            <option value="AccountHST"
+                                                {{ old('account_type') == 'AccountHST' ? 'selected' : '' }}>AccountHST
+                                            </option>
+                                            <option value="AccountT1"
+                                                {{ old('account_type') == 'AccountT1' ? 'selected' : '' }}>AccountT1
+                                            </option>
                                         @endif
                                         @if ($isOperation)
-                                            <option value="operation" {{ old('account_type') == 'operation' ? 'selected' : '' }}>Operation</option>
+                                            <option value="operation"
+                                                {{ old('account_type') == 'operation' ? 'selected' : '' }}>Operation
+                                            </option>
                                         @endif
                                     </select>
                                 </div>
 
                                 <!-- AccountT2 Form -->
-                                <div id="accountT2_form" style="{{ old('account_type', 'AccountT2') == 'AccountT2' ? '' : 'display: none;' }}">
+                                <div id="accountT2_form"
+                                    style="{{ old('account_type', 'AccountT2') == 'AccountT2' ? '' : 'display: none;' }}">
                                     <h5 class="text-white mt-4">AccountT2 Details</h5>
                                     @php $accT2 = $accountsT2->first(); @endphp
-
                                     <div class="form-group">
                                         <label class="text-white">Client Name</label>
                                         <input type="text" name="clientname_t2" class="form-control text-white"
                                             value="{{ old('clientname_t2', optional($accT2)->clientname) }}">
+                                        @error('clientname_t2')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Email</label>
                                         <input type="email" name="email_t2" class="form-control text-white"
                                             value="{{ old('email_t2', optional($accT2)->email) }}">
+                                        @error('email_t2')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Phone</label>
                                         <input type="text" name="phone_t2" class="form-control text-white"
                                             value="{{ old('phone_t2') }}">
+                                        @error('phone_t2')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Corporation Name</label>
-                                        <input type="text" name="corpration_name_t2" class="form-control text-white"
-                                            value="{{ old('corpration_name_t2', optional($accT2)->corpration_name) }}">
+                                        <input type="text" name="corporation_name_t2" class="form-control text-white"
+                                            value="{{ old('corporation_name_t2', optional($accT2)->corporation_name) }}">
+                                        @error('corporation_name_t2')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Corporation Number</label>
-                                        <input type="text" name="corpration_number_t2" class="form-control text-white"
-                                            value="{{ old('corpration_number_t2', optional($accT2)->corpration_number) }}">
+                                        <input type="text" name="corporation_number_t2" class="form-control text-white"
+                                            value="{{ old('corporation_number_t2', optional($accT2)->corporation_number) }}">
+                                        @error('corporation_number_t2')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Due Date</label>
                                         <input type="date" name="due_date_t2" class="form-control text-white"
                                             value="{{ old('due_date_t2', optional($accT2)->due_date) }}">
+                                        @error('due_date_t2')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Nature of Business</label>
                                         <textarea name="nature_of_business_t2" class="form-control text-white">{{ old('nature_of_business_t2', optional($accT2)->nature_of_business) }}</textarea>
+                                        @error('nature_of_business_t2')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="form-label mb-1">Priority</label>
                                         <select name="priority_t2" class="form-control">
-                                            <option value="low" {{ old('priority_t2', optional($accT2)->priority) == 'low' ? 'selected' : '' }}>Low</option>
-                                            <option value="medium" {{ old('priority_t2', optional($accT2)->priority) == 'medium' ? 'selected' : '' }}>Medium</option>
-                                            <option value="high" {{ old('priority_t2', optional($accT2)->priority) == 'high' ? 'selected' : '' }}>High</option>
+                                            <option value="low"
+                                                {{ old('priority_t2', optional($accT2)->priority) == 'low' ? 'selected' : '' }}>
+                                                Low</option>
+                                            <option value="medium"
+                                                {{ old('priority_t2', optional($accT2)->priority) == 'medium' ? 'selected' : '' }}>
+                                                Medium</option>
+                                            <option value="high"
+                                                {{ old('priority_t2', optional($accT2)->priority) == 'high' ? 'selected' : '' }}>
+                                                High</option>
                                         </select>
+                                        @error('priority_t2')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
-                                        <label class="form-label mb-1">Add Attachments</label>
+                                        <label class="form-label mb-1">Add Attachment</label>
                                         <input type="file" name="attachments_t2" class="form-control">
+                                        @error('attachments_t2')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
                                 </div>
 
                                 <!-- AccountHST Form -->
-                                <div id="accountHST_form" style="{{ old('account_type') == 'AccountHST' ? '' : 'display: none;' }}">
+                                <div id="accountHST_form"
+                                    style="{{ old('account_type') == 'AccountHST' ? '' : 'display: none;' }}">
                                     <h5 class="text-white mt-4">AccountHST Details</h5>
                                     @php $accHST = $accountsHST->first(); @endphp
-
                                     <div class="form-group">
                                         <label class="text-white">Client Name</label>
                                         <input type="text" name="clientname_hst" class="form-control text-white"
                                             value="{{ old('clientname_hst', optional($accHST)->clientname) }}">
+                                        @error('clientname_hst')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Email</label>
                                         <input type="email" name="email_hst" class="form-control text-white"
                                             value="{{ old('email_hst', optional($accHST)->email) }}">
+                                        @error('email_hst')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Phone</label>
                                         <input type="text" name="phone_hst" class="form-control text-white"
                                             value="{{ old('phone_hst') }}">
+                                        @error('phone_hst')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Corporation Name</label>
-                                        <input type="text" name="corpration_name_hst" class="form-control text-white"
-                                            value="{{ old('corpration_name_hst', optional($accHST)->corpration_name) }}">
+                                        <input type="text" name="corporation_name_hst" class="form-control text-white"
+                                            value="{{ old('corporation_name_hst', optional($accHST)->corporation_name) }}">
+                                        @error('corporation_name_hst')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Corporation Number</label>
-                                        <input type="text" name="corpration_number_hst" class="form-control text-white"
-                                            value="{{ old('corpration_number_hst', optional($accHST)->corpration_number) }}">
+                                        <input type="text" name="corporation_number_hst"
+                                            class="form-control text-white"
+                                            value="{{ old('corporation_number_hst', optional($accHST)->corporation_number) }}">
+                                        @error('corporation_number_hst')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Due Date</label>
                                         <input type="date" name="due_date_hst" class="form-control text-white"
                                             value="{{ old('due_date_hst', optional($accHST)->due_date) }}">
+                                        @error('due_date_hst')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Nature of Business</label>
                                         <textarea name="nature_of_business_hst" class="form-control text-white">{{ old('nature_of_business_hst', optional($accHST)->nature_of_business) }}</textarea>
+                                        @error('nature_of_business_hst')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="form-label mb-1">Priority</label>
                                         <select name="priority_hst" class="form-control">
-                                            <option value="low" {{ old('priority_hst', optional($accHST)->priority) == 'low' ? 'selected' : '' }}>Low</option>
-                                            <option value="medium" {{ old('priority_hst', optional($accHST)->priority) == 'medium' ? 'selected' : '' }}>Medium</option>
-                                            <option value="high" {{ old('priority_hst', optional($accHST)->priority) == 'high' ? 'selected' : '' }}>High</option>
+                                            <option value="low"
+                                                {{ old('priority_hst', optional($accHST)->priority) == 'low' ? 'selected' : '' }}>
+                                                Low</option>
+                                            <option value="medium"
+                                                {{ old('priority_hst', optional($accHST)->priority) == 'medium' ? 'selected' : '' }}>
+                                                Medium</option>
+                                            <option value="high"
+                                                {{ old('priority_hst', optional($accHST)->priority) == 'high' ? 'selected' : '' }}>
+                                                High</option>
                                         </select>
+                                        @error('priority_hst')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
-                                        <label class="form-label mb-1">Add Attachments</label>
-                                        <input type="file" name="attachments_hst" class="form-control" multiple>
+                                        <label class="form-label mb-1">Add Attachment</label>
+                                        <input type="file" name="attachments_hst" class="form-control">
+                                        @error('attachments_hst')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
                                 </div>
 
                                 <!-- AccountT1 Form -->
-                                <div id="accountT1_form" style="{{ old('account_type') == 'AccountT1' ? '' : 'display: none;' }}">
+                                <div id="accountT1_form"
+                                    style="{{ old('account_type') == 'AccountT1' ? '' : 'display: none;' }}">
                                     <h5 class="text-white mt-4">AccountT1 Details</h5>
                                     @php $accT1 = $accountsT1->first(); @endphp
-
                                     <div class="form-group">
                                         <label class="text-white">Client Name</label>
                                         <input type="text" name="clientname_t1" class="form-control text-white"
                                             value="{{ old('clientname_t1', optional($accT1)->clientname) }}">
+                                        @error('clientname_t1')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Period</label>
                                         <input type="text" name="period_t1" class="form-control text-white"
                                             value="{{ old('period_t1', optional($accT1)->period) }}">
+                                        @error('period_t1')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Driving License</label>
                                         <input type="text" name="driving_license_t1" class="form-control text-white"
                                             value="{{ old('driving_license_t1', optional($accT1)->driving_license) }}">
+                                        @error('driving_license_t1')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">SIM Number</label>
                                         <input type="text" name="sim_number_t1" class="form-control text-white"
                                             value="{{ old('sim_number_t1', optional($accT1)->sim_number) }}">
+                                        @error('sim_number_t1')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Business Name</label>
-                                        <input type="text" name="bussiness_name_t1" class="form-control text-white"
-                                            value="{{ old('bussiness_name_t1', optional($accT1)->bussiness_name) }}">
+                                        <input type="text" name="business_name_t1" class="form-control text-white"
+                                            value="{{ old('business_name_t1', optional($accT1)->business_name) }}">
+                                        @error('business_name_t1')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Family Name</label>
-                                        <input type="text" name="famliy_name_t1" class="form-control text-white"
-                                            value="{{ old('famliy_name_t1', optional($accT1)->famliy_name) }}">
+                                        <input type="text" name="family_name_t1" class="form-control text-white"
+                                            value="{{ old('family_name_t1', optional($accT1)->family_name) }}">
+                                        @error('family_name_t1')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="text-white">Year</label>
                                         <input type="text" name="year_t1" class="form-control text-white"
                                             value="{{ old('year_t1', optional($accT1)->year) }}">
+                                        @error('year_t1')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
                                 </div>
 
                                 <!-- Operation Form -->
-                                <div id="operation_form" style="{{ old('account_type') == 'operation' ? '' : 'display: none;' }}">
+                                <div id="operation_form"
+                                    style="{{ old('account_type') == 'operation' ? '' : 'display: none;' }}">
                                     <h5 class="text-white mt-4">Operation Details</h5>
                                     @php $operationRecord = $operation->first(); @endphp
-
                                     <div class="form-group">
                                         <label class="text-white">Description</label>
-                                        <textarea name="description_op" class="form-control text-white">{{ old('description_op', optional($operationRecord)->description) }}</textarea>
+                                        <textarea name="description" class="form-control text-white">{{ old('description', optional($operationRecord)->description) }}</textarea>
+                                        @error('description')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
-                                        <label class="form-label mb-1">Add Attachments</label>
-                                        <input type="file" name="attachments_op" class="form-control" multiple>
+                                        <label class="form-label mb-1">Add Attachment</label>
+                                        <input type="file" name="attachments" class="form-control">
+                                        @error('attachments')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
-
                                     <div class="form-group">
                                         <label class="form-label mb-1">Priority</label>
-                                        <select name="priority_op" class="form-control">
-                                            <option value="low" {{ old('priority_op', optional($operationRecord)->priority) == 'low' ? 'selected' : '' }}>Low</option>
-                                            <option value="medium" {{ old('priority_op', optional($operationRecord)->priority) == 'medium' ? 'selected' : '' }}>Medium</option>
-                                            <option value="high" {{ old('priority_op', optional($operationRecord)->priority) == 'high' ? 'selected' : '' }}>High</option>
+                                        <select name="priority" class="form-control">
+                                            <option value="low"
+                                                {{ old('priority', optional($operationRecord)->priority) == 'low' ? 'selected' : '' }}>
+                                                Low</option>
+                                            <option value="medium"
+                                                {{ old('priority', optional($operationRecord)->priority) == 'medium' ? 'selected' : '' }}>
+                                                Medium</option>
+                                            <option value="high"
+                                                {{ old('priority', optional($operationRecord)->priority) == 'high' ? 'selected' : '' }}>
+                                                High</option>
                                         </select>
+                                        @error('priority')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </div>
                                 </div>
                             @endif
@@ -338,21 +440,48 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @error('department_id')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
                             </div>
 
-                            <div class="form-group">
-                                <label class="text-white" for="team_lead_id">Team Lead</label>
-                                <select name="team_lead_id" id="team_lead_id"
-                                    class="form-control custom-select text-white">
-                                    <option value="">Select Team Lead</option>
-                                    @foreach ($team_leads as $lead)
-                                        <option value="{{ $lead->id }}"
-                                            {{ old('team_lead_id') == $lead->id ? 'selected' : '' }}>
-                                            {{ $lead->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            @if ($team_leads)
+                                <div class="form-group">
+                                    <label class="text-white" for="team_lead_id">Team Lead</label>
+                                    <select name="team_lead_id" id="team_lead_id"
+                                        class="form-control custom-select text-white">
+                                        <option value="">Select Team Lead</option>
+                                        @foreach ($team_leads as $team_lead)
+                                            <option value="{{ $team_lead->id }}"
+                                                data-department="{{ $team_lead->department_id }}"
+                                                {{ old('team_lead_id') == $team_lead->id ? 'selected' : '' }}>
+                                                {{ $team_lead->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('team_lead_id')
+                                        <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const departmentSelect = document.getElementById('department_id');
+                                        const teamLeadSelect = document.getElementById('team_lead_id');
+                                        const allOptions = Array.from(teamLeadSelect.querySelectorAll('option[data-department]'));
+
+                                        departmentSelect.addEventListener('change', function() {
+                                            const selectedDept = this.value;
+                                            teamLeadSelect.innerHTML = '<option value="">Select Team Lead</option>';
+                                            allOptions.forEach(opt => {
+                                                if (opt.getAttribute('data-department') === selectedDept) {
+                                                    teamLeadSelect.appendChild(opt.cloneNode(true));
+                                                }
+                                            });
+                                        });
+                                        departmentSelect.dispatchEvent(new Event('change'));
+                                    });
+                                </script>
+                            @endif
 
                             <div class="form-group text-center mt-3">
                                 <button type="submit" class="btn btn-light">Create Task</button>
@@ -366,15 +495,16 @@
         <script>
             function toggleAccountForm() {
                 const accountType = document.getElementById('account_type').value;
-                const accountT2Form = document.getElementById('accountT2_form');
-                const accountHSTForm = document.getElementById('accountHST_form');
-                const accountT1Form = document.getElementById('accountT1_form');
-                const operationForm = document.getElementById('operation_form');
-
-                accountT2Form.style.display = accountType === 'AccountT2' ? 'block' : 'none';
-                accountHSTForm.style.display = accountType === 'AccountHST' ? 'block' : 'none';
-                accountT1Form.style.display = accountType === 'AccountT1' ? 'block' : 'none';
-                operationForm.style.display = accountType === 'operation' ? 'block' : 'none';
+                const forms = {
+                    'AccountT2': 'accountT2_form',
+                    'AccountHST': 'accountHST_form',
+                    'AccountT1': 'accountT1_form',
+                    'operation': 'operation_form'
+                };
+                Object.values(forms).forEach(formId => document.getElementById(formId).style.display = 'none');
+                if (forms[accountType]) document.getElementById(forms[accountType]).style.display = 'block';
             }
+            document.addEventListener('DOMContentLoaded', toggleAccountForm);
         </script>
-    @endsection
+    </div>
+@endsection

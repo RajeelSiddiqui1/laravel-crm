@@ -16,6 +16,7 @@ class OnwerTask extends Model
         'account_t1_id',
         'account_t2_id',
         'account_hst_id',
+        'manager_operation_id',
     ];
 
     protected $casts = [
@@ -52,6 +53,10 @@ class OnwerTask extends Model
     public function accountHst()
     {
         return $this->belongsTo(AccountHST::class, 'account_hst_id'); // ✅ new relation
+    }
+    public function managerOperation()
+    {
+        return $this->belongsTo(ManagerOperation::class, 'manager_operation_id');
     }
 
     public function employee()

@@ -12,8 +12,8 @@ class AccountT1 extends Model
         'period',
         'driving_license',
         'sim_number',
-        'bussiness_name',
-        'famliy_name',
+        'business_name',
+        'family_name',
         'year'
     ];
 

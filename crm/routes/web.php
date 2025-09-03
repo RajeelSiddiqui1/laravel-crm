@@ -44,7 +44,8 @@ Route::controller(ProjectManager::class)->group(function () {
             Route::post('/project-manager/owntasks/store/', 'store_own_task')->name('project_manager.owntask_store');
             Route::get('/project-manager/mytask/edit/{id}', 'mytask_edit')->name('project_manager.mytask_edit');
             Route::put('/project-manager/mytask/edit/{id}', 'mytask_update')->name('project_manager.mytask_update');
-            Route::delete('/project-manager/mytask/delete/{id}', 'my_task_destroy')->name('project_manager.mytask_delete');
+            Route::delete('mytask/attachment/{id}', 'delete_attachment')->name('project_manager.delete_attachment');
+            Route::delete('/project-manager/mytask/delete/{id}', 'mytask_destroy')->name('project_manager.mytask_destroy');
             Route::post('/my-tasks/share/{id}',  'share_task')->name('project_manager.share_task');
             Route::post('/project-manager/shared-tasks',  'shareTask')->name('project_manager.share_task');
             // Route::get('/project-manager/shared-tasks/list',  'sharedTaskList')->name('project_manager.shared_tasks');

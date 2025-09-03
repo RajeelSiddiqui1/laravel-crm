@@ -6,5 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class ManagerOperation extends Model
 {
-    //
+    protected $fillable = [
+        'task_id',
+        'project_manager_id',
+        'description',
+        'attachments',
+        'priority',
+    ];
+
+      public function ownerTask()
+    {
+        return $this->belongsTo(OnwerTask::class, 'task_id');
+    }
 }
