@@ -12,6 +12,7 @@ class ManagerOperation extends Model
         'description',
         'attachments',
         'priority',
+        'team_lead_id'
     ];
 
       public function ownerTask()

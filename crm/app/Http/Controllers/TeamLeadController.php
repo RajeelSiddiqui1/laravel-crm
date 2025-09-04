@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Mail\AssignedEmployeeTask;
+use App\Models\AccountHST;
 use App\Models\CellCenterPos;
+use App\Models\ManagerOperation;
 use App\Models\Message;
 use App\Models\OnwerTask;
 use App\Models\Subtask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
+use App\Models\AccountT1;
+use App\Models\AccountT2;
 use App\Models\TeamLead;
 use App\Models\Department;
 use App\Models\Employee;
@@ -204,38 +208,39 @@ class TeamLeadController extends Controller
     //     return view('team_lead.manager_tasks', compact('tasks', 'employees'));
     // }
 
-    public function manager_tasks()
-    {
-        $teamLead = Auth::guard('team_lead')->user();
-        $departmentId = $teamLead->department_id;
+public function manager_tasks()
+{
+    $teamLead = Auth::guard('team_lead')->user();
 
-        // For Share Dropdown (optional)
-        $otherTeamLeads = TeamLead::where('id', '!=', $teamLead->id)
-            ->pluck('name', 'id');
-
-        // Fetch tasks with required relations for this team lead, only for Accounts department, excluding Call Center
-        $tasks = OnwerTask::with(['department', 'teamLead', 'accountT1', 'accountT2', 'accountHst'])
-            ->where('team_lead_id', $teamLead->id)
-            ->where('department_id', $departmentId)
-            ->whereHas('department', function ($query) {
-                $query->where('name', '=', 'Accounts')
-                    ->where('name', '!=', 'Call Center');
-            })
-            ->get()
-            ->map(function ($task) {
-                // Rename "Call Center" to "Call Operator" if needed
-                if ($task->department && $task->department->name === 'Call Center') {
-                    $task->department->name = 'Call operator';
-                }
-                return $task;
-            });
-
-        $employees = Employee::where('department_id', $departmentId)->get();
-
-        return view('team_lead.manager_tasks', compact('tasks', 'employees', 'otherTeamLeads'));
+    if (!$teamLead) {
+        abort(403, 'Unauthorized access');
     }
 
+    $departmentId = $teamLead->department_id;
 
+    // Dusre Team Leads dropdown ke liye
+    $otherTeamLeads = TeamLead::where('id', '!=', $teamLead->id)
+        ->pluck('name', 'id');
+
+    // Fetch tasks with pagination
+    $accountst1 = AccountT1::where('team_lead_id', $teamLead->id)->paginate(10);
+    $accountst2 = AccountT2::where('team_lead_id', $teamLead->id)->paginate(10);
+    $accountsthst = AccountHST::where('team_lead_id', $teamLead->id)->paginate(10);
+    $manageroperation = ManagerOperation::where('team_lead_id', $teamLead->id)->paginate(10);
+
+    // Employees from same department
+    $employees = Employee::where('department_id', $departmentId)->get();
+
+    return view('team_lead.manager_tasks', compact(
+        'teamLead',
+        'accountst1',
+        'accountst2',
+        'accountsthst',
+        'manageroperation',
+        'employees',
+        'otherTeamLeads'
+    ));
+}
     public function assignEmployees(Request $request, OnwerTask $task)
     {
         $request->validate([

@@ -14,7 +14,8 @@ class AccountT1 extends Model
         'sim_number',
         'business_name',
         'family_name',
-        'year'
+        'year',
+        'team_lead_id'
     ];
 
     public function ownerTask()

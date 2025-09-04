@@ -527,6 +527,7 @@ class ProjectManager extends Controller
                 $account->attachments = $attachment;
                 $account->project_manager_id = $manager->id;
                 $account->task_id = $task->id;
+                $account->team_lead_id = $request->team_lead_id;
                 if (!$account->save()) {
                     Log::error('Failed to save AccountT2: ', $account->toArray());
                     return redirect()->back()->with('error_swal', 'Failed to save AccountT2 task')->withInput();
@@ -558,6 +559,7 @@ class ProjectManager extends Controller
                 $account->attachments = $attachment;
                 $account->project_manager_id = $manager->id;
                 $account->task_id = $task->id;
+                $account->team_lead_id = $request->team_lead_id;
                 if (!$account->save()) {
                     Log::error('Failed to save AccountHST: ', $account->toArray());
                     return redirect()->back()->with('error_swal', 'Failed to save AccountHST task')->withInput();
@@ -597,6 +599,7 @@ class ProjectManager extends Controller
             $account->attachments = $attachment;
             $account->project_manager_id = $manager->id;
             $account->task_id = $task->id;
+            $account->team_lead_id = $request->team_lead_id;
 
             Log::debug('ManagerOperation data before save', $account->toArray());
 
@@ -700,8 +703,8 @@ class ProjectManager extends Controller
                 'period_t1' => 'required|string|max:255',
                 'driving_license_t1' => 'required|string|max:255',
                 'sim_number_t1' => 'required|string|max:255',
-                'bussiness_name_t1' => 'required|string|max:255',
-                'famliy_name_t1' => 'required|string|max:255', // Note: Typo in 'famliy_name_t1' (should be 'family_name_t1'?)
+                'bussiness_name_t1' => 'nullable|string|max:255',
+                'famliy_name_t1' => 'nullable|string|max:255', // Note: Typo in 'famliy_name_t1' (should be 'family_name_t1'?)
                 'year_t1' => 'required|string|max:255',
             ]);
         } elseif ($request->account_type === 'AccountT2' && $isAccounts) {
@@ -751,12 +754,14 @@ class ProjectManager extends Controller
             $account->period = $request->period_t1;
             $account->driving_license = $request->driving_license_t1;
             $account->sim_number = $request->sim_number_t1;
-            $account->bussiness_name = $request->bussiness_name_t1;
-            $account->famliy_name = $request->famliy_name_t1;
+            $account->business_name = $request->bussiness_name_t1;
+            $account->family_name = $request->famliy_name_t1;
             $account->year = $request->year_t1;
             $account->project_manager_id = $manager->id;
-            $account->save();
+          
             $task->account_t1_id = $account->id; // Link to AccountT1
+            $account->team_lead_id = $request->team_lead_id;
+              $account->save();
         } elseif ($request->account_type === 'AccountT2' && $isAccounts) {
             $account = new AccountT2();
             $attachments = null;
@@ -783,8 +788,9 @@ class ProjectManager extends Controller
             $account->priority = $request->priority_t2;
             $account->attachments = $attachments;
             $account->project_manager_id = $manager->id;
-            $account->save();
-            $task->account_t2_id = $account->id; // Link to AccountT2
+            $task->account_t2_id = $account->id;
+            $account->team_lead_id = $request->team_lead_id; // Link to AccountT2
+              $account->save();
         } elseif ($request->account_type === 'AccountHST' && $isAccounts) {
             $account = new AccountHST();
             $attachments = [];
@@ -812,8 +818,10 @@ class ProjectManager extends Controller
             $account->priority = $request->priority_hst;
             $account->attachments = json_encode($attachments); // Store as JSON for multiple files
             $account->project_manager_id = $manager->id;
-            $account->save();
+           
             $task->account_hst_id = $account->id; // Link to AccountHST
+            $account->team_lead_id = $request->team_lead_id;
+             $account->save();
         }
 
         if ($isOperation && $request->account_type === 'operation') {
@@ -847,6 +855,7 @@ class ProjectManager extends Controller
             $account->attachments = $attachment;
             $account->project_manager_id = $manager->id;
             $account->task_id = $task->id;
+            $account->team_lead_id = $request->team_lead_id;
 
             Log::debug('ManagerOperation data before save', $account->toArray());
 
@@ -1003,6 +1012,7 @@ class ProjectManager extends Controller
             $account->business_name = $request->input('business_name');
             $account->family_name = $request->input('family_name');
             $account->year = $request->input('year');
+            $account->team_lead_id = $request->input('team_lead_id');
         } elseif ($accountType === 'T2' || $accountType === 'HST') {
             $account->clientname = $request->input('client_name');
             $account->phone = $request->input('phone');
@@ -1012,6 +1022,7 @@ class ProjectManager extends Controller
             $account->corporation_name = $request->input('corporation_name');
             $account->nature_of_business = $request->input('nature_of_business');
             $account->priority = $request->input('priority');
+            $account->team_lead_id = $request->input('team_lead_id');
 
             if ($request->hasFile('attachments')) {
                 if ($account->attachments) {
@@ -1031,6 +1042,7 @@ class ProjectManager extends Controller
             // $account->client_name = $request->input('client_name');
             $account->description = $request->input('description');
             $account->priority = $request->input('priority');
+            $account->team_lead_id = $request->input('team_lead_id');
 
             if ($request->hasFile('attachments')) {
                 if ($account->attachments) {
