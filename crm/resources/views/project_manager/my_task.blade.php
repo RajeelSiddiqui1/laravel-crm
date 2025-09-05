@@ -6,15 +6,24 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --body-bg: #121217; /* Darker, modern background */
-            --primary: #4f46e5; /* Vibrant indigo for primary actions */
-            --success: #22c55e; /* Green for success */
-            --warning: #f59e0b; /* Amber for warnings */
-            --danger: #ef4444; /* Red for destructive actions */
-            --text: #d1d5db; /* Light gray for text readability */
-            --border: #2d3748; /* Subtle border color */
-            --table-bg: rgba(31, 41, 55, 0.6); /* Semi-transparent table background */
-            --hover-bg: rgba(75, 85, 99, 0.2); /* Subtle hover effect */
+            --body-bg: #121217;
+            /* Darker, modern background */
+            --primary: #4f46e5;
+            /* Vibrant indigo for primary actions */
+            --success: #22c55e;
+            /* Green for success */
+            --warning: #f59e0b;
+            /* Amber for warnings */
+            --danger: #ef4444;
+            /* Red for destructive actions */
+            --text: #d1d5db;
+            /* Light gray for text readability */
+            --border: #2d3748;
+            /* Subtle border color */
+            --table-bg: rgba(31, 41, 55, 0.6);
+            /* Semi-transparent table background */
+            --hover-bg: rgba(75, 85, 99, 0.2);
+            /* Subtle hover effect */
         }
 
         body {
@@ -26,7 +35,8 @@
         }
 
         .container {
-            max-width: 1400px; /* Wider container for modern dashboards */
+            max-width: 1400px;
+            /* Wider container for modern dashboards */
         }
 
         .table {
@@ -35,7 +45,8 @@
             border-radius: 1rem;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(8px); /* Glassmorphism effect */
+            backdrop-filter: blur(8px);
+            /* Glassmorphism effect */
         }
 
         .table thead {
@@ -218,6 +229,7 @@
                             <th>Year</th>
                             <th>Business</th>
                             <th>View</th>
+                            <th>Group Chat</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -233,6 +245,8 @@
                                     <a href="{{ route('project_manager.my_task_detail', $account->id) }}"
                                         class="btn btn-sm btn-success">View</a>
                                 </td>
+                                <td> <a href="{{ route('chat.group', $account->id) }}" class="btn btn-primary btn-sm">Group
+                                        Chat</a>
                                 <td>
                                     <a href="{{ route('project_manager.mytask_edit', $account->id) }}"
                                         class="btn btn-sm btn-warning">Edit</a>
@@ -270,6 +284,7 @@
                             <th>Priority</th>
                             <th>Attachments</th>
                             <th>View</th>
+                            <th>Group Chat</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -317,22 +332,26 @@
                                                 </audio>
                                             @elseif (in_array($ext, ['pdf']))
                                                 <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF" class="icon">
+                                                    <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF"
+                                                        class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
                                                 <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/ms-excel.png" alt="Excel" class="icon">
+                                                    <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
+                                                        alt="Excel" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @elseif (in_array($ext, ['doc', 'docx']))
                                                 <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/ms-word.png" alt="Word" class="icon">
+                                                    <img src="https://img.icons8.com/color/48/000000/ms-word.png"
+                                                        alt="Word" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @else
                                                 <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/fluency/48/000000/file.png" alt="File" class="icon">
+                                                    <img src="https://img.icons8.com/fluency/48/000000/file.png"
+                                                        alt="File" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @endif
@@ -345,6 +364,8 @@
                                     <a href="{{ route('project_manager.my_task_detail', $account->id) }}"
                                         class="btn btn-sm btn-success">View</a>
                                 </td>
+                                <td> <a href="{{ route('chat.group', $account->id) }}" class="btn btn-primary btn-sm">Group
+                                        Chat</a>
                                 <td>
                                     <a href="{{ route('project_manager.mytask_edit', $account->id) }}"
                                         class="btn btn-sm btn-warning">Edit</a>
@@ -382,6 +403,7 @@
                             <th>Priority</th>
                             <th>Attachments</th>
                             <th>View</th>
+                            <th>Gropu Chat</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -429,22 +451,28 @@
                                                 </audio>
                                             @elseif (in_array($ext, ['pdf']))
                                                 <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF" class="icon">
+                                                    <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF"
+                                                        class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
                                                 <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/ms-excel.png" alt="Excel" class="icon">
+                                                    <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
+                                                        alt="Excel" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @elseif (in_array($ext, ['doc', 'docx']))
-                                                <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/ms-word.png" alt="Word" class="icon">
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/color/48/000000/ms-word.png"
+                                                        alt="Word" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @else
-                                                <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/fluency/48/000000/file.png" alt="File" class="icon">
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/fluency/48/000000/file.png"
+                                                        alt="File" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @endif
@@ -457,6 +485,7 @@
                                     <a href="{{ route('project_manager.my_task_detail', $account->id) }}"
                                         class="btn btn-sm btn-success">View</a>
                                 </td>
+                                <td>  <a href="{{ route('chat.group', $account->id) }}" class="btn btn-primary btn-sm">Group Chat</a>
                                 <td>
                                     <a href="{{ route('project_manager.mytask_edit', $account->id) }}"
                                         class="btn btn-sm btn-warning">Edit</a>
@@ -491,6 +520,7 @@
                             <th>Priority</th>
                             <th>Attachments</th>
                             <th>View</th>
+                            <th>Grop Chat</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -528,23 +558,31 @@
                                                     <source src="{{ $fileUrl }}" type="audio/{{ $ext }}">
                                                 </audio>
                                             @elseif (in_array($ext, ['pdf']))
-                                                <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF" class="icon">
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/color/48/000000/pdf.png"
+                                                        alt="PDF" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
-                                                <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/ms-excel.png" alt="Excel" class="icon">
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
+                                                        alt="Excel" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @elseif (in_array($ext, ['doc', 'docx']))
-                                                <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/ms-word.png" alt="Word" class="icon">
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/color/48/000000/ms-word.png"
+                                                        alt="Word" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @else
-                                                <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/fluency/48/000000/file.png" alt="File" class="icon">
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/fluency/48/000000/file.png"
+                                                        alt="File" class="icon">
                                                     <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                 </a>
                                             @endif
@@ -557,6 +595,7 @@
                                     <a href="{{ route('project_manager.my_task_detail', $operation->id) }}"
                                         class="btn btn-sm btn-success">View</a>
                                 </td>
+                                <td>  <a href="{{ route('chat.group', $operation->id) }}" class="btn btn-primary btn-sm">Group Chat</a>
                                 <td>
                                     <a href="{{ route('project_manager.mytask_edit', $operation->id) }}"
                                         class="btn btn-sm btn-warning">Edit</a>

@@ -2,7 +2,7 @@
 
 @section('content')
 <style>
-    /* Advanced UI/UX Styles (unchanged) */
+    /* Advanced UI/UX Styles */
     :root {
         --primary-color: #3b82f6;
         --secondary-color: #6b7280;
@@ -68,12 +68,6 @@
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    .task-description {
-        font-size: 1.1rem;
-        opacity: 0.9;
-        line-height: 1.5;
-    }
-
     .task-body {
         padding: 2.5rem;
         background: rgba(255, 255, 255, 0.95);
@@ -123,9 +117,8 @@
     .badge-status.completed { background: #22c55e; color: #ffffff; }
     .badge-status.in_progress { background: #3b82f6; color: #ffffff; }
     .badge-status.pending { background: #facc15; color: #1f2937; }
-    .badge-status.on_hold { background: #ff6b6b; color: #ffffff; }
 
-    .alert-success {
+    .alert-success, .alert-danger {
         background: var(--glass-bg);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.2);
@@ -135,6 +128,10 @@
         padding: 1.2rem;
         margin-bottom: 2rem;
         animation: slideIn 0.5s ease;
+    }
+
+    .alert-danger {
+        border-color: #ff6b6b;
     }
 
     .btn-close {
@@ -196,7 +193,6 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
-    /* Progress Timeline */
     .progress-timeline {
         margin-top: 2rem;
         padding: 1.5rem;
@@ -227,7 +223,7 @@
         position: absolute;
         top: 50%;
         left: 0;
-        width: {{ $task->status == 'completed' ? '100%' : ($task->status == 'in_progress' ? '50%' : ($task->status == 'on_hold' ? '25%' : '10%')) }};
+        width: {{ $account->status == 'completed' ? '100%' : ($account->status == 'in_progress' ? '50%' : '10%') }};
         height: 4px;
         background: var(--gradient);
         z-index: 2;
@@ -256,7 +252,6 @@
         color: #6b7280;
     }
 
-    /* Responsive Design */
     @media (max-width: 768px) {
         .task-card {
             margin: 1rem;
@@ -276,7 +271,6 @@
         }
     }
 
-    /* Animations */
     .fade-in {
         animation: fadeIn 0.8s ease-in-out;
     }
@@ -295,7 +289,6 @@
         to { opacity: 1; transform: translateX(0); }
     }
 
-    /* Particle Background */
     #particles-js {
         position: fixed;
         top: 0;
@@ -304,173 +297,144 @@
         height: 100%;
         z-index: -1;
     }
+
+    audio {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
 </style>
 
 <div id="particles-js"></div>
 <div class="container my-5 task-container">
     <!-- Success Alert -->
-    @if (session('success'))
+    @if (session('success_swal'))
         <div class="alert alert-success alert-dismissible fade show mb-4 slide-in" role="alert">
-            {{ session('success') }}
+            {{ session('success_swal') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <!-- Error Alert -->
+    @if (session('error_swal'))
+        <div class="alert alert-danger alert-dismissible fade show mb-4 slide-in" role="alert">
+            {{ session('error_swal') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
     <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8">
-            <div class="task-card fade-in" data-tilt data-tilt-max="10" data-tilt-speed="400" data-tilt-perspective="1000">
-                <!-- Task Header -->
-                <div class="task-header">
-                    <h5 class="task-title">{{ $task->name ?? 'Task #' . $task->id }}</h5>
-                    <p class="task-description">{{ $task->description ?? 'No description available' }}</p>
-                </div>
-                <!-- Task Body -->
-                <div class="task-body">
-                    <div class="task-detail" data-tooltip="Assigned department">
-                        <i class="bi bi-building"></i>
-                        <div>
-                            <strong>Department:</strong> {{ $task->department->name ?? 'N/A' }}
-                        </div>
+        <div class="col-lg-8 col-md-10">
+            @if ($account)
+                <div class="task-card fade-in" data-tilt data-tilt-max="10" data-tilt-speed="400" data-tilt-perspective="1000">
+                    <!-- Task Header -->
+                    <div class="task-header">
+                        <h5 class="task-title">Task: {{ $account->clientname ?? 'Task #' . $account->id }}</h5>
+                        <p class="task-description">Details for {{ $accountType }} Account</p>
                     </div>
-                    <div class="task-detail" data-tooltip="Team lead assigned">
-                        <i class="bi bi-person-fill"></i>
-                        <div>
-                            <strong>Team Lead:</strong> {{ $task->teamLead->name ?? 'N/A' }}
-                        </div>
-                    </div>
-                    <div class="task-detail" data-tooltip="Task start date">
-                        <i class="bi bi-calendar-fill"></i>
-                        <div>
-                            <strong>Start Date:</strong> {{ $task->start_date ? \Carbon\Carbon::parse($task->start_date)->format('M d, Y') : 'N/A' }}
-                        </div>
-                    </div>
-                    <div class="task-detail" data-tooltip="Task deadline">
-                        <i class="bi bi-calendar-x-fill"></i>
-                        <div>
-                            <strong>Deadline:</strong> {{ $task->deadline ? \Carbon\Carbon::parse($task->deadline)->format('M d, Y') : 'N/A' }}
-                        </div>
-                    </div>
-                    <div class="task-detail" data-tooltip="Task priority level">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <div>
-                            <strong>Priority:</strong>
-                            <span class="badge badge-priority {{ strtolower($task->priority) }}">
-                                {{ $task->priority ?? 'N/A' }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="task-detail" data-tooltip="Current task status">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <div>
-                            <strong>Status:</strong>
-                            <span class="badge badge-status {{ str_replace(' ', '_', $task->status) }}">
-                                {{ ucfirst($task->status) ?? 'N/A' }}
-                            </span>
-                        </div>
-                    </div>
-                    <!-- Account Details -->
-                    @if ($accountType === 'AccountT1')
+                    <!-- Task Body -->
+                    <div class="task-body">
+                        <!-- Common Task Details -->
                         <div class="task-detail" data-tooltip="Client's name">
                             <i class="bi bi-person-circle"></i>
                             <div>
                                 <strong>Client Name:</strong> {{ $account->clientname ?? 'N/A' }}
                             </div>
                         </div>
-                        <div class="task-detail" data-tooltip="Period">
-                            <i class="bi bi-calendar-month"></i>
-                            <div>
-                                <strong>Period:</strong> {{ $account->period ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Driving license">
-                            <i class="bi bi-card-text"></i>
-                            <div>
-                                <strong>Driving License:</strong> {{ $account->driving_license ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="SIM number">
-                            <i class="bi bi-sim"></i>
-                            <div>
-                                <strong>SIM Number:</strong> {{ $account->sim_number ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Business name">
-                            <i class="bi bi-briefcase"></i>
-                            <div>
-                                <strong>Business Name:</strong> {{ $account->bussiness_name ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Family name">
-                            <i class="bi bi-people"></i>
-                            <div>
-                                <strong>Family Name:</strong> {{ $account->famliy_name ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Year">
-                            <i class="bi bi-calendar"></i>
-                            <div>
-                                <strong>Year:</strong> {{ $account->year ?? 'N/A' }}
-                            </div>
-                        </div>
-                        @if ($account->attachments)
-                            <div class="task-detail" data-tooltip="View attached file">
-                                <i class="bi bi-file-earmark-arrow-down"></i>
+                        @if ($accountType === 'T2' || $accountType === 'HST')
+                            <div class="task-detail" data-tooltip="Client's email address">
+                                <i class="bi bi-envelope-fill"></i>
                                 <div>
-                                    <strong>Attachment:</strong>
-                                    <a href="{{ $account->attachments }}" target="_blank">{{ basename($account->attachments) }}</a>
+                                    <strong>Email:</strong> {{ $account->email ?? 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Client's contact number">
+                                <i class="bi bi-telephone-fill"></i>
+                                <div>
+                                    <strong>Phone:</strong> {{ $account->phone ?? 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Due date">
+                                <i class="bi bi-calendar-x-fill"></i>
+                                <div>
+                                    <strong>Due Date:</strong> {{ $account->due_date ? \Carbon\Carbon::parse($account->due_date)->format('M d, Y') : 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Corporation name">
+                                <i class="bi bi-building"></i>
+                                <div>
+                                    <strong>Corporation Name:</strong> {{ $account->corporation_name ?? 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Corporation number">
+                                <i class="bi bi-hash"></i>
+                                <div>
+                                    <strong>Corporation Number:</strong> {{ $account->corporation_number ?? 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Nature of business">
+                                <i class="bi bi-briefcase-fill"></i>
+                                <div>
+                                    <strong>Nature of Business:</strong> {{ $account->nature_of_business ?? 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Priority level">
+                                <i class="bi bi-exclamation-circle-fill"></i>
+                                <div>
+                                    <strong>Priority:</strong>
+                                    <span class="badge badge-priority {{ strtolower($account->priority) }}">
+                                        {{ ucfirst($account->priority) ?? 'N/A' }}
+                                    </span>
                                 </div>
                             </div>
                         @endif
-                    @elseif ($accountType === 'AccountT2')
-                        <div class="task-detail" data-tooltip="Client's name">
-                            <i class="bi bi-person-circle"></i>
-                            <div>
-                                <strong>Client Name:</strong> {{ $account->clientname ?? 'N/A' }}
+                        @if ($accountType === 'T1')
+                            <div class="task-detail" data-tooltip="Period">
+                                <i class="bi bi-calendar-month"></i>
+                                <div>
+                                    <strong>Period:</strong> {{ $account->period ?? 'N/A' }}
+                                </div>
                             </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Client's email address">
-                            <i class="bi bi-envelope-fill"></i>
-                            <div>
-                                <strong>Email:</strong> {{ $account->email ?? 'N/A' }}
+                            <div class="task-detail" data-tooltip="Driving license">
+                                <i class="bi bi-card-text"></i>
+                                <div>
+                                    <strong>Driving License:</strong> {{ $account->driving_license ?? 'N/A' }}
+                                </div>
                             </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Client's contact number">
-                            <i class="bi bi-telephone-fill"></i>
-                            <div>
-                                <strong>Phone:</strong> {{ $account->phone ?? 'N/A' }}
+                            <div class="task-detail" data-tooltip="SIM number">
+                                <i class="bi bi-sim"></i>
+                                <div>
+                                    <strong>SIM Number:</strong> {{ $account->sim_number ?? 'N/A' }}
+                                </div>
                             </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Corporation name">
+                            <div class="task-detail" data-tooltip="Business name">
+                                <i class="bi bi-briefcase"></i>
+                                <div>
+                                    <strong>Business Name:</strong> {{ $account->business_name ?? 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Family name">
+                                <i class="bi bi-people"></i>
+                                <div>
+                                    <strong>Family Name:</strong> {{ $account->family_name ?? 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="task-detail" data-tooltip="Year">
+                                <i class="bi bi-calendar"></i>
+                                <div>
+                                    <strong>Year:</strong> {{ $account->year ?? 'N/A' }}
+                                </div>
+                            </div>
+                        @endif
+                        <div class="task-detail" data-tooltip="Assigned department">
                             <i class="bi bi-building"></i>
                             <div>
-                                <strong>Corporation Name:</strong> {{ $account->corporation_name ?? 'N/A' }}
+                                <strong>Department:</strong> {{ $account->department->name ?? 'N/A' }}
                             </div>
                         </div>
-                        <div class="task-detail" data-tooltip="Corporation number">
-                            <i class="bi bi-hash"></i>
+                        <div class="task-detail" data-tooltip="Team lead assigned">
+                            <i class="bi bi-person-fill"></i>
                             <div>
-                                <strong>Corporation Number:</strong> {{ $account->corporation_number ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Due date">
-                            <i class="bi bi-calendar-x-fill"></i>
-                            <div>
-                                <strong>Due Date:</strong> {{ $account->due_date ? \Carbon\Carbon::parse($account->due_date)->format('M d, Y') : 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Nature of business">
-                            <i class="bi bi-briefcase-fill"></i>
-                            <div>
-                                <strong>Nature of Business:</strong> {{ $account->nature_of_business ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Priority level">
-                            <i class="bi bi-exclamation-circle-fill"></i>
-                            <div>
-                                <strong>Priority:</strong>
-                                <span class="badge badge-priority {{ strtolower($account->priority) }}">
-                                    {{ $account->priority ?? 'N/A' }}
-                                </span>
+                                <strong>Team Lead:</strong> {{ $account->teamLead->name ?? 'N/A' }}
                             </div>
                         </div>
                         @if ($account->attachments)
@@ -482,96 +446,30 @@
                                 </div>
                             </div>
                         @endif
-                    @elseif ($accountType === 'AccountHST')
-                        <div class="task-detail" data-tooltip="Client's name">
-                            <i class="bi bi-person-circle"></i>
-                            <div>
-                                <strong>Client Name:</strong> {{ $account->clientname ?? 'N/A' }}
+                        <!-- Progress Timeline -->
+                        <div class="progress-timeline">
+                            <div class="timeline-step">
+                                <div class="timeline-node {{ $account->status == 'pending' ? 'active' : '' }}"></div>
+                                <div class="timeline-node {{ $account->status == 'in_progress' ? 'active' : '' }}"></div>
+                                <div class="timeline-node {{ $account->status == 'completed' ? 'active' : '' }}"></div>
                             </div>
+                            <div class="timeline-label" style="left: 0;">Pending</div>
+                            <div class="timeline-label" style="left: 50%; transform: translateX(-50%);">In Progress</div>
+                            <div class="timeline-label" style="right: 0;">Completed</div>
                         </div>
-                        <div class="task-detail" data-tooltip="Client's email address">
-                            <i class="bi bi-envelope-fill"></i>
-                            <div>
-                                <strong>Email:</strong> {{ $account->email ?? 'N/A' }}
-                            </div>
+                        <!-- Action Buttons -->
+                        <div class="task-actions">
+                            <button class="btn btn-primary" id="export-pdf">Export as PDF</button>
+                           
+                            <a href="{{ route('team_lead.manager_tasks') }}" class="btn btn-secondary">Back to Tasks</a>
                         </div>
-                        <div class="task-detail" data-tooltip="Client's contact number">
-                            <i class="bi bi-telephone-fill"></i>
-                            <div>
-                                <strong>Phone:</strong> {{ $account->phone ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Corporation name">
-                            <i class="bi bi-building"></i>
-                            <div>
-                                <strong>Corporation Name:</strong> {{ $account->corporation_name ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Corporation number">
-                            <i class="bi bi-hash"></i>
-                            <div>
-                                <strong>Corporation Number:</strong> {{ $account->corporation_number ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Due date">
-                            <i class="bi bi-calendar-x-fill"></i>
-                            <div>
-                                <strong>Due Date:</strong> {{ $account->due_date ? \Carbon\Carbon::parse($account->due_date)->format('M d, Y') : 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Nature of business">
-                            <i class="bi bi-briefcase-fill"></i>
-                            <div>
-                                <strong>Nature of Business:</strong> {{ $account->nature_of_business ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="task-detail" data-tooltip="Priority level">
-                            <i class="bi bi-exclamation-circle-fill"></i>
-                            <div>
-                                <strong>Priority:</strong>
-                                <span class="badge badge-priority {{ strtolower($account->priority) }}">
-                                    {{ $account->priority ?? 'N/A' }}
-                                </span>
-                            </div>
-                        </div>
-                        @if ($account->attachments)
-                            <div class="task-detail" data-tooltip="View attached file">
-                                <i class="bi bi-file-earmark-arrow-down"></i>
-                                <div>
-                                    <strong>Attachment:</strong>
-                                    <a href="{{ $account->attachments }}" target="_blank">{{ basename($account->attachments) }}</a>
-                                </div>
-                            </div>
-                        @endif
-                    @else
-                        <div class="task-detail" data-tooltip="No account information available">
-                            <i class="bi bi-info-circle"></i>
-                            <div>
-                                <strong>Account Info:</strong> <span class="text-muted">No Account Info</span>
-                            </div>
-                        </div>
-                    @endif
-                    <!-- Progress Timeline -->
-                    <div class="progress-timeline">
-                        <div class="timeline-step">
-                            <div class="timeline-node {{ $task->status == 'pending' ? 'active' : '' }}"></div>
-                            <div class="timeline-node {{ $task->status == 'in_progress' ? 'active' : '' }}"></div>
-                            <div class="timeline-node {{ $task->status == 'on_hold' ? 'active' : '' }}"></div>
-                            <div class="timeline-node {{ $task->status == 'completed' ? 'active' : '' }}"></div>
-                        </div>
-                        <div class="timeline-label" style="left: 0;">Pending</div>
-                        <div class="timeline-label" style="left: 33%; transform: translateX(-50%);">In Progress</div>
-                        <div class="timeline-label" style="left: 66%; transform: translateX(-50%);">On Hold</div>
-                        <div class="timeline-label" style="right: 0;">Completed</div>
-                    </div>
-                    <!-- Action Buttons -->
-                    <div class="task-actions">
-                        <button class="btn btn-primary" id="export-pdf">Export as PDF</button>
-                    
-                        <a href="{{ route('team_lead.manager_tasks') }}" class="btn btn-secondary">Back to Tasks</a>
                     </div>
                 </div>
-            </div>
+            @else
+                <div class="alert alert-danger text-center slide-in">
+                    Task not found.
+                </div>
+            @endif
         </div>
     </div>
 
@@ -634,13 +532,13 @@
         });
 
         // PDF Export Functionality
-        document.getElementById('export-pdf').addEventListener('click', () => {
+        document.getElementById('export-pdf')?.addEventListener('click', () => {
             const element = document.querySelector('.task-card');
             const opt = {
-                margin: 1,
-                filename: `Task_${{ $task->name ?? $task->id }}.pdf`,
+                margin: 0.5,
+                filename: `Task_${{ $account->clientname ?? $account->id }}_${{ $accountType }}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
+                html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
             html2pdf().from(element).set(opt).save();

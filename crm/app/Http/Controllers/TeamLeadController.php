@@ -337,119 +337,185 @@ public function manager_tasks()
     }
 
     function manager_tasks_detail($id)
-    {
-        $task = OnwerTask::with(['department', 'teamLead', 'accountT1', 'accountT2', 'accountHST'])->findOrFail($id);
+  {
+    // Manager fetch karo (agar zarurat ho Auth guard se)
+    $manager = Auth::guard('team_lead')->user(); 
+    $deptIds = $manager->department_id ?? [];
 
-        // Determine account type
-        $accountType = null;
-        $account = null;
-        if ($task->account_t1_id) {
-            $accountType = 'AccountT1';
-            $account = $task->accountT1;
-        } elseif ($task->account_t2_id) {
-            $accountType = 'AccountT2';
-            $account = $task->accountT2;
-        } elseif ($task->account_hst_id) {
-            $accountType = 'AccountHST';
-            $account = $task->accountHST;
-        }
-        return view('team_lead.manager_tasks_detail', compact('task', 'accountType', 'account'));
+    if (empty($deptIds)) {
+        return redirect()->route('team_lead.manager_tasks')
+            ->with('error_swal', 'No departments assigned to you.');
     }
 
+    // Account models ke sath owner task fetch karo
+    $accountT1 = AccountT1::with('ownerTask')->find($id);
+    $accountT2 = AccountT2::with('ownerTask')->find($id);
+    $accountHST = AccountHST::with('ownerTask')->find($id);
 
+    $account = null;
+    $accountType = null;
 
-
-
-    public function subtask_create($taskId)
-    {
-        $task = OnwerTask::findOrFail($taskId);
-        $teamLead = Auth::guard('team_lead')->user();
-
-        $assignedEmployees = Employee::whereIn('id', explode(',', $task->employee_id))
-            ->where('department_id', $teamLead->department_id)
-            ->get();
-
-        $cellCenterPos = CellCenterPos::all();
-
-        $teamLeadDepartmentName = $teamLead->department->name ?? '';
-
-        return view('team_lead.create_subtask', compact('task', 'assignedEmployees', 'cellCenterPos', 'teamLeadDepartmentName'));
+    if ($accountT1) {
+        $account = $accountT1;
+        $accountType = 'T1';
+    } elseif ($accountT2) {
+        $account = $accountT2;
+        $accountType = 'T2';
+    } elseif ($accountHST) {
+        $account = $accountHST;
+        $accountType = 'HST';
+    } else {
+        return redirect()->route('team_lead.manager_tasks')
+            ->with('error_swal', 'Account not found.');
     }
 
-    public function subtask_store(Request $request)
-    {
-        $request->validate([
-            'owner_task_id' => 'required|exists:owner_tasks,id',
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'assigned_employee_id' => 'required|exists:employees,id',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'start_time' => 'nullable|date_format:H:i',
-            'end_time' => 'nullable|date_format:H:i',
-            'lead' => 'required|numeric',
-            'task_type' => 'nullable',
-        ]);
+    return view('team_lead.manager_tasks_detail', compact('account', 'accountType'));
+}
 
-        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
-            if ($request->filled('start_time') && $request->filled('end_time')) {
-                if (strtotime($request->end_time) <= strtotime($request->start_time)) {
-                    return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
-                }
+
+
+
+public function subtask_create($id)
+{
+    $teamLead = Auth::guard('team_lead')->user();
+
+    // Pehle check karo account kis type ka hai
+    $accountT1 = AccountT1::find($id);
+    $accountT2 = AccountT2::find($id);
+    $accountHST = AccountHST::find($id);
+
+    $account = null;
+    $accountType = null;
+    $task = null;
+
+    if ($accountT1) {
+        $account = $accountT1;
+        $accountType = 'T1';
+        $task = $accountT1->ownerTask;
+    } elseif ($accountT2) {
+        $account = $accountT2;
+        $accountType = 'T2';
+        $task = $accountT2->ownerTask;
+    } elseif ($accountHST) {
+        $account = $accountHST;
+        $accountType = 'HST';
+        $task = $accountHST->ownerTask;
+    } else {
+        return redirect()->route('team_lead.manager_tasks')
+            ->with('error_swal', 'Account not found.');
+    }
+
+    // Assigned employees filter karo
+    $assignedEmployees = Employee::where('department_id', $teamLead->department_id)
+        ->get();
+
+    $cellCenterPos = CellCenterPos::all();
+
+    $teamLeadDepartmentName = $teamLead->department->name ?? '';
+
+    return view('team_lead.create_subtask', compact(
+        'task',
+        'assignedEmployees',
+        'cellCenterPos',
+        'teamLeadDepartmentName',
+        'account',
+        'accountType'
+    ));
+}
+
+public function subtask_store(Request $request)
+{git 
+    $request->validate([
+        'account_id' => 'integer', // id T1/T2/HST ka
+        'account_type' => 'string|in:T1,T2,HST', // kis type ka account hai
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+        'assigned_employee_id' => 'required|exists:employees,id',
+        'start_date' => 'nullable|date',
+        'end_date' => 'nullable|date|after_or_equal:start_date',
+        'start_time' => 'nullable|date_format:H:i',
+        'end_time' => 'nullable|date_format:H:i',
+        'lead' => 'required|numeric',
+        'task_type' => 'nullable',
+        'form_task' => 'exists:cell_center_pos,id',
+    ]);
+
+    // Same-day validation
+    if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
+        if ($request->filled('start_time') && $request->filled('end_time')) {
+            if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+                return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
             }
         }
-
-        $teamLead = Auth::guard('team_lead')->user();
-        $task = OnwerTask::findOrFail($request->owner_task_id);
-
-        if ($task->team_lead_id !== $teamLead->id) {
-            return back()->with('error_swal_swal', 'Unauthorized access to this task.');
-        }
-
-        if (!$teamLead->department_id) {
-            return back()->with('error_swal_swal', 'Team Lead does not belong to any department.');
-        }
-
-        $employee = Employee::findOrFail($request->assigned_employee_id);
-
-        if ($employee->department_id !== $teamLead->department_id) {
-            return back()->with('error_swal_swal', 'Selected employee is not from your department.');
-        }
-
-        $formTask = CellCenterPos::findOrFail($request->form_task);
-
-        $data = [
-            'title' => $request->title,
-            'description' => $request->description,
-            'assigned_employee_id' => $employee->id,
-            'owner_task_id' => $task->id,
-            'start_date' => $request->start_date ?? null,
-            'end_date' => $request->end_date ?? null,
-            'start_time' => $request->start_time ?? null,
-            'end_time' => $request->end_time ?? null,
-            'department_id' => $teamLead->department_id,
-            'lead' => $request->lead,
-            'task_type' => $request->task_type,
-        ];
-
-        $subtask = Subtask::create($data);
-
-        EmployeeSubtask::create([
-            'subtask_id' => $subtask->id,
-            'comments' => [],
-            'statuses' => [],
-            'attachments' => [],
-        ]);
-
-        Notification::create([
-            'title' => 'New Subtask Assigned',
-            'message' => 'You have been assigned a new subtask: "' . $subtask->title . '" under task "' . $task->name . '".',
-            'user_id' => $employee->id,
-            'user_type' => 'employee',
-        ]);
-
-        return redirect()->route('team_lead.subtask.list', $task->id)->with('success_swal_swal', 'Subtask created successfully.');
     }
+
+    $teamLead = Auth::guard('team_lead')->user();
+
+    // Account type ke basis pe task nikalna
+    $task = null;
+    if ($request->account_type === 'T1') {
+        $account = AccountT1::with('ownerTask')->findOrFail($request->account_id);
+        $task = $account->ownerTask;
+    } elseif ($request->account_type === 'T2') {
+        $account = AccountT2::with('ownerTask')->findOrFail($request->account_id);
+        $task = $account->ownerTask;
+    } elseif ($request->account_type === 'HST') {
+        $account = AccountHST::with('ownerTask')->findOrFail($request->account_id);
+        $task = $account->ownerTask;
+    }
+
+    // Security checks
+    // if ($task->team_lead_id !== $teamLead->id) {
+    //     return back()->with('error_swal_swal', 'Unauthorized access to this task.');
+    // }
+
+    if (!$teamLead->department_id) {
+        return back()->with('error_swal_swal', 'Team Lead does not belong to any department.');
+    }
+
+    $employee = Employee::findOrFail($request->assigned_employee_id);
+
+    // if ($employee->department_id !== $teamLead->department_id) {
+    //     return back()->with('error_swal_swal', 'Selected employee is not from your department.');
+    // }
+
+    $formTask = CellCenterPos::findOrFail($request->form_task);
+
+    // Save subtask
+    $data = [
+        'title' => $request->title,
+        'description' => $request->description,
+        'assigned_employee_id' => $employee->id,
+        'owner_task_id' => $task->id, // link with real OwnerTask
+        'start_date' => $request->start_date ?? null,
+        'end_date' => $request->end_date ?? null,
+        'start_time' => $request->start_time ?? null,
+        'end_time' => $request->end_time ?? null,
+        'department_id' => $teamLead->department_id,
+        'lead' => $request->lead,
+        'task_type' => $request->task_type,
+    ];
+
+    $subtask = Subtask::create($data);
+
+    EmployeeSubtask::create([
+        'subtask_id' => $subtask->id,
+        'comments' => [],
+        'statuses' => [],
+        'attachments' => [],
+    ]);
+
+    Notification::create([
+        'title' => 'New Subtask Assigned',
+        'message' => 'You have been assigned a new subtask: "' . $subtask->title . '" under task "' . $task->name . '".',
+        'user_id' => $employee->id,
+        'user_type' => 'employee',
+    ]);
+
+    return redirect()->route('team_lead.subtask.list', $task->id)
+        ->with('success_swal_swal', 'Subtask created successfully.');
+}
+
 
     public function subtask_edit($id)
     {

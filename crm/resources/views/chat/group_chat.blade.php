@@ -3,7 +3,7 @@
 @section('content')
     <div class="container py-4">
         <div class="d-flex align-items-center justify-content-between mb-4">
-            <h4 class="fw-bold text-dark">Group Chat - Task: {{ $task->name }}</h4>
+            {{-- <h4 class="fw-bold text-dark">Group Chat - Task: {{ $task->name }}</h4> --}}
             <span class="badge bg-success text-white">Active</span>
         </div>
 
@@ -22,19 +22,17 @@
                                 class="p-3 rounded {{ $isSender ? 'bg-primary text-white' : 'bg-light text-dark border' }} shadow-sm">
                                 @unless ($isSender)
                                     <div class="fw-semibold mb-1 text-primary">
-                                        @if ($msg->sender_type === 'employee')
+                                        @if ($msg->sender_type === 'employee' && $msg->employee)
                                             {{ $msg->employee->name ?? 'Employee' }}
-                                        @elseif ($msg->sender_type === 'team_lead')
+                                        @elseif ($msg->sender_type === 'team_lead' && $msg->teamLead)
                                             {{ $msg->teamLead->name ?? 'Team Lead' }}
-                                        @elseif ($msg->sender_type === 'project_manager')
+                                        @elseif ($msg->sender_type === 'project_manager' && $msg->projectManager)
                                             {{ $msg->projectManager->name ?? 'Project Manager' }}
-                                        @elseif ($msg->sender_type === 'project_owner')
+                                        @elseif ($msg->sender_type === 'project_owner' && $msg->projectOwner)
                                             {{ $msg->projectOwner->name ?? 'Project Owner (Admin)' }}
                                         @else
                                             Unknown
                                         @endif
-
-
                                     </div>
                                 @endunless
 
@@ -42,11 +40,9 @@
                                     <p class="mb-0">{{ $msg->content }}</p>
                                 @endif
 
-                                @if ($attachments)
+                                @if ($attachments && filter_var($attachments, FILTER_VALIDATE_URL))
                                     @php
-                                        $ext = strtolower(
-                                            pathinfo(parse_url($attachments, PHP_URL_PATH), PATHINFO_EXTENSION),
-                                        );
+                                        $ext = strtolower(pathinfo(parse_url($attachments, PHP_URL_PATH), PATHINFO_EXTENSION));
                                         $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'gif']);
                                         $isVideo = in_array($ext, ['mp4', 'mov', 'avi', 'webm']);
                                         $isAudio = in_array($ext, ['mp3', 'wav', 'ogg']);
@@ -79,6 +75,8 @@
                                             </a>
                                         @endif
                                     </div>
+                                @elseif ($attachments)
+                                    <span class="text-danger">Invalid attachment</span>
                                 @endif
                             </div>
                             <div class="text-muted small mt-1 {{ $isSender ? 'text-end' : 'text-start' }}">
@@ -100,7 +98,7 @@
                     <i class="fas fa-paperclip"></i>
                     <input type="file" name="attachments"
                         accept=".jpg,.jpeg,.png,.gif,.mp4,.mov,.avi,.webm,.mp3,.wav,.ogg,.pdf,.doc,.docx,.xls,.xlsx,.txt"
-                        style="display: none;">
+                        style="display: none;" aria-label="Upload attachment">
                 </label>
                 <button class="btn btn-primary" type="submit" style="border-radius: 0 20px 20px 0; padding: 12px 20px;">
                     <i class="fas fa-paper-plane"></i>
@@ -118,6 +116,10 @@
 
         .message-container {
             max-width: 70%;
+        }
+
+        .message-container p {
+            word-break: break-word;
         }
 
         .bg-primary {
@@ -169,5 +171,26 @@
             box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
             border-color: #007bff;
         }
+
+        @media (max-width: 576px) {
+            .message-container {
+                max-width: 90%;
+            }
+            .attachments-img,
+            .attachments-video,
+            audio {
+                max-width: 100%;
+                max-height: 100px;
+            }
+        }
     </style>
+@endsection
+
+@section('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    </script>
 @endsection

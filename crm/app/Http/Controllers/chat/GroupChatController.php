@@ -11,15 +11,46 @@ use App\Models\OnwerTask;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Log;
 use App\Events\GroupMessageSent;
+use App\Models\AccountHST;
+use App\Models\AccountT1;
+use App\Models\AccountT2;
 
 class GroupChatController extends Controller
 {
-    public function index($ownerTaskId)
-    {
-        $task = OnwerTask::findOrFail($ownerTaskId);
-        $messages = GroupMessage::where('owner_task_id', $ownerTaskId)->orderBy('created_at')->get();
-        return view('chat.group_chat', compact('task', 'messages'));
+    public function index($id)
+{
+    // Account models ke sath owner task fetch karo
+    $accountT1 = AccountT1::with('ownerTask')->find($id);
+    $accountT2 = AccountT2::with('ownerTask')->find($id);
+    $accountHST = AccountHST::with('ownerTask')->find($id);
+
+    $account = null;
+    $accountType = null;
+    $task = null;
+
+    if ($accountT1) {
+        $account = $accountT1;
+        $accountType = 'T1';
+        $task = $accountT1->ownerTask;
+    } elseif ($accountT2) {
+        $account = $accountT2;
+        $accountType = 'T2';
+        $task = $accountT2->ownerTask;
+    } elseif ($accountHST) {
+        $account = $accountHST;
+        $accountType = 'HST';
+        $task = $accountHST->ownerTask;
+    } else {
+        return redirect()->back()->with('error', 'Account not found.');
     }
+
+    // Messages fetch karo specific task ke liye
+    $messages = GroupMessage::orderBy('created_at', 'asc')
+        ->get();
+
+    return view('chat.group_chat', compact('task','messages', 'account', 'accountType'));
+}
+
 
     public function send(Request $request)
     {

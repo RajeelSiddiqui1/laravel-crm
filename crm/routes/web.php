@@ -121,7 +121,7 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::put('/team-lead/subtask-update/{id}', 'subtask_update')->name('team_lead.subtask.update');
         Route::put('/team-lead/tasks/{task}/update-status', 'updateStatus')->name('team_lead.tasks.update_status');
         Route::get('/team-lead/tasks/{id}/detail', 'manager_tasks_detail')->name('team_lead.task_detail');
-        Route::get('/team-lead/task/{task}/subtask/create', 'subtask_create')->name('team_lead.subtask.create');
+        Route::get('/team-lead/task/{id}/subtask/create', 'subtask_create')->name('team_lead.subtask.create');
         Route::get('team-lead/subtask/{id}/list', 'subtask_list')->name('team_lead.subtask.list');
         Route::post('/team-lead/subtask/store', 'subtask_store')->name('team_lead.subtask.store');
         Route::get('/team-lead/subtask/{id}/view',  'subtask_view')->name('');
@@ -193,7 +193,7 @@ Route::controller(Employee::class)->group(function () {
 // });
 
 
-Route::get('/chat/group/{ownerTaskId}', [GroupChatController::class, 'index'])->name('chat.group');
+Route::get('/chat/group/{id}', [GroupChatController::class, 'index'])->name('chat.group');
 Route::post('/chat/group/send', [GroupChatController::class, 'send'])->name('chat.group.send');
 
 
