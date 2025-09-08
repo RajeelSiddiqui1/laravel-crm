@@ -24,6 +24,9 @@ class CellCenterAccount extends Model
     ];
 
    
+    protected $casts = [
+        'attachments' => 'array'
+    ];
     public function subtask(): BelongsTo
     {
         return $this->belongsTo(Subtask::class);

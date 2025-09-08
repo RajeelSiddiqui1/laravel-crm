@@ -30,8 +30,10 @@ class CellCenterPos extends Model
         'attachments',
     ];
 
+    protected $casts = [
+        'attachments' => 'array'
+    ];
 
-  
 
     public function subtask(): BelongsTo
     {

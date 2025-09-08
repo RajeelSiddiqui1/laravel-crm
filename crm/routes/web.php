@@ -160,9 +160,7 @@ Route::controller(Employee::class)->group(function () {
 
 
         Route::get('employee/subtask/{subtaskId}',  'employee_task_view')->name('employee.subtask.view');
-        Route::put('employee/subtask/pos/update/{id}',  'updatePos')->name('employee.subtask.pos.update');
-        Route::put('employee/subtask/account/update/{id}',  'updateAccount')->name('employee.subtask.account.update');
-        Route::put('employee/subtask/update/{id}',  'update')->name('employee.subtask.update');
+        Route::put('/employee/subtasks/{id}/update',  'updateSubtask')->name('employee.subtask.update');
 
         Route::get('employee/team-lead/', 'fetch_team_leads')->name('team_lead.teamleads');
         Route::get('employee/message/{id}/team-lead', 'message_teamlead')->name('employee.message.teamlead');

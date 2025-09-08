@@ -8,56 +8,39 @@ use Illuminate\Support\Facades\Auth;
 class Subtask extends Model
 {
     protected $fillable = [
+        'owner_task_id',
+        'team_lead_id',
+        'employee_id',
         'title',
         'description',
-        'assigned_employee_id',
-        'owner_task_id',
-        'start_date',
-        'start_time',
-        'end_date',
-        'end_time',
-        'comment',
-        'status',
         'attachments',
-        'attachment_type',
-        'department_id',
         'lead',
-        'form_task',
-        'cell_center_pos_id',
+        'task_type',
+        'teamlead_status',
+        'employee_status',
+        'start_date',
+        'end_date',
+        'start_time',
+        'end_time',
+        'account_t1_id',
+        'account_t2_id',
+        'account_hst_id',
+        'manager_operation_id',
+        'cell_center_account_ids',
+        'call_center_pos_ids'
     ];
 
-    protected $casts = [
-        'attachments' => 'array',
-        'cell_center_pos_ids' => 'array',
+     protected $casts = [
+        'call_center_pos_ids' => 'array',
         'cell_center_account_ids' => 'array',
     ];
-
-    public function task()
-    {
-        return $this->belongsTo(OnwerTask::class, 'owner_task_id');
-    }
-
-
-    public function employeeSubtask()
-    {
-        if ($this->task_type === 'cell_center_pos') {
-            return $this->hasOne(CellCenterPos::class, 'id')->where('employee_id', Auth::guard('employee'));
-        } elseif ($this->task_type === 'cell_center_accounts') {
-            return $this->hasOne(CellCenterAccount::class, 'id')->where('employee_id', Auth::guard('employee'));
-        }
-        return $this->hasOne(EmployeeSubtask::class); // Adjust to your original model
-    }
-
-
     public function employee()
     {
-        return $this->belongsTo(Employee::class, 'assigned_employee_id');
+        return $this->belongsTo(Employee::class, 'employee_id');
     }
 
-   
-
-    public function cellCenterPos()
+    public function teamLead()
     {
-        return $this->belongsTo(CellCenterPos::class, 'cell_center_pos_id');
+        return $this->belongsTo(TeamLead::class, 'team_lead_id');
     }
 }

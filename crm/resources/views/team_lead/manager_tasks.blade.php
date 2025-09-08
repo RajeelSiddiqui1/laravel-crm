@@ -6,15 +6,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --body-bg: #121217; /* Darker, modern background */
-            --primary: #4f46e5; /* Vibrant indigo for primary actions */
-            --success: #22c55e; /* Green for success */
-            --warning: #f59e0b; /* Amber for warnings */
-            --danger: #ef4444; /* Red for destructive actions */
-            --text: #d1d5db; /* Light gray for text readability */
-            --border: #2d3748; /* Subtle border color */
-            --table-bg: rgba(31, 41, 55, 0.6); /* Semi-transparent table background */
-            --hover-bg: rgba(75, 85, 99, 0.2); /* Subtle hover effect */
+            --body-bg: #121217;
+            --primary: #4f46e5;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #d1d5db;
+            --border: #2d3748;
+            --table-bg: rgba(31, 41, 55, 0.6);
+            --hover-bg: rgba(75, 85, 99, 0.2);
         }
 
         body {
@@ -26,7 +26,7 @@
         }
 
         .container {
-            max-width: 1400px; /* Wider container for modern dashboards */
+            max-width: 1400px;
         }
 
         .table {
@@ -35,7 +35,7 @@
             border-radius: 1rem;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(8px); /* Glassmorphism effect */
+            backdrop-filter: blur(8px);
         }
 
         .table thead {
@@ -213,6 +213,7 @@
             border-radius: 0.5rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             min-width: 200px;
+            z-index: 1050;
         }
 
         .dropdown-menu .form-check {
@@ -231,6 +232,12 @@
         .dropdown-divider {
             border-color: var(--border);
         }
+
+        .dropup .dropdown-menu {
+            bottom: 100%;
+            top: auto;
+            margin-bottom: 0.125rem;
+        }
     </style>
 @endsection
 
@@ -242,7 +249,6 @@
             </div>
         </div>
 
-        <!-- T1 Tasks -->
         @if($accountst1->isNotEmpty())
             <h3 class="account-type-header">T1 Tasks</h3>
             <div class="table-responsive">
@@ -379,37 +385,36 @@
                                     @else
                                         <div class="employee-name text-muted">No employees assigned</div>
                                     @endif
-                                    @if ($unassignedEmployees->isNotEmpty())
-                                        <form method="POST"
-                                            action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
-                                            @csrf
-                                            <div class="dropdown mt-2">
-                                                <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                                                    id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
-                                                    aria-expanded="false">
-                                                    Assign Employees
-                                                </button>
-                                                <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
-                                                    @foreach ($unassignedEmployees as $employee)
-                                                        <li>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="employee_id[]" value="{{ $employee->id }}"
-                                                                    id="emp-{{ $task->id }}-{{ $employee->id }}">
-                                                                <label class="form-check-label"
-                                                                    for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
-                                                            </div>
-                                                        </li>
-                                                    @endforeach
+                                    <form method="POST"
+                                        action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
+                                        @csrf
+                                        <div class="dropup mt-2">
+                                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
+                                                id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                                Assign Employees
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
+                                                @foreach ($unassignedEmployees as $employee)
                                                     <li>
-                                                        <hr class="dropdown-divider">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                name="employee_id[]" value="{{ $employee->id }}"
+                                                                id="emp-{{ $task->id }}-{{ $employee->id }}"
+                                                                {{ in_array($employee->id, $assignedEmployeeIds) ? 'checked' : '' }}>
+                                                            <label class="form-check-label"
+                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
+                                                        </div>
                                                     </li>
-                                                    <li><button type="submit"
-                                                            class="btn btn-sm btn-success w-100">Assign</button></li>
-                                                </ul>
-                                            </div>
-                                        </form>
-                                    @endif
+                                                @endforeach
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><button type="submit"
+                                                        class="btn btn-sm btn-success w-100">Assign</button></li>
+                                            </ul>
+                                        </div>
+                                    </form>
                                 </td>
                                 <td>
                                     <a href="{{ route('team_lead.subtask.create', $task->id) }}"
@@ -435,7 +440,6 @@
             </div>
         @endif
 
-        <!-- T2 Tasks -->
         @if($accountst2->isNotEmpty())
             <h3 class="account-type-header">T2 Tasks</h3>
             <div class="table-responsive">
@@ -578,37 +582,36 @@
                                     @else
                                         <div class="employee-name text-muted">No employees assigned</div>
                                     @endif
-                                    @if ($unassignedEmployees->isNotEmpty())
-                                        <form method="POST"
-                                            action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
-                                            @csrf
-                                            <div class="dropdown mt-2">
-                                                <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                                                    id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
-                                                    aria-expanded="false">
-                                                    Assign Employees
-                                                </button>
-                                                <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
-                                                    @foreach ($unassignedEmployees as $employee)
-                                                        <li>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="employee_id[]" value="{{ $employee->id }}"
-                                                                    id="emp-{{ $task->id }}-{{ $employee->id }}">
-                                                                <label class="form-check-label"
-                                                                    for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
-                                                            </div>
-                                                        </li>
-                                                    @endforeach
+                                    <form method="POST"
+                                        action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
+                                        @csrf
+                                        <div class="dropup mt-2">
+                                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
+                                                id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                                Assign Employees
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
+                                                @foreach ($unassignedEmployees as $employee)
                                                     <li>
-                                                        <hr class="dropdown-divider">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                name="employee_id[]" value="{{ $employee->id }}"
+                                                                id="emp-{{ $task->id }}-{{ $employee->id }}"
+                                                                {{ in_array($employee->id, $assignedEmployeeIds) ? 'checked' : '' }}>
+                                                            <label class="form-check-label"
+                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
+                                                        </div>
                                                     </li>
-                                                    <li><button type="submit"
-                                                            class="btn btn-sm btn-success w-100">Assign</button></li>
-                                                </ul>
-                                            </div>
-                                        </form>
-                                    @endif
+                                                @endforeach
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><button type="submit"
+                                                        class="btn btn-sm btn-success w-100">Assign</button></li>
+                                            </ul>
+                                        </div>
+                                    </form>
                                 </td>
                                 <td>
                                     <a href="{{ route('team_lead.subtask.create', $task->id) }}"
@@ -633,7 +636,6 @@
             </div>
         @endif
 
-        <!-- HST Tasks -->
         @if($accountsthst->isNotEmpty())
             <h3 class="account-type-header">HST Tasks</h3>
             <div class="table-responsive">
@@ -776,37 +778,36 @@
                                     @else
                                         <div class="employee-name text-muted">No employees assigned</div>
                                     @endif
-                                    @if ($unassignedEmployees->isNotEmpty())
-                                        <form method="POST"
-                                            action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
-                                            @csrf
-                                            <div class="dropdown mt-2">
-                                                <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                                                    id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
-                                                    aria-expanded="false">
-                                                    Assign Employees
-                                                </button>
-                                                <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
-                                                    @foreach ($unassignedEmployees as $employee)
-                                                        <li>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="employee_id[]" value="{{ $employee->id }}"
-                                                                    id="emp-{{ $task->id }}-{{ $employee->id }}">
-                                                                <label class="form-check-label"
-                                                                    for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
-                                                            </div>
-                                                        </li>
-                                                    @endforeach
+                                    <form method="POST"
+                                        action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
+                                        @csrf
+                                        <div class="dropup mt-2">
+                                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
+                                                id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                                Assign Employees
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
+                                                @foreach ($unassignedEmployees as $employee)
                                                     <li>
-                                                        <hr class="dropdown-divider">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                name="employee_id[]" value="{{ $employee->id }}"
+                                                                id="emp-{{ $task->id }}-{{ $employee->id }}"
+                                                                {{ in_array($employee->id, $assignedEmployeeIds) ? 'checked' : '' }}>
+                                                            <label class="form-check-label"
+                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
+                                                        </div>
                                                     </li>
-                                                    <li><button type="submit"
-                                                            class="btn btn-sm btn-success w-100">Assign</button></li>
-                                                </ul>
-                                            </div>
-                                        </form>
-                                    @endif
+                                                @endforeach
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><button type="submit"
+                                                        class="btn btn-sm btn-success w-100">Assign</button></li>
+                                            </ul>
+                                        </div>
+                                    </form>
                                 </td>
                                 <td>
                                     <a href="{{ route('team_lead.subtask.create', $task->id) }}"
@@ -831,7 +832,6 @@
             </div>
         @endif
 
-        <!-- Operations Tasks -->
         @if($manageroperation->isNotEmpty())
             <h3 class="account-type-header">Operations Tasks</h3>
             <div class="table-responsive">
@@ -964,37 +964,36 @@
                                     @else
                                         <div class="employee-name text-muted">No employees assigned</div>
                                     @endif
-                                    @if ($unassignedEmployees->isNotEmpty())
-                                        <form method="POST"
-                                            action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
-                                            @csrf
-                                            <div class="dropdown mt-2">
-                                                <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                                                    id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
-                                                    aria-expanded="false">
-                                                    Assign Employees
-                                                </button>
-                                                <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
-                                                    @foreach ($unassignedEmployees as $employee)
-                                                        <li>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    name="employee_id[]" value="{{ $employee->id }}"
-                                                                    id="emp-{{ $task->id }}-{{ $employee->id }}">
-                                                                <label class="form-check-label"
-                                                                    for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
-                                                            </div>
-                                                        </li>
-                                                    @endforeach
+                                    <form method="POST"
+                                        action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
+                                        @csrf
+                                        <div class="dropup mt-2">
+                                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
+                                                id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                                Assign Employees
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
+                                                @foreach ($unassignedEmployees as $employee)
                                                     <li>
-                                                        <hr class="dropdown-divider">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                name="employee_id[]" value="{{ $employee->id }}"
+                                                                id="emp-{{ $task->id }}-{{ $employee->id }}"
+                                                                {{ in_array($employee->id, $assignedEmployeeIds) ? 'checked' : '' }}>
+                                                            <label class="form-check-label"
+                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
+                                                        </div>
                                                     </li>
-                                                    <li><button type="submit"
-                                                            class="btn btn-sm btn-success w-100">Assign</button></li>
-                                                </ul>
-                                            </div>
-                                        </form>
-                                    @endif
+                                                @endforeach
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><button type="submit"
+                                                        class="btn btn-sm btn-success w-100">Assign</button></li>
+                                            </ul>
+                                        </div>
+                                    </form>
                                 </td>
                                 <td>
                                     <a href="{{ route('team_lead.subtask.create', $task->id) }}"
