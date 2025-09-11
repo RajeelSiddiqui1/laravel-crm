@@ -30,10 +30,11 @@ class Subtask extends Model
         'call_center_pos_ids'
     ];
 
-     protected $casts = [
+    protected $casts = [
         'call_center_pos_ids' => 'array',
         'cell_center_account_ids' => 'array',
     ];
+
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id');
@@ -42,5 +43,17 @@ class Subtask extends Model
     public function teamLead()
     {
         return $this->belongsTo(TeamLead::class, 'team_lead_id');
+    }
+
+
+    public function cellCenterPos()
+    {
+        return $this->belongsTo(CellCenterPos::class, 'task_id');
+    }
+
+
+    public function cellCenterPosAccount()
+    {
+        return $this->belongsTo(CellCenterAccount::class, 'task_id');
     }
 }

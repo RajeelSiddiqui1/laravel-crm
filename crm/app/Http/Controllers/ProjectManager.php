@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\AssignedTeamLeaderTask;
 use App\Models\AccountHST;
+use App\Models\CellCenterAccount;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\ManagerOperation;
@@ -16,9 +17,11 @@ use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
 use App\Models\AccountT1;
 use App\Models\AccountT2;
+use App\Models\CellCenterPos;
 use App\Models\Notification;
 use App\Models\SharedTask;
 use App\Models\TeamLead;
+use App\Models\Visitor;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -1146,58 +1149,50 @@ Task not associated with any owner task.');
         }
     }
 
-    function subtask()
-    {
-        $manager = Auth::guard('project_manager')->user();
+   public function subtask_list()
+{
+    $manager = Auth::guard('project_manager')->user();
 
-        // If it's already an array, use it directly
-        $departmentIds = $manager->department_ids;
+    $subtasks = Subtask::with('employee', 'teamLead') // eager load relationships if needed
+        ->where('manager_id', $manager->id)
+        ->get();
 
-        // Make sure it's a valid array of integers
-        if (!is_array($departmentIds) || empty($departmentIds)) {
-            $departmentIds = [];
-        } else {
-            $departmentIds = array_map('intval', $departmentIds);
-        }
-
-        // Now get subtasks for those departments
-        $subtasks = Subtask::whereIn('department_id', $departmentIds)
-            ->with('employee')
-            ->get();
-
-        return view('project_manager.subtask', compact('subtasks'));
-    }
-
-    function subtask_detail($id)
-    {
-        $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
-
-        $employeeId = $subtask->assigned_employee_id;
-
-        $employeeSubtasks = Subtask::with('employeeSubtask')
-            ->where('assigned_employee_id', $employeeId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $attachments = [];
-
-        if ($subtask->employeeSubtask && $subtask->employeeSubtask->attachments) {
-            $attachments = is_array($subtask->employeeSubtask->attachments)
-                ? $subtask->employeeSubtask->attachments
-                : json_decode($subtask->employeeSubtask->attachments, true);
-
-            if (!is_array($attachments)) {
-                $attachments = explode(',', $subtask->employeeSubtask->attachments);
-            }
-
-            $attachments = collect($attachments)->flatten()->filter(function ($url) {
-                return is_string($url) && !empty(trim($url));
-            })->values()->all();
-        }
+    return view('project_manager.subtask', compact('subtasks'));
+}
 
 
-        return view('project_manager.subtask_detail', compact('subtask', 'employeeSubtasks', 'attachments'));
-    }
+function subtask_detail($id)
+{
+    $manager = Auth::guard('project_manager')->user();
+    $subtask = Subtask::findOrFail($id);
+
+    $posRecords = $subtask->call_center_pos_ids
+        ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
+        : collect();
+
+    $accountRecords = $subtask->cell_center_account_ids
+        ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
+        : collect();
+
+    $managerDeptIds = is_array($manager->department_ids) 
+        ? $manager->department_ids 
+        : explode(',', $manager->department_ids);
+
+    $visitorRecords = Visitor::whereJsonContains('department_ids', $managerDeptIds)->get();
+
+    return view('project_manager.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'visitorRecords'));
+}
+function fetch_visitor($id)
+{
+    $visitor = Visitor::findOrFail($id);
+    return response()->json([
+        'name' => $visitor->name ?? 'N/A',
+        'email' => $visitor->email ?? 'N/A',
+        'phone' => $visitor->phone ?? 'N/A',
+        'department_id' => $visitor->department_id ?? 'N/A',
+        'status' => $visitor->status ?? 'N/A'
+    ]);
+}
 
 
     public function teamleads()

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\AssignedEmployeeTask;
 use App\Models\AccountHST;
+use App\Models\CellCenterAccount;
 use App\Models\CellCenterPos;
 use App\Models\ManagerOperation;
 use App\Models\Message;
@@ -387,40 +388,46 @@ class TeamLeadController extends Controller
         $account = null;
         $accountType = null;
         $task = null;
+        $managerId = null; // <--- NEW
 
         if ($accountT1) {
             $account = $accountT1;
             $accountType = 'T1';
             $task = $accountT1->ownerTask;
+            $managerId = $task->project_manager_id ?? null;
         } elseif ($accountT2) {
             $account = $accountT2;
             $accountType = 'T2';
             $task = $accountT2->ownerTask;
+            $managerId = $task->project_manager_id ?? null;
         } elseif ($accountHST) {
             $account = $accountHST;
             $accountType = 'HST';
             $task = $accountHST->ownerTask;
+            $managerId = $task->project_manager_id ?? null;
         } elseif ($accountManager) {
             $account = $accountManager;
             $accountType = 'MANAGER';
             $task = $accountManager->ownerTask;
+            $managerId = $task->project_manager_id ?? null;
         } else {
             return redirect()->route('team_lead.manager_tasks')
                 ->with('error_swal', 'Account not found.');
         }
 
         $assignedEmployees = Employee::whereIn('id', function ($query) {
-            $query->select('employee_id')
-                ->from('owner_tasks');
+            $query->select('employee_id')->from('owner_tasks');
         })->get();
 
         return view('team_lead.create_subtask', compact(
             'task',
             'assignedEmployees',
             'account',
-            'accountType'
+            'accountType',
+            'managerId'  // pass manager_id to view
         ));
     }
+
 
 
     public function subtask_store(Request $request)
@@ -459,9 +466,13 @@ class TeamLeadController extends Controller
         $subtask->end_date      = $request->end_date;
         $subtask->start_time    = $request->start_time;
         $subtask->end_time      = $request->end_time;
-        $subtask->team_lead_id  = $teamLead->id;
-        $subtask->employee_id   = $request->assigned_employee_id;
 
+        // IDs
+        $subtask->team_lead_id  = Auth::guard('team_lead')->id(); // team lead creating
+        $subtask->employee_id   = $request->assigned_employee_id;  // employee assigned
+        $subtask->manager_id    = $request->manager_id ?? null;    // manager owner of the account/task
+
+        // Account type mapping
         if ($request->account_type === 'T1') {
             $subtask->account_t1_id = $request->account_id;
         } elseif ($request->account_type === 'T2') {
@@ -471,6 +482,8 @@ class TeamLeadController extends Controller
         } elseif ($request->account_type === 'MANAGER') {
             $subtask->manager_operation_id = $request->account_id;
         }
+
+
 
         if ($request->hasFile('attachments')) {
             try {
@@ -589,20 +602,17 @@ class TeamLeadController extends Controller
     }
 
 
-   public function subtask_list($id)
+public function subtask_list($id)
 {
-    // Determine the task type and fetch the parent task
     $task = null;
     $taskType = null;
 
-    // Check for T1 task
     $t1Task = AccountT1::find($id);
     if ($t1Task) {
         $task = $t1Task;
         $taskType = 'account_t1_id';
     }
 
-    // Check for T2 task
     if (!$task) {
         $t2Task = AccountT2::find($id);
         if ($t2Task) {
@@ -611,7 +621,6 @@ class TeamLeadController extends Controller
         }
     }
 
-    // Check for HST task
     if (!$task) {
         $hstTask = AccountHST::find($id);
         if ($hstTask) {
@@ -620,7 +629,6 @@ class TeamLeadController extends Controller
         }
     }
 
-    // Check for Operations task
     if (!$task) {
         $operationTask = ManagerOperation::find($id);
         if ($operationTask) {
@@ -629,53 +637,48 @@ class TeamLeadController extends Controller
         }
     }
 
-    // If no task is found, redirect with error
     if (!$task) {
         return redirect()->route('team_lead.manager_tasks')->with('error_swal', 'Task not found.');
     }
 
-    // Fetch subtasks for the task
+    $teamLeadId = Auth::guard('team_lead')->id();
+
     $subtasks = Subtask::with('employee')
         ->where($taskType, $id)
+        ->where('team_lead_id', $teamLeadId) // <--- Only show subtasks created by this team lead
         ->get();
 
-    // Pass task and subtasks to the view
     return view('team_lead.subtask_list', compact('task', 'subtasks'));
 }
-
     public function subtask_update_status(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|string|in:pending,in_progress,approved,rejected,late',
+            'teamlead_status' => 'required|in:pending,completed,late,rejected'
         ]);
 
         $subtask = Subtask::findOrFail($id);
-        $teamLead = Auth::guard('team_lead')->user();
 
-
-        if ($teamLead->department_id !== $subtask->department_id) {
-            return redirect()->back()->with('error_swal', 'Access denied. Different department.');
+        if (Auth::guard('team_lead')->id() !== $subtask->team_lead_id) {
+            return redirect()->back()->with('error', 'You are not authorized to update this subtask.');
         }
 
-
-        $subtask->status = $request->status;
+        $subtask->teamlead_status = $request->teamlead_status;
         $subtask->save();
 
-        $projectManagers = ProjectManager::whereHas('departments', function ($query) use ($subtask) {
-            $query->where('departments.id', $subtask->department_id);
-        })->get();
 
-        foreach ($projectManagers as $manager) {
+        // Notify the assigned employee
+        if ($subtask->employee_id) {
             Notification::create([
-                'title' => "Subtask has been update",
-                'user_id' => $manager->id,
-                'user_type' => 'project_manager',
-                'message' => 'Team Lead updated Subtask #' . $subtask->id . ' to "' . $request->status . '".',
+                'title' => "Subtask Status Updated",
+                'user_id' => $subtask->employee_id,
+                'user_type' => 'employee',
+                'message' => 'Your Subtask #' . $subtask->id . ' has been updated to "' . $request->teamlead_status . '" by Team Lead.',
             ]);
         }
 
-        return redirect()->back()->with('success_swal', 'Subtask status updated and all managers notified.');
+        return redirect()->back()->with('success_swal', 'Subtask status updated and all relevant users notified.');
     }
+
 
 
     public function subtask_detail($id)
@@ -693,6 +696,24 @@ class TeamLeadController extends Controller
         return view('team_lead.subtask_detail', compact('subtask', 'employeeSubtasks'));
     }
 
+
+
+    public function EmployeeSubtasks($subtaskId)
+    {
+        $subtask = Subtask::findOrFail($subtaskId);
+
+        // Get POS records
+        $posRecords = $subtask->call_center_pos_ids
+            ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
+            : collect();
+
+        // Get Account records
+        $accountRecords = $subtask->cell_center_account_ids
+            ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
+            : collect();
+
+        return view('team_lead.employee_subtasks', compact('subtask', 'posRecords', 'accountRecords'));
+    }
 
     public function subtask_show_more($id)
     {

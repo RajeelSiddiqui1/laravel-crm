@@ -1,18 +1,12 @@
-
 @extends('layout.app')
 
 @section('content')
     <div class="container">
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        {{-- <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="text-white">My Assigned Subtasks</h3>
-            <a href="{{ route('employee.subtask.create') }}" class="btn btn-success">Create Subtask</a>
-        </div> --}}
-
         <div class="table-responsive">
-            <table class="table table-bordered table-dark">
-                <thead class="bg-dark">
+            <table class="table table-bordered table-transparent">
+                <thead class="bg-transparent">
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">Title</th>
@@ -21,7 +15,8 @@
                         <th scope="col">Leads</th>
                         <th scope="col">Start</th>
                         <th scope="col">End</th>
-                        <th scope="col">Status</th>
+                        <th scope="col">Employee Status</th>
+                        <th scope="col">Team Lead Status</th>
                         <th scope="col">Action</th>
                     </tr>
                 </thead>
@@ -67,14 +62,24 @@
                                 @endif
                             </td>
                             <td>
+                                <form action="{{ route('employee.subtask_status_update', $subtask->id) }}" method="POST" class="status-form">
+                                    @csrf
+                                    @method('PATCH')
+                                    <select name="employee_status" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="this.form.submit()">
+                                        <option value="pending" {{ $subtask->employee_status == 'pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="completed" {{ $subtask->employee_status == 'completed' ? 'selected' : '' }}>Completed</option>
+                                     
+                                    </select>
+                                </form>
+                            </td>
+                            <td>
                                 <span class="badge 
-                                    @if ($subtask->employee_status == 'pending') bg-secondary
-                                    @elseif ($subtask->employee_status == 'in_progress') bg-warning
-                                    @elseif ($subtask->employee_status == 'completed') bg-success
-                                    @elseif ($subtask->employee_status == 'reject') bg-danger
-                                    @elseif ($subtask->employee_status == 'late') bg-dark
+                                    @if ($subtask->teamlead_status == 'pending') bg-secondary
+                                    @elseif ($subtask->teamlead_status == 'completed') bg-success
+                                    @elseif ($subtask->teamlead_status == 'late') bg-warning
+                                    @elseif ($subtask->teamlead_status == 'reject') bg-danger
                                     @else bg-light text-dark @endif">
-                                    {{ ucfirst(str_replace('_', ' ', $subtask->employee_status ?? 'unknown')) }}
+                                    {{ ucfirst(str_replace('_', ' ', $subtask->teamlead_status ?? 'unknown')) }}
                                 </span>
                             </td>
                             <td>
@@ -85,7 +90,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center">No subtasks assigned.</td>
+                            <td colspan="10" class="text-center text-white">No subtasks assigned.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -97,44 +102,50 @@
 @section('styles')
     <style>
         .container {
-            background-color: #1a1a1a;
+            /* background-color: rgba(0, 0, 0, 0.7); */
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             max-width: 1200px;
+            backdrop-filter: blur(10px);
         }
-        .table-dark {
-            background-color: #2c2c2c;
+        .table-transparent {
+            background-color: transparent;
             color: #fff;
         }
-        .table-dark th,
-        .table-dark td {
-            border-color: #444;
+        .table-transparent th,
+        .table-transparent td {
+            border-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.05);
         }
-        .table-dark thead th {
-            background-color: #1a1a1a;
+        .bg-transparent {
+            background-color: rgba(0, 0, 0, 0.5) !important;
         }
         .badge {
             font-size: 0.9em;
             padding: 0.5em 1em;
-        }
-        .btn-success {
-            background-color: #28a745;
-            border-color: #28a745;
-        }
-        .btn-success:hover {
-            background-color: #218838;
-            border-color: #1e7e34;
+            border-radius: 0.25rem;
         }
         .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
+            background-color: rgba(0, 123, 255, 0.8);
+            border-color: rgba(0, 123, 255, 0.8);
         }
         .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #004085;
+            background-color: rgba(0, 86, 179, 0.8);
+            border-color: rgba(0, 64, 133, 0.8);
+        }
+        .form-select {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        .form-select:focus {
+            background-color: rgba(0, 0, 0, 0.9);
+            border-color: rgba(0, 123, 255, 0.8);
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
         .toggle-description {
             font-size: 0.9em;
+            color: #0d6efd;
         }
         .description-full,
         .description-short {
@@ -154,6 +165,10 @@
             .btn-sm {
                 font-size: 0.8em;
                 padding: 0.3rem 0.6rem;
+            }
+            .form-select-sm {
+                font-size: 0.8em;
+                padding: 0.3rem;
             }
         }
     </style>
@@ -177,6 +192,25 @@
                         full.classList.remove('d-none');
                         this.textContent = 'Show Less';
                     }
+                });
+            });
+
+            const forms = document.querySelectorAll('.status-form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'Do you want to update the status?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, update it!',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.submit();
+                        }
+                    });
                 });
             });
         });

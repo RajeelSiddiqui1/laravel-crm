@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Mail\EditTask;
 use App\Mail\TaskAssignedMail;
 use App\Mail\TaskDeletedMail;
+use App\Models\CellCenterAccount;
+use App\Models\CellCenterPos;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Notification;
@@ -13,6 +15,7 @@ use App\Models\ProjectManager;
 use App\Models\ProjectOwner;
 use App\Models\Subtask;
 use App\Models\TeamLead;
+use App\Models\Visitor;
 use App\Notifications\OwnerTaskAssign;
 use App\Notifications\OwnerTaskEdit;
 use Cloudinary\Cloudinary as CloudinaryCloudinary;
@@ -115,31 +118,31 @@ class ProjectOnwer extends Controller
         return view('project_owner.home');
     }
 
-function project_manager_view()
-{
-    $managers = ProjectManager::all();
+    function project_manager_view()
+    {
+        $managers = ProjectManager::all();
 
-    foreach ($managers as $manager) {
-        $deptIds = $manager->department_ids; // field ka naam departments_ids hai
+        foreach ($managers as $manager) {
+            $deptIds = $manager->department_ids; // field ka naam departments_ids hai
 
-        // Ensure hamesha array mile
-        if (is_string($deptIds)) {
-            $deptIds = json_decode($deptIds, true);
+            // Ensure hamesha array mile
+            if (is_string($deptIds)) {
+                $deptIds = json_decode($deptIds, true);
+            }
+
+            if (empty($deptIds)) {
+                $deptIds = [];
+            }
+
+            // Departments fetch karo
+            $departments = Department::whereIn('id', $deptIds)->pluck('name')->toArray();
+
+            // Extra property set kar dete hain
+            $manager->departments_list = $departments;
         }
 
-        if (empty($deptIds)) {
-            $deptIds = [];
-        }
-
-        // Departments fetch karo
-        $departments = Department::whereIn('id', $deptIds)->pluck('name')->toArray();
-
-        // Extra property set kar dete hain
-        $manager->departments_list = $departments;
+        return view('project_owner.project_managers', compact('managers'));
     }
-
-    return view('project_owner.project_managers', compact('managers'));
-}
 
     function employee_view()
     {
@@ -241,10 +244,10 @@ function project_manager_view()
 
 
 
-   public function tasks_createview()
-{
-    
-    
+    public function tasks_createview()
+    {
+
+
         $managers = ProjectManager::all()->map(function ($manager) {
             return [
                 'id' => $manager->id,
@@ -252,10 +255,10 @@ function project_manager_view()
             ];
         })->toArray();
 
-     
 
-    return view('project_owner.tasks_create', compact('managers'));
-}
+
+        return view('project_owner.tasks_create', compact('managers'));
+    }
     public function getProjectManagers($departmentId)
     {
         $managers = ProjectManager::whereJsonContains('department_ids', (string) $departmentId)
@@ -268,52 +271,52 @@ function project_manager_view()
 
     function tasks_create(Request $request)
     {
-       $validated = $request->validate([
-        'client_name' => 'required|string|max:255',
-        'managers' => 'nullable|array',
-        'managers.*' => 'exists:project_managers,id', // Validate manager IDs exist
-        'audio_file' => 'nullable|string', // Base64 audio data
-    ]);
-
-    $task = new OnwerTask();
-    $task->client_name = $validated['client_name'];
-    $task->managers = json_encode($validated['managers'] ?? []); // Store manager IDs as JSON array
-
-    if ($request->filled('audio_file')) {
-    try {
-        // Extract base64 data (format: data:audio/webm;base64,...)
-        [, $data] = explode(';', $request->audio_file);
-        [, $base64Data] = explode(',', $data);
-        $binary = base64_decode($base64Data);
-
-        // Create a temporary file for upload
-        $tempPath = tempnam(sys_get_temp_dir(), 'audio_');
-        file_put_contents($tempPath, $binary);
-
-        // Upload to Cloudinary (treat audio as video for best processing)
-        $uploaded = Cloudinary::uploadApi()->upload($tempPath, [
-            'folder' => 'task_audio',
-            'resource_type' => 'video', // ⚡ use video for audio files
-            'public_id' => 'task_audio/' . uniqid('audio_')
+        $validated = $request->validate([
+            'client_name' => 'required|string|max:255',
+            'managers' => 'nullable|array',
+            'managers.*' => 'exists:project_managers,id', // Validate manager IDs exist
+            'audio_file' => 'nullable|string', // Base64 audio data
         ]);
 
-        $task->audio_url = $uploaded['secure_url'];
+        $task = new OnwerTask();
+        $task->client_name = $validated['client_name'];
+        $task->managers = json_encode($validated['managers'] ?? []); // Store manager IDs as JSON array
 
-        // Clean up temp file
-        unlink($tempPath);
-    } catch (\Exception $e) {
-        Log::error('Cloudinary audio upload failed: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Audio upload failed')->withInput();
+        if ($request->filled('audio_file')) {
+            try {
+                // Extract base64 data (format: data:audio/webm;base64,...)
+                [, $data] = explode(';', $request->audio_file);
+                [, $base64Data] = explode(',', $data);
+                $binary = base64_decode($base64Data);
+
+                // Create a temporary file for upload
+                $tempPath = tempnam(sys_get_temp_dir(), 'audio_');
+                file_put_contents($tempPath, $binary);
+
+                // Upload to Cloudinary (treat audio as video for best processing)
+                $uploaded = Cloudinary::uploadApi()->upload($tempPath, [
+                    'folder' => 'task_audio',
+                    'resource_type' => 'video', // ⚡ use video for audio files
+                    'public_id' => 'task_audio/' . uniqid('audio_')
+                ]);
+
+                $task->audio_url = $uploaded['secure_url'];
+
+                // Clean up temp file
+                unlink($tempPath);
+            } catch (\Exception $e) {
+                Log::error('Cloudinary audio upload failed: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'Audio upload failed')->withInput();
+            }
+        }
+
+        $task->save();
+
+        return redirect()->back()->with('success_swal', 'Task created successfully!');
     }
-}
-
-    $task->save();
-
-    return redirect()->back()->with('success_swal', 'Task created successfully!');
-    }
 
 
-   public function edit($id)
+    public function edit($id)
     {
         $task = OnwerTask::findOrFail($id);
         $managers = ProjectManager::all()->map(function ($manager) {
@@ -342,37 +345,37 @@ function project_manager_view()
         $task->managers = json_encode($validated['managers'] ?? []);
         $task->status = $task->status; // Preserve existing status
 
-       if ($request->filled('audio_file')) {
-    try {
-        // Extract base64 data
-        [, $data] = explode(';', $request->audio_file);
-        [, $base64Data] = explode(',', $data);
-        $binary = base64_decode($base64Data);
+        if ($request->filled('audio_file')) {
+            try {
+                // Extract base64 data
+                [, $data] = explode(';', $request->audio_file);
+                [, $base64Data] = explode(',', $data);
+                $binary = base64_decode($base64Data);
 
-        // Create a temporary file for upload
-        $tempPath = tempnam(sys_get_temp_dir(), 'audio_');
-        file_put_contents($tempPath, $binary);
+                // Create a temporary file for upload
+                $tempPath = tempnam(sys_get_temp_dir(), 'audio_');
+                file_put_contents($tempPath, $binary);
 
-        // Use task ID as the Cloudinary public_id to overwrite same file
-        $publicId = 'task_audio/task_' . $task->id;
+                // Use task ID as the Cloudinary public_id to overwrite same file
+                $publicId = 'task_audio/task_' . $task->id;
 
-        // Upload to Cloudinary (overwrite enabled)
-        $uploaded = Cloudinary::uploadApi()->upload($tempPath, [
-            'folder' => 'task_audio',
-            'resource_type' => 'video',
-            'public_id' => $publicId,
-            'overwrite' => true,   // ⚡ ensures old file is replaced
-        ]);
+                // Upload to Cloudinary (overwrite enabled)
+                $uploaded = Cloudinary::uploadApi()->upload($tempPath, [
+                    'folder' => 'task_audio',
+                    'resource_type' => 'video',
+                    'public_id' => $publicId,
+                    'overwrite' => true,   // ⚡ ensures old file is replaced
+                ]);
 
-        $task->audio_url = $uploaded['secure_url'];
+                $task->audio_url = $uploaded['secure_url'];
 
-        // Clean up temp file
-        unlink($tempPath);
-    } catch (\Exception $e) {
-        Log::error('Cloudinary audio upload failed: ' . $e->getMessage());
-        return redirect()->back()->with('error_swal', 'Audio upload failed')->withInput();
-    }
-}
+                // Clean up temp file
+                unlink($tempPath);
+            } catch (\Exception $e) {
+                Log::error('Cloudinary audio upload failed: ' . $e->getMessage());
+                return redirect()->back()->with('error_swal', 'Audio upload failed')->withInput();
+            }
+        }
 
 
         $task->save();
@@ -395,7 +398,8 @@ function project_manager_view()
     }
 
 
-    public function manager_task($id){
+    public function manager_task($id)
+    {
         $tasks = OnwerTask::find($id);
         return view('project_owner.project_manager_tasks', compact('tasks'));
     }
@@ -408,40 +412,88 @@ function project_manager_view()
 
     function subtask()
     {
-        $subtasks = Subtask::with('employee')->get();
+        $subtasks = Subtask::with('employee', 'teamLead')->get();
         return view('project_owner.subtask', compact('subtasks'));
     }
 
     public function subtask_detail($id)
     {
-        $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
+        $subtask = Subtask::findOrFail($id);
 
-        $employeeId = $subtask->assigned_employee_id;
+        // Get POS records
+        $posRecords = $subtask->call_center_pos_ids
+            ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
+            : collect();
 
-        $employeeSubtasks = Subtask::with('employeeSubtask')
-            ->where('assigned_employee_id', $employeeId)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Get Account records
+        $accountRecords = $subtask->cell_center_account_ids
+            ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
+            : collect();
 
-        $attachments = [];
-
-        if ($subtask->employeeSubtask && $subtask->employeeSubtask->attachments) {
-            $attachments = is_array($subtask->employeeSubtask->attachments)
-                ? $subtask->employeeSubtask->attachments
-                : json_decode($subtask->employeeSubtask->attachments, true);
-
-            if (!is_array($attachments)) {
-                $attachments = explode(',', $subtask->employeeSubtask->attachments);
-            }
-
-            $attachments = collect($attachments)->flatten()->filter(function ($url) {
-                return is_string($url) && !empty(trim($url));
-            })->values()->all();
-        }
-
-        return view('project_owner.subtask_detail', compact('subtask', 'employeeSubtasks', 'attachments'));
+        return view('project_owner.subtask_detail', compact('subtask', 'posRecords', 'accountRecords'));
     }
 
+
+
+    public function visitors()
+    {
+        
+        $visitors = Visitor::get();
+
+        return view('project_owner.visitor', compact('visitors'));
+    }
+
+    public function create_visitor_view()
+    {
+        $departments = Department::get();
+        return view('project_owner.create_visitor', compact('departments'));
+    }
+
+   public function create_visitor(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:visitors',
+        'phone' => 'required|string|max:15',
+        'department_id' => 'exists:departments,id',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    $visitors = new Visitor();
+    $visitors->name = $request->name;
+    $visitors->email = $request->email;
+    $visitors->phone = $request->phone;
+
+    // Set password as "name123"
+    $visitors->password = bcrypt($request->name . '123');
+
+    // Save selected departments as JSON array
+    $visitors->department_ids = (array) $request->department_id;
+
+    // Handle image upload
+    if ($request->hasFile('image')) {
+        $image = $request->file('image');
+        $imageName = time() . '.' . $image->getClientOriginalExtension();
+        $image->move(public_path('images/visitors'), $imageName);
+        $visitors->image = $imageName;
+    } else {
+        $randomId = rand(1, 30);
+        $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
+        if ($imageContent !== false) {
+            $imageName = time() . '_auto.jpg';
+            file_put_contents(public_path("images/visitors/$imageName"), $imageContent);
+            $visitors->image = $imageName;
+        }
+    }
+
+    if ($visitors->save()) {
+        session()->flash('success_swal', 'Visitor created successfully.');
+        return redirect()->route('project_owner.visitor');
+    }
+
+    session()->flash('error_swal', 'Failed to create Visitor.');
+    return redirect()->back()->withInput();
+}
 
     public function allOwnerTasks()
     {

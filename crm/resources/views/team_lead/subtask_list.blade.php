@@ -138,6 +138,10 @@
             background: var(--success);
         }
 
+        .badge-secondary {
+            background: #6b7280;
+        }
+
         .dropdown-menu {
             background: rgba(55, 65, 81, 0.9);
             border: 1px solid var(--border);
@@ -158,7 +162,7 @@
 @section('content')
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="text-white">Subtasks for {{ $task->clientname ?? $task->title ?? 'Task' }}</h3>
+            <h3 class="text-white">Subtasks for {{ $task->clientname ?? ($task->title ?? 'Task') }}</h3>
             <a href="{{ route('team_lead.manager_tasks') }}" class="btn btn-secondary">← Back to Manager Tasks</a>
         </div>
 
@@ -210,7 +214,8 @@
                             <th>#</th>
                             <th>Title</th>
                             <th>Assigned To</th>
-                            <th>Status</th>
+                            <th>Your Status</th>
+                            <th>Employee Status</th>
                             <th>Start Date</th>
                             <th>Start Time</th>
                             <th>End Date</th>
@@ -218,6 +223,7 @@
                             <th>View</th>
                             <th>Edit</th>
                             <th>Delete</th>
+                            <th>Employee Tasks</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -233,17 +239,33 @@
                                         @method('PATCH')
                                         <select name="teamlead_status" class="form-select form-select-sm"
                                             onchange="this.form.submit()">
-                                            @foreach ($statuses as $status)
+                                            @foreach (['pending', 'completed', 'late', 'rejected'] as $status)
                                                 <option value="{{ $status }}"
                                                     {{ $subtask->teamlead_status == $status ? 'selected' : '' }}>
-                                                    {{ ucfirst(str_replace('_', ' ', $status)) }}
+                                                    {{ ucfirst($status) }}
                                                 </option>
                                             @endforeach
                                         </select>
                                     </form>
                                     <span
-                                        class="badge mt-2 {{ $subtask->teamlead_status == 'approved' ? 'bg-success' : ($subtask->teamlead_status == 'rejected' ? 'bg-danger' : ($subtask->teamlead_status == 'late' ? 'bg-warning' : ($subtask->teamlead_status == 'in_progress' ? 'bg-primary' : 'bg-secondary'))) }}">
-                                        {{ ucfirst(str_replace('_', ' ', $subtask->teamlead_status ?? 'pending')) }}
+                                        class="badge mt-2 
+                                        {{ $subtask->teamlead_status == 'completed'
+                                            ? 'bg-success'
+                                            : ($subtask->teamlead_status == 'rejected'
+                                                ? 'bg-danger'
+                                                : ($subtask->teamlead_status == 'late'
+                                                    ? 'bg-warning'
+                                                    : 'bg-secondary')) }}">
+                                        {{ ucfirst($subtask->teamlead_status ?? 'pending') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge 
+                                        {{ $subtask->employee_status == 'complete'
+                                            ? 'bg-success'
+                                            : 'bg-warning' }}">
+                                        {{ ucfirst($subtask->employee_status ?? 'pending') }}
                                     </span>
                                 </td>
                                 <td>{{ $subtask->start_date ?? '-' }}</td>
@@ -265,6 +287,12 @@
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                     </form>
+                                </td>
+                                <td>
+                                    <a href="{{ route('teamlead.employee_subtask.details', $subtask->id) }}"
+                                        class="btn btn-success">
+                                        Show
+                                    </a>
                                 </td>
                             </tr>
                         @endforeach
@@ -290,6 +318,7 @@
                     const employeeCell = row.cells[2]?.textContent.toLowerCase() || '';
                     const statusSelectInRow = row.querySelector('select[name="teamlead_status"]');
                     const rowStatus = statusSelectInRow ? statusSelectInRow.value : '';
+                    const employeeStatusCell = row.cells[4]?.textContent.toLowerCase() || '';
 
                     const matchesEmployee = employeeCell.includes(employeeValue);
                     const matchesStatus = !statusValue || rowStatus === statusValue;
