@@ -36,6 +36,7 @@ Route::controller(ProjectManager::class)->group(function () {
             Route::get('project-manager/notifications/{id}',  'viewNotification')->name('project_manager.notifications.view');
             Route::get('/project-manager/subtask_list', 'subtask_list')->name('project_manager.subtask');
             Route::get('/project-manager/subtask/detail/{id}', 'subtask_detail')->name('project_manager.subtask_detail');
+            Route::post('/shared-task/{subtaskId}',  'store_shared_task')->name('shared-task.store');
             Route::get('/project-manager/mytasks', 'manager_task_list')->name('project_manager.mytask');
             Route::get('/project-manager/mytasks/detail/{id}', 'my_task_detail')->name('project_manager.my_task_detail');
             Route::get('/project-manager/mytasks/create/{id}', 'create_my_task')->name('project_manager.mytask_create');

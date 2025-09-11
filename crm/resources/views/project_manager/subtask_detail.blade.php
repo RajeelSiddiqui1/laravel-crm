@@ -9,7 +9,7 @@
             </a>
         </div>
 
-     
+
         @if ($subtask->attachments)
             <div class="card bg-glass mb-5 shadow-lg border-0">
                 <div class="card-body p-4">
@@ -74,12 +74,19 @@
                                         class="badge {{ $pos->status === 'active' ? 'bg-success' : ($pos->status === 'inactive' ? 'bg-danger' : 'bg-warning') }}">
                                         {{ $pos->status }}
                                     </span>
-                                    <select id="visitorDropdown" class="form-select mb-3" style="max-width: 300px;">
-                                        <option value="">Select a Visitor</option>
-                                        @foreach ($visitorRecords as $visitor)
-                                            <option value="{{ $visitor->id }}">{{ $visitor->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST">
+                                        @csrf
+                                        <select name="visitor_id" class="form-select mb-3" style="max-width: 300px;">
+                                            <option value="">Select a Visitor</option>
+                                            @foreach ($visitorRecords as $visitor)
+                                                <option value="{{ $visitor->id }}">{{ $visitor->name }} -
+                                                    {{ $visitor->department->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">
+                                            Share Task
+                                        </button>
+                                    </form>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
@@ -186,12 +193,21 @@
                                         class="badge {{ $account->status === 'active' ? 'bg-success' : ($account->status === 'inactive' ? 'bg-danger' : 'bg-warning') }}">
                                         {{ $account->status }}
                                     </span>
-                                    <select id="visitorDropdown" class="form-select mb-3" style="max-width: 300px;">
-                                        <option value="">Select a Visitor</option>
-                                        @foreach ($visitorRecords as $visitor)
-                                            <option value="{{ $visitor->id }}">{{ $visitor->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST">
+                                        @csrf
+                                        <select name="visitor_id" class="form-select mb-3" style="max-width: 300px;">
+                                            <option value="">Select a Visitor</option>
+                                            @foreach ($visitorRecords as $visitor)
+                                                @foreach ($visitor->department_ids as $deptId)
+                                                    <option value="{{ $visitor->id }}">{{ $visitor->name }} -
+                                                        {{ $departments[$deptId]->name ?? 'N/A' }}</option>
+                                                @endforeach
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">
+                                            Share Task
+                                        </button>
+                                    </form>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
@@ -205,13 +221,13 @@
                                     </div>
                                     <div class="col-md-6">
                                         <p class="mb-2"><strong>Corporation Number:</strong>
-                                            {{ $account->corporation_number ?? 'N/A' }}</p>
+                                            {{ $account->corpuration_number ?? 'N/A' }}</p>
                                         <p class="mb-2"><strong>Corporation Email:</strong>
-                                            {{ $account->corporation_email ?? 'N/A' }}</p>
+                                            {{ $account->corpuration_email ?? 'N/A' }}</p>
                                         <p class="mb-2"><strong>Corporation Documents:</strong>
-                                            {{ $account->corporation_documents ?? 'N/A' }}</p>
+                                            {{ $account->corpuration_documents ?? 'N/A' }}</p>
                                         <p class="mb-2"><strong>Previous History:</strong>
-                                            {{ $account->previous_history ?? 'N/A' }}</p>
+                                            {{ $account->pervious_history ?? 'N/A' }}</p>
                                         <p class="mb-2"><strong>Fees:</strong>
                                             ${{ number_format($account->fees ?? 0, 2) }}</p>
                                     </div>
@@ -403,7 +419,7 @@
                         error: function() {
                             $('#visitorDetails').html(
                                 '<p class="text-danger">Failed to fetch visitor details.</p>'
-                                );
+                            );
                         }
                     });
                 } else {

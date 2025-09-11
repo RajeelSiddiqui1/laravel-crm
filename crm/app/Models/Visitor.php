@@ -19,4 +19,9 @@ class Visitor extends Model
      protected $casts = [
         'department_ids' => 'array'
     ];
+
+        public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 }

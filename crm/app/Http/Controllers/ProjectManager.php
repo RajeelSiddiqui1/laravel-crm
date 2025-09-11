@@ -761,10 +761,10 @@ class ProjectManager extends Controller
             $account->family_name = $request->famliy_name_t1;
             $account->year = $request->year_t1;
             $account->project_manager_id = $manager->id;
-          
+
             $task->account_t1_id = $account->id; // Link to AccountT1
             $account->team_lead_id = $request->team_lead_id;
-              $account->save();
+            $account->save();
         } elseif ($request->account_type === 'AccountT2' && $isAccounts) {
             $account = new AccountT2();
             $attachments = null;
@@ -793,7 +793,7 @@ class ProjectManager extends Controller
             $account->project_manager_id = $manager->id;
             $task->account_t2_id = $account->id;
             $account->team_lead_id = $request->team_lead_id; // Link to AccountT2
-              $account->save();
+            $account->save();
         } elseif ($request->account_type === 'AccountHST' && $isAccounts) {
             $account = new AccountHST();
             $attachments = [];
@@ -821,10 +821,10 @@ class ProjectManager extends Controller
             $account->priority = $request->priority_hst;
             $account->attachments = json_encode($attachments); // Store as JSON for multiple files
             $account->project_manager_id = $manager->id;
-           
+
             $task->account_hst_id = $account->id; // Link to AccountHST
             $account->team_lead_id = $request->team_lead_id;
-             $account->save();
+            $account->save();
         }
 
         if ($isOperation && $request->account_type === 'operation') {
@@ -1063,7 +1063,7 @@ class ProjectManager extends Controller
             }
         }
 
-        $account->save();       
+        $account->save();
 
         $task = $account->ownerTask;
         if (!$task) {
@@ -1149,50 +1149,95 @@ Task not associated with any owner task.');
         }
     }
 
-   public function subtask_list()
-{
-    $manager = Auth::guard('project_manager')->user();
+    public function subtask_list()
+    {
+        $manager = Auth::guard('project_manager')->user();
 
-    $subtasks = Subtask::with('employee', 'teamLead') // eager load relationships if needed
-        ->where('manager_id', $manager->id)
-        ->get();
+        $subtasks = Subtask::with('employee', 'teamLead') // eager load relationships if needed
+            ->where('manager_id', $manager->id)
+            ->get();
 
-    return view('project_manager.subtask', compact('subtasks'));
-}
+        return view('project_manager.subtask', compact('subtasks'));
+    }
 
 
-function subtask_detail($id)
-{
-    $manager = Auth::guard('project_manager')->user();
-    $subtask = Subtask::findOrFail($id);
+    function subtask_detail($id)
+    {
+        $manager = Auth::guard('project_manager')->user();
+        $subtask = Subtask::findOrFail($id);
 
-    $posRecords = $subtask->call_center_pos_ids
-        ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
-        : collect();
+        $posRecords = $subtask->call_center_pos_ids
+            ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
+            : collect();
 
-    $accountRecords = $subtask->cell_center_account_ids
-        ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
-        : collect();
+        $accountRecords = $subtask->cell_center_account_ids
+            ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
+            : collect();
 
-    $managerDeptIds = is_array($manager->department_ids) 
-        ? $manager->department_ids 
-        : explode(',', $manager->department_ids);
+        $managerDeptIds = is_array($manager->department_ids)
+            ? $manager->department_ids
+            : explode(',', $manager->department_ids);
 
-    $visitorRecords = Visitor::whereJsonContains('department_ids', $managerDeptIds)->get();
+        $visitorRecords = Visitor::whereJsonContains('department_ids', $managerDeptIds)->get();
 
-    return view('project_manager.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'visitorRecords'));
-}
-function fetch_visitor($id)
-{
-    $visitor = Visitor::findOrFail($id);
-    return response()->json([
-        'name' => $visitor->name ?? 'N/A',
-        'email' => $visitor->email ?? 'N/A',
-        'phone' => $visitor->phone ?? 'N/A',
-        'department_id' => $visitor->department_id ?? 'N/A',
-        'status' => $visitor->status ?? 'N/A'
-    ]);
-}
+        return view('project_manager.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'visitorRecords'));
+    }
+    function fetch_visitor($id)
+    {
+        $visitor = Visitor::findOrFail($id);
+        return response()->json([
+            'name' => $visitor->name ?? 'N/A',
+            'email' => $visitor->email ?? 'N/A',
+            'phone' => $visitor->phone ?? 'N/A',
+            'department_id' => $visitor->department_id ?? 'N/A',
+            'status' => $visitor->status ?? 'N/A'
+        ]);
+    }
+
+
+    public function store_shared_task(Request $request, $subtaskId)
+    {
+        // Validate the request
+        $request->validate([
+            'visitor_id' => 'required|exists:visitors,id',
+        ]);
+
+        // Find the subtask
+        $subtask = Subtask::findOrFail($subtaskId);
+
+        // Get manager ID from subtask
+        $managerId = $subtask->manager_id;
+
+        // Get employee ID from either CallCenterAccount or POS
+        $employeeId = null;
+
+        // Check CallCenterAccount
+        $callCenterAccount = CellCenterAccount::where('subtask_id', $subtaskId)->first();
+        if ($callCenterAccount) {
+            $employeeId = $callCenterAccount->employee_id;
+        } else {
+            // Check POS
+            $pos = CellCenterPos::where('subtask_id', $subtaskId)->first();
+            if ($pos) {
+                $employeeId = $pos->employee_id;
+            }
+        }
+
+        // If no employee found, return error
+        if (!$employeeId) {
+            return redirect()->back()->with('error', 'No employee found in CallCenterAccount or POS records');
+        }
+
+        // Create SharedTask record
+        SharedTask::create([
+            'visitor_id' => $request->visitor_id,
+            'manager_id' => $managerId,
+            'employee_id' => $employeeId,
+            'subtask_id' => $subtaskId,
+        ]);
+
+        return redirect()->back()->with('success', 'Task shared successfully');
+    }
 
 
     public function teamleads()

@@ -7,29 +7,32 @@ use Illuminate\Database\Eloquent\Model;
 class SharedTask extends Model
 {
     protected $fillable = [
-        'owner_task_id',
-        'department_id',
-        'assigned_by',
-        'assigned_to',
+        'manager_id',
+        'employee_id',
+        'visitor_id ',
+        'subtask_id',
+        'comment',
+        'status'
     ];
 
-    public function task()
+    public function visitor()
     {
-        return $this->belongsTo(OnwerTask::class, 'owner_task_id');
+        return $this->belongsTo(Visitor::class);
     }
 
-    public function department()
+    public function manager()
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(User::class, 'manager_id');
     }
 
-    public function sharedBy()
+    public function employee()
     {
-        return $this->belongsTo(ProjectManager::class, 'assigned_by');
+        return $this->belongsTo(User::class, 'employee_id');
     }
 
-    public function sharedTo()
+   
+    public function subtask()
     {
-        return $this->belongsTo(ProjectManager::class, 'assigned_to');
+        return $this->belongsTo(Subtask::class);
     }
 }
