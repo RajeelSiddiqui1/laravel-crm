@@ -74,19 +74,32 @@
                                         class="badge {{ $pos->status === 'active' ? 'bg-success' : ($pos->status === 'inactive' ? 'bg-danger' : 'bg-warning') }}">
                                         {{ $pos->status }}
                                     </span>
-                                    <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST">
-                                        @csrf
-                                        <select name="visitor_id" class="form-select mb-3" style="max-width: 300px;">
-                                            <option value="">Select a Visitor</option>
-                                            @foreach ($visitorRecords as $visitor)
-                                                <option value="{{ $visitor->id }}">{{ $visitor->name }} -
-                                                    {{ $visitor->department->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">
-                                            Share Task
-                                        </button>
-                                    </form>
+
+                                    @php
+                                        $sharedVisitorIds = $sharedTasks
+                                            ->where('cell_center_pos_id', $pos->id)
+                                            ->pluck('visitor_id')
+                                            ->toArray();
+                                        $sharedVisitorRecords = $visitorRecords->whereIn('id', $sharedVisitorIds);
+                                    @endphp
+
+                                    @if ($sharedVisitorRecords->isNotEmpty())
+                                        <p class="mb-0"><strong>Shared with:</strong>
+                                            {{ $sharedVisitorRecords->pluck('name')->join(', ') }}</p>
+                                    @else
+                                        <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="pos_id" value="{{ $pos->id }}">
+                                            <select name="visitor_id" class="form-select mb-2" style="max-width: 300px;">
+                                                <option value="">Select a Visitor</option>
+                                                @foreach ($visitorRecords as $visitor)
+                                                    <option value="{{ $visitor->id }}">{{ $visitor->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">Share
+                                                Task</button>
+                                        </form>
+                                    @endif
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
@@ -193,21 +206,35 @@
                                         class="badge {{ $account->status === 'active' ? 'bg-success' : ($account->status === 'inactive' ? 'bg-danger' : 'bg-warning') }}">
                                         {{ $account->status }}
                                     </span>
-                                    <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST">
-                                        @csrf
-                                        <select name="visitor_id" class="form-select mb-3" style="max-width: 300px;">
-                                            <option value="">Select a Visitor</option>
-                                            @foreach ($visitorRecords as $visitor)
-                                                @foreach ($visitor->department_ids as $deptId)
-                                                    <option value="{{ $visitor->id }}">{{ $visitor->name }} -
-                                                        {{ $departments[$deptId]->name ?? 'N/A' }}</option>
+
+                                    @php
+                                        $sharedVisitorIds = $sharedTasks
+                                            ->where('cell_center_account_id', $account->id)
+                                            ->pluck('visitor_id')
+                                            ->toArray();
+                                        $sharedVisitorRecords = $visitorRecords->whereIn('id', $sharedVisitorIds);
+                                    @endphp
+
+                                    @if ($sharedVisitorRecords->isNotEmpty())
+                                        <p class="mb-0"><strong>Shared with:</strong>
+                                            {{ $sharedVisitorRecords->pluck('name')->join(', ') }}</p>
+                                    @else
+                                        <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="account_id" value="{{ $account->id }}">
+                                            <select name="visitor_id" class="form-select mb-2" style="max-width: 300px;">
+                                                <option value="">Select a Visitor</option>
+                                                @foreach ($visitorRecords as $visitor)
+                                                    <option value="{{ $visitor->id }}">{{ $visitor->name }}</option>
                                                 @endforeach
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">
-                                            Share Task
-                                        </button>
-                                    </form>
+                                            </select>
+                                            <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">Share
+                                                Task</button>
+                                        </form>
+                                    @endif
+
+
+
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">

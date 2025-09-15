@@ -1179,9 +1179,15 @@ Task not associated with any owner task.');
             : explode(',', $manager->department_ids);
 
         $visitorRecords = Visitor::whereJsonContains('department_ids', $managerDeptIds)->get();
+        $sharedVisitors = SharedTask::where('subtask_id', $subtask->id)->pluck('visitor_id')->toArray();
+        $sharedTasks = SharedTask::where('subtask_id', $subtask->id)->get();
 
-        return view('project_manager.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'visitorRecords'));
+
+
+        return view('project_manager.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'visitorRecords', 'sharedVisitors','sharedTasks'));
     }
+
+
     function fetch_visitor($id)
     {
         $visitor = Visitor::findOrFail($id);
@@ -1189,55 +1195,60 @@ Task not associated with any owner task.');
             'name' => $visitor->name ?? 'N/A',
             'email' => $visitor->email ?? 'N/A',
             'phone' => $visitor->phone ?? 'N/A',
-            'department_id' => $visitor->department_id ?? 'N/A',
+            'department_id' => $visitor->department_ids ?? 'N/A',
             'status' => $visitor->status ?? 'N/A'
         ]);
     }
 
 
-    public function store_shared_task(Request $request, $subtaskId)
-    {
-        // Validate the request
-        $request->validate([
-            'visitor_id' => 'required|exists:visitors,id',
-        ]);
+public function store_shared_task(Request $request, $subtaskId)
+{
+    $request->validate([
+        'visitor_id' => 'required|exists:visitors,id',
+    ]);
 
-        // Find the subtask
-        $subtask = Subtask::findOrFail($subtaskId);
+    $subtask = Subtask::findOrFail($subtaskId);
+    $managerId = $subtask->manager_id;
 
-        // Get manager ID from subtask
-        $managerId = $subtask->manager_id;
+    $employeeId = null;
+    $posId = null;
+    $accountId = null;
 
-        // Get employee ID from either CallCenterAccount or POS
-        $employeeId = null;
-
-        // Check CallCenterAccount
-        $callCenterAccount = CellCenterAccount::where('subtask_id', $subtaskId)->first();
+    // Agar account IDs hain to pehle account check karo
+    if (!empty($subtask->cell_center_account_ids)) {
+        $callCenterAccount = CellCenterAccount::whereIn('id', (array) $subtask->cell_center_account_ids)->first();
         if ($callCenterAccount) {
             $employeeId = $callCenterAccount->employee_id;
-        } else {
-            // Check POS
-            $pos = CellCenterPos::where('subtask_id', $subtaskId)->first();
-            if ($pos) {
-                $employeeId = $pos->employee_id;
-            }
+            $accountId = $callCenterAccount->id;
         }
-
-        // If no employee found, return error
-        if (!$employeeId) {
-            return redirect()->back()->with('error', 'No employee found in CallCenterAccount or POS records');
-        }
-
-        // Create SharedTask record
-        SharedTask::create([
-            'visitor_id' => $request->visitor_id,
-            'manager_id' => $managerId,
-            'employee_id' => $employeeId,
-            'subtask_id' => $subtaskId,
-        ]);
-
-        return redirect()->back()->with('success', 'Task shared successfully');
     }
+
+    // Agar account se employee nahi mila to POS check karo
+    if (!$employeeId && !empty($subtask->call_center_pos_ids)) {
+        $pos = CellCenterPos::whereIn('id', (array) $subtask->call_center_pos_ids)->first();
+        if ($pos) {
+            $employeeId = $pos->employee_id;
+            $posId = $pos->id;
+        }
+    }
+
+    if (!$employeeId) {
+        return redirect()->back()->with('error', 'No employee found in CallCenterAccount or POS records');
+    }
+
+    SharedTask::create([
+        'visitor_id' => $request->visitor_id,
+        'manager_id' => $managerId,
+        'employee_id' => $employeeId,
+        'subtask_id' => $subtaskId,
+        'cell_center_pos_id' => $posId,
+        'cell_center_account_id' => $accountId,
+    ]);
+
+    return redirect()->back()->with('success', 'Task shared successfully');
+}
+
+
 
 
     public function teamleads()

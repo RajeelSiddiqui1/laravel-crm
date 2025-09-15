@@ -32,6 +32,12 @@ return [
             'driver' => 'session',
             'provider' => 'project_owners',
         ],
+
+        // ✅ New Guard for Visitors
+        'visitor' => [
+            'driver' => 'session',
+            'provider' => 'visitors',
+        ],
     ],
 
     'providers' => [
@@ -59,6 +65,12 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\ProjectOwner::class,
         ],
+
+        // ✅ New Provider for Visitors
+        'visitors' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Visitor::class,
+        ],
     ],
 
     'passwords' => [
@@ -70,6 +82,7 @@ return [
         ],
     ],
 
+    // ✅ Yeh password confirm timeout hota hai (re-authentication ke liye)
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
 ];

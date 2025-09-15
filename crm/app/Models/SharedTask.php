@@ -9,10 +9,12 @@ class SharedTask extends Model
     protected $fillable = [
         'manager_id',
         'employee_id',
-        'visitor_id ',
+        'visitor_id',
         'subtask_id',
+        'cell_center_pos_id',
+        'cell_center_account_id',
         'comment',
-        'status'
+        'status',
     ];
 
     public function visitor()
@@ -34,5 +36,15 @@ class SharedTask extends Model
     public function subtask()
     {
         return $this->belongsTo(Subtask::class);
+    }
+
+     public function pos()
+    {
+        return $this->belongsTo(CellCenterPos::class, 'cell_center_pos_id');
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(CellCenterAccount::class, 'cell_center_account_id');
     }
 }

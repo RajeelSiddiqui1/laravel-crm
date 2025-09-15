@@ -2,26 +2,31 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;  // <-- yeh import karo
+use Illuminate\Notifications\Notifiable;
 
-class Visitor extends Model
+class Visitor extends Authenticatable
 {
+    use Notifiable;
 
-    
+    protected $table = 'visitors'; // agar table ka naam custom hai
+
     protected $fillable = [
         'name',
         'email',
         'password',
-        'image',
-        'department_ids'
+        'phone',
+        'department_ids',
+        'status',
     ];
 
      protected $casts = [
-        'department_ids' => 'array'
+        'department_ids' => 'array',
+    ];
+    protected $hidden = [
+        'password',
+        'remember_token',
     ];
 
-        public function department()
-    {
-        return $this->belongsTo(Department::class);
-    }
+
 }

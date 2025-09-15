@@ -699,6 +699,129 @@
             </header>
         @endif
 
+
+            @if (Auth::guard('visitor')->check())
+            <div id="sidebar-wrapper" data-simplebar="" data-simplebar-auto-hide="true">
+                <div class="brand-logo">
+                    <a href="#">
+                        <img src="{{ asset('assets/images/logo-icon.png') }}" class="logo-icon" alt="logo icon">
+                        <h5 class="logo-text">Employee</h5>
+                    </a>
+                </div>
+                <ul class="sidebar-menu do-nicescrol">
+                    <li class="user-profile-sidebar">
+                        <div class="avatar">
+                            <img src="{{ Auth::guard('visitor')->user()->image ? asset('images/visitors/' . Auth::guard('visitor')->user()->image) : 'https://avatar.iran.liara.run/public/28' }}"
+                                class="img-circle" alt="user avatar">
+                        </div>
+                        <div class="media-body">
+                            <h6 class="mt-2 user-title">{{ Auth::guard('visitor')->user()->name }}</h6>
+                            <p class="user-subtitle">{{ Auth::guard('visitor')->user()->email }}</p>
+                        </div>
+                    </li>
+                    <li class="sidebar-header">MAIN NAVIGATION</li>
+                    <li>
+                        <a href="{{ route('visitor.sharedtask.view') }}">
+                            <i class="icon-wallet mr-2"></i> <span>Visit List</span>
+                        </a>
+                    </li>
+                    
+                    @php
+                        $user = null;
+                        $guard = null;
+
+                        foreach (['project_owner', 'project_manager', 'team_lead', 'employee'] as $g) {
+                            if (Auth::guard($g)->check()) {
+                                $user = Auth::guard($g)->user();
+                                $guard = $g;
+                                break;
+                            }
+                        }
+
+                        $notificationCount = 0;
+
+                        if ($user && $guard) {
+                            $notificationCount = \App\Models\Notification::where('user_id', $user->id)
+                                ->where('user_type', $guard)
+                                ->where('is_read', false)
+                                ->count();
+                        }
+                    @endphp
+
+                    <!-- 🔔 Notification Icon -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative d-flex align-items-center"
+                            href="{{ route('notifications.index') }}"
+                            @if ($notificationCount > 0) onclick="playNotificationSound()" @endif>
+                            <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
+                            @if ($notificationCount > 0)
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm">
+                                    {{ $notificationCount > 99 ? '99+' : $notificationCount }}
+                                    <span class="visually-hidden">unread notifications</span>
+                                </span>
+                            @endif
+                        </a>
+                    </li>
+
+                    <!-- 🔊 Audio Element -->
+                    <audio id="notif-sound" preload="auto">
+                        <source src="{{ asset('sounds/notification.mp3') }}" type="audio/mpeg">
+                    </audio>
+
+                    <!-- 📜 JS Script -->
+                    <script>
+                        function playNotificationSound() {
+                            const audio = document.getElementById('notif-sound');
+                            if (audio) {
+                                audio.currentTime = 0;
+                                audio.play().catch(err => {
+                                    console.warn("Sound failed:", err);
+                                });
+                            }
+                        }
+                    </script>
+                </ul>
+            </div>
+
+            <header class="topbar-nav">
+                <nav class="navbar navbar-expand fixed-top">
+                    <ul class="navbar-nav mr-auto align-items-center">
+                        <li class="nav-item">
+                            <a class="nav-link toggle-menu" href="javascript:void();"><i
+                                    class="icon-menu menu-icon"></i></a>
+                        </li>
+                        <li class="nav-item">
+                            <form class="search-bar">
+                                <input type="text" class="form-control" placeholder="Enter keywords">
+                                <a href="javascript:void();"><i class="icon-magnifier"></i></a>
+                            </form>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav align-items-center right-nav-link">
+                        <li class="nav-item dropdown-lg">
+                            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
+                                href="javascript:void();"><i class="fa fa-envelope-open-o"></i></a>
+                        </li>
+                        <li class="nav-item dropdown-lg">
+                            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
+                                href="javascript:void();"><i class="fa fa-bell-o"></i></a>
+                        </li>
+                        <li class="nav-item language">
+                            <a class="nav-link dropdown-toggle waves-effect" data-toggle="dropdown"
+                                href="javascript:void();"><i class="fa fa-flag"></i></a>
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                <li class="dropdown-item"><i class="flag-icon flag-icon-gb mr-2"></i> English</li>
+                                <li class="dropdown-item"><i class="flag-icon flag-icon-fr mr-2"></i> French</li>
+                                <li class="dropdown-item"><i class="flag-icon flag-icon-cn mr-2"></i> Chinese</li>
+                                <li class="dropdown-item"><i class="flag-icon flag-icon-de mr-2"></i> German</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+            </header>
+        @endif
+
         <div class="clearfix"></div>
 
         <div class="content-wrapper">

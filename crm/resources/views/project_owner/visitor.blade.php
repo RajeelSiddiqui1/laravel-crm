@@ -118,7 +118,7 @@
         </div>
         <div class="row">
             <div class="col-md-12 d-flex justify-content-end">
-                <a href="{{ route('project_manager.create_teamlead_view') }}" class="btn btn-primary mb-3">Create TeamLead</a>
+                <a href="{{ route('project_owner.create.visitor.view') }}" class="btn btn-primary mb-3">Create Visitor</a>
             </div>
         </div>
 
@@ -142,20 +142,19 @@
                             <td>{{ $visitor->email }}</td>
                             <td>{{ $visitor->phone }}</td>
                             <td>
-                                @if ($visitor->department_ids)
-                                    @php
-                                        $departments = \App\Models\Department::whereIn(
-                                            'id',
-                                            json_decode($visitor->department_ids),
-                                        )
-                                            ->pluck('name')
-                                            ->toArray();
-                                    @endphp
+                                @php
+                                    $departments = \App\Models\Department::whereIn('id', $visitor->department_ids ?? [])
+                                        ->pluck('name')
+                                        ->toArray();
+                                @endphp
+
+                                @if (!empty($departments))
                                     {{ implode(', ', $departments) }}
                                 @else
                                     N/A
                                 @endif
                             </td>
+
                             <td>
                                 <img src="{{ $visitor->image ? asset('images/visitors/' . $visitor->image) : 'https://avatar.iran.liara.run/public/28' }}"
                                     style="height:50px; width:50px; object-fit:cover; border-radius:8px;" alt="Visitor">

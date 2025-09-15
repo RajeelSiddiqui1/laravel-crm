@@ -12,18 +12,20 @@ class CheckUserRoles
         if (
             Auth::guard('web')->check() ||             // Admin
             Auth::guard('team_lead')->check() ||       // Team Lead
-            Auth::guard('project_owner')->check() ||
-            Auth::guard('project_manager')->check() ||
-            Auth::guard('employee')     // Project Owner
+            Auth::guard('project_owner')->check() ||   // Project Owner
+            Auth::guard('project_manager')->check() || // Project Manager
+            Auth::guard('employee')->check() ||        // Employee
+            Auth::guard('visitor')->check()            // Visitor
         ) {
             return $next($request);
         }
 
-        // Prevent redirect to login — show 403 or JSON
+        // ✅ Agar login nahi hai
         if ($request->expectsJson()) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        abort(403, 'Access denied');
+        // ✅ Redirect to login page instead of abort
+        return redirect()->route('project_owner.login');
     }
 }

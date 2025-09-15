@@ -437,7 +437,7 @@ class ProjectOnwer extends Controller
 
     public function visitors()
     {
-        
+
         $visitors = Visitor::get();
 
         return view('project_owner.visitor', compact('visitors'));
@@ -449,51 +449,55 @@ class ProjectOnwer extends Controller
         return view('project_owner.create_visitor', compact('departments'));
     }
 
-   public function create_visitor(Request $request)
-{
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255|unique:visitors',
-        'phone' => 'required|string|max:15',
-        'department_id' => 'exists:departments,id',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-    ]);
+    public function create_visitor(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:visitors,name',
+            'email' => 'required|email|max:255|unique:visitors',
+            'phone' => 'required|string|max:15',
+            'department_id' => 'exists:departments,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
-    $visitors = new Visitor();
-    $visitors->name = $request->name;
-    $visitors->email = $request->email;
-    $visitors->phone = $request->phone;
+        $visitors = new Visitor();
+        $visitors->name = $request->name;
+        $visitors->email = $request->email;
+        $visitors->phone = $request->phone;
 
-    // Set password as "name123"
-    $visitors->password = bcrypt($request->name . '123');
+        // Set password as "name123"
+        $firstWord = explode(' ', $request->name)[0]; // pehla word nikal lo
+        $short = strtolower(substr($firstWord, 0, 1)); // pehle word ka first letter lowercase
 
-    // Save selected departments as JSON array
-    $visitors->department_ids = (array) $request->department_id;
+        $visitors->password = $short . '123';
 
-    // Handle image upload
-    if ($request->hasFile('image')) {
-        $image = $request->file('image');
-        $imageName = time() . '.' . $image->getClientOriginalExtension();
-        $image->move(public_path('images/visitors'), $imageName);
-        $visitors->image = $imageName;
-    } else {
-        $randomId = rand(1, 30);
-        $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
-        if ($imageContent !== false) {
-            $imageName = time() . '_auto.jpg';
-            file_put_contents(public_path("images/visitors/$imageName"), $imageContent);
+
+        // Save selected departments as JSON array
+        $visitors->department_ids = (array) $request->department_id;
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('images/visitors'), $imageName);
             $visitors->image = $imageName;
+        } else {
+            $randomId = rand(1, 30);
+            $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
+            if ($imageContent !== false) {
+                $imageName = time() . '_auto.jpg';
+                file_put_contents(public_path("images/visitors/$imageName"), $imageContent);
+                $visitors->image = $imageName;
+            }
         }
-    }
 
-    if ($visitors->save()) {
-        session()->flash('success_swal', 'Visitor created successfully.');
-        return redirect()->route('project_owner.visitor');
-    }
+        if ($visitors->save()) {
+            session()->flash('success_swal', 'Visitor created successfully.');
+            return redirect()->route('project_owner.visitor');
+        }
 
-    session()->flash('error_swal', 'Failed to create Visitor.');
-    return redirect()->back()->withInput();
-}
+        session()->flash('error_swal', 'Failed to create Visitor.');
+        return redirect()->back()->withInput();
+    }
 
     public function allOwnerTasks()
     {
