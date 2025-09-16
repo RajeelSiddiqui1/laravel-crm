@@ -51,6 +51,8 @@ Route::controller(ProjectManager::class)->group(function () {
         Route::post('/project-manager/shared-tasks', 'shareTask')->name('project_manager.share_task');
         Route::patch('/project-manager/owner-tasks/{id}/status2', 'updateStatus2')->name('project_manager.update_status2');
         Route::patch('/project-manager/owner-tasks/{id}/status3', 'updateStatus3')->name('project_manager.update_status3');
+        Route::get('/project-manager/shared/task', 'shared_task')->name('project_manager.shared_task.view');
+        Route::get('/project-manager/employee/task/show/{id}', 'show_employee_task')->name('project_manager.show_employee_task.view');
         Route::get('/project-manager/teamleads', 'teamleads')->name('project_manager.teamleads');
         Route::get('/project-manager/teamleads/create', 'create_teamlead_view')->name('project_manager.create_teamlead_view');
         Route::post('/project-manager/teamleads/create', 'create_teamlead')->name('project_manager.create_teamlead');
@@ -175,6 +177,8 @@ Route::controller(VisitorController::class)->group(function () {
         Route::get('/visitor/home', 'home')->name('visitor.home');
         Route::put('/visitor/profile', 'updateProfile')->name('visitor.profile.update');
         Route::get('/visitor/visit/list', 'showSharedTasks')->name('visitor.sharedtask.view');
+        Route::get('shared-tasks/lead/info/{id}',  'lead_info')->name('visitor.lead_info.view');
+        Route::put('shared-tasks/lead/info/{id}',  'update_lead_info')->name('visitor.lead_info.post');
         Route::get('shared-tasks/pos/{id}',  'showPos')->name('visitor.shared.pos.detail');
         Route::get('shared-tasks/account/{id}',  'showAccount')->name('visitor.shared.account.detail');
     });

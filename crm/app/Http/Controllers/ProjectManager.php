@@ -1184,7 +1184,7 @@ Task not associated with any owner task.');
 
 
 
-        return view('project_manager.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'visitorRecords', 'sharedVisitors','sharedTasks'));
+        return view('project_manager.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'visitorRecords', 'sharedVisitors', 'sharedTasks'));
     }
 
 
@@ -1201,53 +1201,85 @@ Task not associated with any owner task.');
     }
 
 
-public function store_shared_task(Request $request, $subtaskId)
+    public function store_shared_task(Request $request, $subtaskId)
+    {
+        $request->validate([
+            'visitor_id' => 'required|exists:visitors,id',
+        ]);
+
+        $subtask = Subtask::findOrFail($subtaskId);
+        $managerId = $subtask->manager_id;
+        $teamleadId = $subtask->team_lead_id; // 👈 subtask se teamlead uthao
+
+        $employeeId = null;
+        $posId = null;
+        $accountId = null;
+
+        // Agar account_id aya hai
+        if ($request->has('account_id')) {
+            $account = CellCenterAccount::find($request->account_id);
+            if ($account) {
+                $employeeId = $account->employee_id;
+                $accountId = $account->id;
+            }
+        }
+
+        // Agar pos_id aya hai
+        if ($request->has('pos_id')) {
+            $pos = CellCenterPos::find($request->pos_id);
+            if ($pos) {
+                $employeeId = $pos->employee_id;
+                $posId = $pos->id;
+            }
+        }
+
+        if (!$employeeId) {
+            return redirect()->back()->with('error', 'No employee found in CallCenterAccount or POS record');
+        }
+
+        SharedTask::create([
+            'visitor_id' => $request->visitor_id,
+            'manager_id' => $managerId,
+            'teamlead_id' => $teamleadId,   // 👈 ab save hoga
+            'employee_id' => $employeeId,
+            'subtask_id' => $subtaskId,
+            'cell_center_pos_id' => $posId,
+            'cell_center_account_id' => $accountId,
+        ]);
+
+        return redirect()->back()->with('success', 'Task shared successfully');
+    }
+
+ public function show_employee_task($id)
 {
-    $request->validate([
-        'visitor_id' => 'required|exists:visitors,id',
-    ]);
+    // Shared task fetch karo
+    $shared_task = SharedTask::with(['cellCenterPos', 'cellCenterAccount'])->findOrFail($id);
 
-    $subtask = Subtask::findOrFail($subtaskId);
-    $managerId = $subtask->manager_id;
+    // Related POS aur Account nikalo
+    $cell_center_pos = $shared_task->cell_center_pos_id 
+        ? CellCenterPos::find($shared_task->cell_center_pos_id) 
+        : null;
 
-    $employeeId = null;
-    $posId = null;
-    $accountId = null;
+    $cell_center_account = $shared_task->cell_center_account_id 
+        ? CellCenterAccount::find($shared_task->cell_center_account_id) 
+        : null;
 
-    // Agar account IDs hain to pehle account check karo
-    if (!empty($subtask->cell_center_account_ids)) {
-        $callCenterAccount = CellCenterAccount::whereIn('id', (array) $subtask->cell_center_account_ids)->first();
-        if ($callCenterAccount) {
-            $employeeId = $callCenterAccount->employee_id;
-            $accountId = $callCenterAccount->id;
-        }
-    }
-
-    // Agar account se employee nahi mila to POS check karo
-    if (!$employeeId && !empty($subtask->call_center_pos_ids)) {
-        $pos = CellCenterPos::whereIn('id', (array) $subtask->call_center_pos_ids)->first();
-        if ($pos) {
-            $employeeId = $pos->employee_id;
-            $posId = $pos->id;
-        }
-    }
-
-    if (!$employeeId) {
-        return redirect()->back()->with('error', 'No employee found in CallCenterAccount or POS records');
-    }
-
-    SharedTask::create([
-        'visitor_id' => $request->visitor_id,
-        'manager_id' => $managerId,
-        'employee_id' => $employeeId,
-        'subtask_id' => $subtaskId,
-        'cell_center_pos_id' => $posId,
-        'cell_center_account_id' => $accountId,
-    ]);
-
-    return redirect()->back()->with('success', 'Task shared successfully');
+    return view("project_manager.show_employee_task", compact(
+        'shared_task',
+        'cell_center_pos',
+        'cell_center_account'
+    ));
 }
 
+
+    function shared_task()
+    {
+        $manager = Auth::guard("project_manager")->user();
+
+        $shared_task = SharedTask::where('manager_id', $manager->id)->get();
+
+        return view("project_manager.shared_task", compact('shared_task'));
+    }
 
 
 

@@ -6,6 +6,7 @@ use App\Models\CellCenterAccount;
 use App\Models\CellCenterPos;
 use App\Models\SharedTask;
 use App\Models\Visitor;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -94,37 +95,104 @@ class VisitorController extends Controller
         return view("visitor.visit_list");
     }
 
-    public function showSharedTasks()
+  public function showSharedTasks()
 {
-    // Visitor login check karo
-          // Auth check
-        $user = Auth::guard('visitor')->user();
-        if (!$user) {
-            return redirect()->route('visitor.login')->with('error', 'Please login first.');
-        }
+    // Visitor login check
+    $user = Auth::guard('visitor')->user();
+    if (!$user) {
+        return redirect()->route('visitor.login')->with('error', 'Please login first.');
+    }
 
-        // Visitor ke sabhi shared tasks
-        $sharedTasks = SharedTask::where('visitor_id', $user->id)->get();
+    // Fetch all shared tasks for the visitor
+    $sharedTasks = SharedTask::where('visitor_id', $user->id)->get();
 
-        $posResults = [];
-        $accountResults = [];
+    $posResults = [];
+    $accountResults = [];
 
-        foreach ($sharedTasks as $shared) {
-            if ($shared->cell_center_pos_id) {
-                $pos = CellCenterPos::find($shared->cell_center_pos_id);
-                if ($pos) {
-                    $posResults[] = $pos;
-                }
-            } elseif ($shared->cell_center_account_id) {
-                $account = CellCenterAccount::find($shared->cell_center_account_id);
-                if ($account) {
-                    $accountResults[] = $account;
-                }
+    foreach ($sharedTasks as $shared) {
+        if ($shared->cell_center_pos_id) {
+            $pos = CellCenterPos::find($shared->cell_center_pos_id);
+            if ($pos) {
+                // Attach shared_task_id and status to pos results
+                $pos->shared_task_id = $shared->id;
+                $pos->shared_status = $shared->status;
+                $posResults[] = $pos;
+            }
+        } elseif ($shared->cell_center_account_id) {
+            $account = CellCenterAccount::find($shared->cell_center_account_id);
+            if ($account) {
+                // Attach shared_task_id and status to account results
+                $account->shared_task_id = $shared->id;
+                $account->shared_status = $shared->status;
+                $accountResults[] = $account;
             }
         }
-
-        return view('visitor.visit_list', compact('posResults', 'accountResults'));
     }
+
+    return view('visitor.visit_list', compact('sharedTasks', 'posResults', 'accountResults'));
+}
+
+public function lead_info($id)
+{
+    // Find the shared task by ID
+    $shared_task = SharedTask::findOrFail($id);
+
+    // Determine if it's a POS or Account and fetch the related record
+    $record = null;
+    $type = null;
+
+    if ($shared_task->cell_center_pos_id) {
+        $record = CellCenterPos::find($shared_task->cell_center_pos_id);
+        $type = 'pos';
+    } elseif ($shared_task->cell_center_account_id) {
+        $record = CellCenterAccount::find($shared_task->cell_center_account_id);
+        $type = 'account';
+    }
+
+    return view('visitor.lead_info', compact('shared_task', 'record', 'type'));
+}
+
+
+public function update_lead_info(Request $request, $id)
+{
+    $sharedTask = SharedTask::findOrFail($id);
+
+    $request->validate([
+        'status' => 'required|in:pending,deployed,on_leave,inactive', // Updated to match ENUM
+        'comment' => 'nullable|string|max:5000',
+        'attachments' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm,mp3,wav,ogg,pdf,xls,xlsx,csv,doc,docx|max:10240',
+    ]);
+
+    $attachmentUrl = $sharedTask->attachments;
+
+    if ($request->hasFile('attachments')) {
+        try {
+            $uploadedFile = Cloudinary::uploadApi()->upload(
+                $request->file('attachments')->getRealPath(),
+                [
+                    'folder' => 'shared_tasks',
+                    'resource_type' => 'auto',
+                ]
+            );
+            $attachmentUrl = $uploadedFile['secure_url'];
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'attachments' => 'Failed to upload file: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    $sharedTask->update([
+        'status' => $request->status,
+        'comment' => $request->comment,
+        'attachments' => $attachmentUrl,
+    ]);
+
+    return redirect()->route('visitor.sharedtask.view')
+        ->with('success', 'Shared task updated successfully.');
+}
+
+
 
 
      public function showPos($id)

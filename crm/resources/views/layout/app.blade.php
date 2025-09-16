@@ -148,6 +148,11 @@
                             <i class="zmdi zmdi-accounts mr-2"></i> <span>Employees</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('project_manager.shared_task.view') }}">
+                            <i class="zmdi zmdi-accounts mr-2"></i> <span>Shared Task</span>
+                        </a>
+                    </li>
 
                     {{-- 🔔 Notification Icon --}}
                     <li class="nav-item">

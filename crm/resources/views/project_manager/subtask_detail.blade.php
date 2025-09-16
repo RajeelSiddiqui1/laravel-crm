@@ -231,7 +231,7 @@
                                             <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">Share
                                                 Task</button>
                                         </form>
-                                    @endif
+@endif
 
 
 

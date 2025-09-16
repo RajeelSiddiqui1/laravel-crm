@@ -8,12 +8,14 @@ class SharedTask extends Model
 {
     protected $fillable = [
         'manager_id',
+        'teamlead_id',
         'employee_id',
         'visitor_id',
         'subtask_id',
         'cell_center_pos_id',
         'cell_center_account_id',
         'comment',
+        'attachments',
         'status',
     ];
 
@@ -27,24 +29,33 @@ class SharedTask extends Model
         return $this->belongsTo(User::class, 'manager_id');
     }
 
-    public function employee()
+    public function teamlead()
     {
-        return $this->belongsTo(User::class, 'employee_id');
+        return $this->belongsTo(TeamLead::class, 'teamlead_id');
     }
 
-   
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
+
     public function subtask()
     {
         return $this->belongsTo(Subtask::class);
     }
 
-     public function pos()
+    // SharedTask.php (model)
+    public function cellCenterPos()
     {
-        return $this->belongsTo(CellCenterPos::class, 'cell_center_pos_id');
+        return $this->belongsTo(CellCenterPos::class, 'cell_center_pos_id', 'id');
     }
 
-    public function account()
+
+
+    public function cellCenterAccount()
     {
-        return $this->belongsTo(CellCenterAccount::class, 'cell_center_account_id');
+        return $this->belongsTo(CellCenterAccount::class, 'cell_center_account_id', 'id');
     }
 }
