@@ -1161,7 +1161,7 @@ Task not associated with any owner task.');
     }
 
 
-    function subtask_detail($id)
+    public function subtask_detail($id)
     {
         $manager = Auth::guard('project_manager')->user();
         $subtask = Subtask::findOrFail($id);
@@ -1176,40 +1176,46 @@ Task not associated with any owner task.');
 
         $managerDeptIds = is_array($manager->department_ids)
             ? $manager->department_ids
-            : explode(',', $manager->department_ids);
+            : json_decode($manager->department_ids, true);
 
-        $visitorRecords = Visitor::whereJsonContains('department_ids', $managerDeptIds)->get();
-        $sharedVisitors = SharedTask::where('subtask_id', $subtask->id)->pluck('visitor_id')->toArray();
+        $managers = ModelsProjectManager::where('id', '!=', $manager->id)
+            ->where(function ($q) use ($managerDeptIds) {
+                foreach ($managerDeptIds as $deptId) {
+                    $q->orWhereJsonContains('department_ids', $deptId);
+                }
+            })->get();
+
+        $sharedManagers = SharedTask::where('subtask_id', $subtask->id)
+            ->pluck('assigend_manager_id') // 👈 assigend_manager_id use karo
+            ->toArray();
+
         $sharedTasks = SharedTask::where('subtask_id', $subtask->id)->get();
 
 
-
-        return view('project_manager.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'visitorRecords', 'sharedVisitors', 'sharedTasks'));
+        return view('project_manager.subtask_detail', compact(
+            'subtask',
+            'posRecords',
+            'accountRecords',
+            'managers',
+            'sharedManagers',
+            'sharedTasks',
+            'manager'
+        ));
     }
 
 
-    function fetch_visitor($id)
-    {
-        $visitor = Visitor::findOrFail($id);
-        return response()->json([
-            'name' => $visitor->name ?? 'N/A',
-            'email' => $visitor->email ?? 'N/A',
-            'phone' => $visitor->phone ?? 'N/A',
-            'department_id' => $visitor->department_ids ?? 'N/A',
-            'status' => $visitor->status ?? 'N/A'
-        ]);
-    }
+
 
 
     public function store_shared_task(Request $request, $subtaskId)
     {
         $request->validate([
-            'visitor_id' => 'required|exists:visitors,id',
+            'manager_id' => 'required|exists:project_managers,id', // 👈 yahan manager_id likho
         ]);
 
         $subtask = Subtask::findOrFail($subtaskId);
         $managerId = $subtask->manager_id;
-        $teamleadId = $subtask->team_lead_id; // 👈 subtask se teamlead uthao
+        $teamleadId = $subtask->team_lead_id;
 
         $employeeId = null;
         $posId = null;
@@ -1238,50 +1244,123 @@ Task not associated with any owner task.');
         }
 
         SharedTask::create([
-            'visitor_id' => $request->visitor_id,
-            'manager_id' => $managerId,
-            'teamlead_id' => $teamleadId,   // 👈 ab save hoga
-            'employee_id' => $employeeId,
-            'subtask_id' => $subtaskId,
-            'cell_center_pos_id' => $posId,
+            'assigend_manager_id'   => $request->manager_id, // 👈 form se aya hua
+            'manager_id'            => $managerId,
+            'teamlead_id'           => $teamleadId,
+            'employee_id'           => $employeeId,
+            'subtask_id'            => $subtaskId,
+            'cell_center_pos_id'    => $posId,
             'cell_center_account_id' => $accountId,
         ]);
 
         return redirect()->back()->with('success', 'Task shared successfully');
     }
 
- public function show_employee_task($id)
-{
-    // Shared task fetch karo
-    $shared_task = SharedTask::with(['cellCenterPos', 'cellCenterAccount'])->findOrFail($id);
 
-    // Related POS aur Account nikalo
-    $cell_center_pos = $shared_task->cell_center_pos_id 
-        ? CellCenterPos::find($shared_task->cell_center_pos_id) 
-        : null;
-
-    $cell_center_account = $shared_task->cell_center_account_id 
-        ? CellCenterAccount::find($shared_task->cell_center_account_id) 
-        : null;
-
-    return view("project_manager.show_employee_task", compact(
-        'shared_task',
-        'cell_center_pos',
-        'cell_center_account'
-    ));
-}
-
-
-    function shared_task()
+    public function show_employee_task($id)
     {
-        $manager = Auth::guard("project_manager")->user();
+        // Shared task fetch karo
+        $shared_task = SharedTask::with(['cellCenterPos', 'cellCenterAccount'])->findOrFail($id);
 
-        $shared_task = SharedTask::where('manager_id', $manager->id)->get();
+        // Related POS aur Account nikalo
+        $cell_center_pos = $shared_task->cell_center_pos_id
+            ? CellCenterPos::find($shared_task->cell_center_pos_id)
+            : null;
 
-        return view("project_manager.shared_task", compact('shared_task'));
+        $cell_center_account = $shared_task->cell_center_account_id
+            ? CellCenterAccount::find($shared_task->cell_center_account_id)
+            : null;
+
+        return view("project_manager.show_employee_task", compact(
+            'shared_task',
+            'cell_center_pos',
+            'cell_center_account'
+        ));
+    }
+
+    public function showSharedTasks()
+    {
+        // Manager login
+        $manager = Auth::guard('project_manager')->user();
+
+        // Manager ke department_ids (array/json handle karega)
+        $managerDeptIds = is_array($manager->department_ids)
+            ? $manager->department_ids
+            : json_decode($manager->department_ids, true);
+
+        // Team leads jo manager ke department me hain
+        $teamLeads = TeamLead::whereIn('department_id', $managerDeptIds)->get();
+
+        // Shared tasks jo iss manager ko assign hue hain
+        $sharedTasks = SharedTask::where('assigend_manager_id', $manager->id)->get();
+
+        $posResults = [];
+        $accountResults = [];
+
+        foreach ($sharedTasks as $shared) {
+            if ($shared->cell_center_pos_id) {
+                $pos = CellCenterPos::find($shared->cell_center_pos_id);
+                if ($pos) {
+                    $pos->shared_task_id = $shared->id;
+                    $pos->shared_status = $shared->status;
+                    $pos->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                    $posResults[] = $pos;
+                }
+            } elseif ($shared->cell_center_account_id) {
+                $account = CellCenterAccount::find($shared->cell_center_account_id);
+                if ($account) {
+                    $account->shared_task_id = $shared->id;
+                    $account->shared_status = $shared->status;
+                    $account->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                    $accountResults[] = $account;
+                }
+            }
+        }
+
+        return view(
+            'project_manager.manager_shared_task_list',
+            compact('sharedTasks', 'posResults', 'accountResults', 'teamLeads')
+        );
+    }
+
+    /**
+     * Assign a teamlead to shared task
+     */
+    public function assign_teamlead_shared_task(Request $request, $sharedTaskId)
+    {
+        $request->validate([
+            'teamlead_id' => 'required|exists:team_leads,id',
+        ]);
+
+        $sharedTask = SharedTask::findOrFail($sharedTaskId);
+        $sharedTask->assigned_teamlead_id = $request->teamlead_id;
+        $sharedTask->save();
+
+        return redirect()->back()->with('success_swal', 'Team Lead assigned successfully.');
     }
 
 
+
+    public function showPos($id)
+    {
+        $pos = CellCenterPos::findOrFail($id);
+        return view('project_manager.pos_detail', compact('pos'));
+    }
+
+    // Account Detail
+    public function showAccount($id)
+    {
+        $account = CellCenterAccount::findOrFail($id);
+        return view('project_manager.account_detail', compact('account'));
+    }
+
+
+
+    function shared_task_list(){
+         $manager = Auth::guard('project_manager')->user();
+        $shared_task = SharedTask::where('manager_id', $manager->id)->get();        
+        return view('project_manager.shared_task', compact('shared_task'));
+    }
 
     public function teamleads()
     {

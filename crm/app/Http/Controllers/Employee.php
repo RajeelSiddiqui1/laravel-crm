@@ -22,6 +22,7 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Support\Facades\Log;
 use App\Models\EmployeeSubtask;
 use App\Models\Notification;
+use App\Models\SharedTask;
 
 class Employee extends Controller
 {
@@ -470,6 +471,124 @@ class Employee extends Controller
             }, $folderParts));
         }
         return null;
+    }
+
+
+    
+    public function showSharedTasks()
+    {
+        // TeamLead login
+        $employee = Auth::guard('employee')->user();
+
+        // Har teamlead ka single department_id hota hai
+    
+
+        // Shared tasks jo iss teamlead ko assign hue hain
+        $sharedTasks = SharedTask::where('assigned_employee_id', $employee->id)->get();
+
+        $posResults = [];
+        $accountResults = [];
+
+        foreach ($sharedTasks as $shared) {
+            if ($shared->cell_center_pos_id) {
+                $pos = CellCenterPos::find($shared->cell_center_pos_id);
+                if ($pos) {
+                    $pos->shared_task_id = $shared->id;
+                    $pos->shared_status = $shared->status;
+                    $posResults[] = $pos;
+                }
+            } elseif ($shared->cell_center_account_id) {
+                $account = CellCenterAccount::find($shared->cell_center_account_id);
+                if ($account) {
+                    $account->shared_task_id = $shared->id;
+                    $account->shared_status = $shared->status;
+                    $accountResults[] = $account;
+                }
+            }
+        }
+
+        return view(
+            'employee.shared_task_list',
+            compact('sharedTasks', 'posResults', 'accountResults')
+        );
+    }
+
+
+
+    public function task_info($id)
+{
+    // Find the shared task by ID
+    $shared_task = SharedTask::findOrFail($id);
+
+    // Determine if it's a POS or Account and fetch the related record
+    $record = null;
+    $type = null;
+
+    if ($shared_task->cell_center_pos_id) {
+        $record = CellCenterPos::find($shared_task->cell_center_pos_id);
+        $type = 'pos';
+    } elseif ($shared_task->cell_center_account_id) {
+        $record = CellCenterAccount::find($shared_task->cell_center_account_id);
+        $type = 'account';
+    }
+
+    return view('employee.task_info', compact('shared_task', 'record', 'type'));
+}
+
+
+public function update_task_info(Request $request, $id)
+{
+    $sharedTask = SharedTask::findOrFail($id);
+
+    $request->validate([
+        'status' => 'required|in:pending,signed,not_avaiable,not_intrested,re_shedule', // Updated to match ENUM
+        'comment' => 'nullable|string|max:5000',
+        'attachments' => 'nullable|file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm,mp3,wav,ogg,pdf,xls,xlsx,csv,doc,docx|max:10240',
+    ]);
+
+    $attachmentUrl = $sharedTask->attachments;
+
+    if ($request->hasFile('attachments')) {
+        try {
+            $uploadedFile = Cloudinary::uploadApi()->upload(
+                $request->file('attachments')->getRealPath(),
+                [
+                    'folder' => 'shared_tasks',
+                    'resource_type' => 'auto',
+                ]
+            );
+            $attachmentUrl = $uploadedFile['secure_url'];
+        } catch (\Exception $e) {
+            return back()->withErrors([
+                'attachments' => 'Failed to upload file: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    $sharedTask->update([
+        'status' => $request->status,
+        'comment' => $request->comment,
+        'attachments' => $attachmentUrl,
+    ]);
+
+    return redirect()->route('employee.sharedtask.view')
+        ->with('success', 'Shared task updated successfully.');
+}
+
+
+
+
+      public function showPos($id)
+    {
+        $pos = CellCenterPos::findOrFail($id);
+        return view('employee.pos_detail', compact('pos'));
+    }
+
+    // Account Detail
+    public function showAccount($id)
+    {
+        $account = CellCenterAccount::findOrFail($id);
+        return view('employee.account_detail', compact('account'));
     }
 
     public function fetch_team_leads()

@@ -146,7 +146,7 @@
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <h2 class="text-center mb-4">POS Details</h2>
+                <h2 class="text-center mb-4">Account Details</h2>
             </div>
         </div>
 
@@ -154,58 +154,50 @@
             <table class="table table-bordered table-hover">
                 <tbody>
                     <tr>
-                        <th>Name</th>
-                        <td>{{ $pos->name ?? 'N/A' }}</td>
+                        <th>Email</th>
+                        <td>{{ $account->email ?? 'N/A' }}</td>
                     </tr>
                     <tr>
-                        <th>Business Name</th>
-                        <td>{{ $pos->business_name ?? 'N/A' }}</td>
+                        <th>Phone</th>
+                        <td>{{ $account->phone ?? 'N/A' }}</td>
                     </tr>
                     <tr>
                         <th>Business Number</th>
-                        <td>{{ $pos->business_number ?? 'N/A' }}</td>
+                        <td>{{ $account->bussiness_number ?? 'N/A' }}</td>
                     </tr>
                     <tr>
-                        <th>Personal Number</th>
-                        <td>{{ $pos->personal_number ?? 'N/A' }}</td>
+                        <th>Corporation Number</th>
+                        <td>{{ $account->corpuration_number ?? 'N/A' }}</td>
                     </tr>
                     <tr>
-                        <th>Email</th>
-                        <td>{{ $pos->personal_email ?? 'N/A' }}</td>
+                        <th>Corporation Email</th>
+                        <td>{{ $account->corpuration_email ?? 'N/A' }}</td>
                     </tr>
                     <tr>
-                        <th>Business Email</th>
-                        <td>{{ $pos->business_email ?? 'N/A' }}</td>
+                        <th>Previous History</th>
+                        <td>{{ $account->pervious_history ?? 'N/A' }}</td>
                     </tr>
                     <tr>
-                        <th>Address</th>
-                        <td>{{ $pos->address ?? 'N/A' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Provider</th>
-                        <td>{{ $pos->provider ?? 'N/A' }}</td>
-                    </tr>
-                    <tr>
-                        <th>POS Type</th>
-                        <td>{{ $pos->pos_type ?? 'N/A' }}</td>
+                        <th>Fees</th>
+                        <td>{{ $account->fees ?? 'N/A' }}</td>
                     </tr>
                     <tr>
                         <th>Status</th>
                         <td>
-                            <span class="badge badge-{{ $pos->status == 'active' ? 'success' : ($pos->status == 'pending' ? 'warning' : 'danger') }}">
-                                {{ ucfirst($pos->status ?? 'N/A') }}
+                            <span class="badge badge-{{ $account->status == 'active' ? 'success' : ($account->status == 'pending' ? 'warning' : 'danger') }}">
+                                {{ ucfirst($account->status ?? 'N/A') }}
                             </span>
                         </td>
                     </tr>
                     <tr>
                         <th>Comments</th>
-                        <td>{{ $pos->comment ?? 'N/A' }}</td>
+                        <td>{{ $account->comments ?? 'N/A' }}</td>
                     </tr>
                     <tr>
                         <th>Attachments</th>
                         <td>
                             @php
-                                $attachments = $pos->attachments;
+                                $attachments = $account->attachments;
                                 if (is_string($attachments)) {
                                     $decoded = json_decode($attachments, true);
                                     $attachments = is_array($decoded) ? $decoded : [$attachments];
@@ -271,7 +263,7 @@
         </div>
 
         <div class="mt-4">
-            <a href="{{ route('visitor.sharedtask.view') }}" class="btn btn-secondary">Back</a>
+            <a href="{{ route('team-lead.sharedtask.view') }}" class="btn btn-secondary">Back</a>
         </div>
     </div>
 @endsection

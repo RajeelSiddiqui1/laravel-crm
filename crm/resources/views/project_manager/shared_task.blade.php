@@ -252,28 +252,34 @@
                     @forelse($shared_task as $shared)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-                            <td>{{ $shared->visitor->name ?? 'N/A' }}</td>
+                            <td>{{ $shared->manager->name ?? 'N/A' }}</td>
                             <td>{{ $shared->employee->name ?? 'N/A' }}</td>
+                            @php
+                                $shortComment = Str::words($shared['comment'] ?? '', 4, '...');
+                            @endphp
                             <td>
-                                @php
-                                    $shortComment = Str::words($shared->comment, 4, '...');
-                                @endphp
                                 {{ $shortComment }}
-                                @if (str_word_count($shared->comment) > 4)
+
+                                @if (str_word_count($shared['comment'] ?? '') > 4)
                                     <button class="btn btn-link p-0 ms-1" data-bs-toggle="modal"
-                                        data-bs-target="#commentModal{{ $shared->id }}">Show More</button>
+                                        data-bs-target="#commentModal{{ $shared['id'] }}">Show More</button>
                                 @endif
+
                             </td>
+
                             <td>
-                                @if ($shared->attachments)
+                                @if (!empty($shared['attachments']))
                                     <div class="mt-2 text-center">
                                         @php
-                                            $fileUrl = Str::startsWith($shared->attachments, ['http://', 'https://'])
-                                                ? $shared->attachments
-                                                : asset('storage/' . $shared->attachments);
-                                            $ext = strtolower(pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
-                                            $fileName = basename($shared->attachments);
+                                            $fileUrl = Str::startsWith($shared['attachments'], ['http://', 'https://'])
+                                                ? $shared['attachments']
+                                                : asset('storage/' . $shared['attachments']);
+                                            $ext = strtolower(
+                                                pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION),
+                                            );
+                                            $fileName = basename($shared['attachments']);
                                         @endphp
+
                                         @if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
                                             <a href="{{ $fileUrl }}" target="_blank">
                                                 <img src="{{ $fileUrl }}" alt="Image" class="img-fluid rounded"
@@ -297,8 +303,8 @@
                                             </a>
                                         @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
                                             <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                <img src="https://img.icons8.com/color/48/000000/ms-excel.png" alt="Excel"
-                                                    class="icon" style="height: 40px;">
+                                                <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
+                                                    alt="Excel" class="icon" style="height: 40px;">
                                                 <div>{{ Str::limit($fileName, 12) }}</div>
                                             </a>
                                         @elseif (in_array($ext, ['doc', 'docx']))
@@ -319,6 +325,7 @@
                                     <span class="text-muted">No Attachment</span>
                                 @endif
                             </td>
+
                             <td>
                                 @php
                                     $status = $shared->status ?? 'N/A';
@@ -333,29 +340,33 @@
                                 @endphp
                                 <span class="badge bg-{{ $badgeClass }}">{{ ucfirst($status) }}</span>
                             </td>
-                            <td>
-                                <a href="{{route('project_manager.show_employee_task.view', $shared->id)}}" class="btn btn-sm btn-success">
+                            {{-- <td>
+                                <a href="{{ route('project_manager.show_employee_task.view', $shared->id) }}"
+                                    class="btn btn-sm btn-success">
                                     See employee task
                                 </a>
-                            </td>
+                            </td> --}}
                         </tr>
 
                         <!-- Enhanced Modal -->
-                        @if (str_word_count($shared->comment) > 4)
-                            <div class="modal fade" id="commentModal{{ $shared->id }}" tabindex="-1"
-                                aria-labelledby="commentModalLabel{{ $shared->id }}" aria-hidden="true">
+                        @if (str_word_count($shared['comment'] ?? '') > 4)
+                            <div class="modal fade" id="commentModal{{ $shared['id'] }}" tabindex="-1"
+                                aria-labelledby="commentModalLabel{{ $shared['id'] }}" aria-hidden="true">
                                 <div class="modal-dialog modal-lg modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="commentModalLabel{{ $shared->id }}">Comment Details</h5>
+                                            <h5 class="modal-title" id="commentModalLabel{{ $shared['id'] }}">
+                                                Comment Details
+                                            </h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                 aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <p>{{ $shared->comment }}</p>
+                                            <p>{{ $shared['comment'] ?? 'No comment available' }}</p>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                                            <button type="button" class="btn btn-primary"
+                                                data-bs-dismiss="modal">Close</button>
                                         </div>
                                     </div>
                                 </div>

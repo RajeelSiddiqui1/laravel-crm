@@ -187,7 +187,7 @@
 
                         <!-- Update Form -->
                         <h4>Update Shared Task</h4>
-                        <form action="{{ route('visitor.lead_info.post', $shared_task->id) }}" method="POST"
+                        <form action="{{ route('employee.task_info.post', $shared_task->id) }}" method="POST"
                             enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
@@ -198,14 +198,14 @@
                                 <!-- Status Dropdown -->
                                 <select name="status" id="status"
                                     class="form-select @error('status') is-invalid @enderror">
-                                    <option value="inactive" {{ $shared_task->status == 'inactive' ? 'selected' : '' }}>
-                                        Inactive</option>
-                                    <option value="pending" {{ $shared_task->status == 'pending' ? 'selected' : '' }}>
-                                        Pending</option>
-                                    <option value="deployed" {{ $shared_task->status == 'deployed' ? 'selected' : '' }}>
-                                        Deployed</option>
-                                    <option value="on_leave" {{ $shared_task->status == 'on_leave' ? 'selected' : '' }}>On
-                                        Leave</option>
+                                    <option value="signed" {{ $shared_task->status == 'signed' ? 'selected' : '' }}>
+                                        Signed</option>
+                                    <option value="not_avaiable" {{ $shared_task->status == 'not_avaiable' ? 'selected' : '' }}>
+                                        Not available</option>
+                                    <option value="not_intrested" {{ $shared_task->status == 'not_intrested' ? 'selected' : '' }}>
+                                        Not Intrested</option>
+                                    <option value="not_intrested" {{ $shared_task->status == 're_shedule' ? 'selected' : '' }}>On
+                                        Not shedule</option>
                                 </select>
 
                                 <!-- Status Badge -->
@@ -306,7 +306,7 @@
 
                             <!-- Form Buttons -->
                             <div class="d-flex justify-content-between">
-                                <a href="{{ route('visitor.sharedtask.view') }}" class="btn btn-secondary">Back</a>
+                                <a href="{{ route('employee.sharedtask.view') }}" class="btn btn-secondary">Back</a>
                                 <button type="submit" class="btn btn-primary">Update Task</button>
                             </div>
                         </form>

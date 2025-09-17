@@ -149,8 +149,13 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('project_manager.shared_task.view') }}">
-                            <i class="zmdi zmdi-accounts mr-2"></i> <span>Shared Task</span>
+                        <a href="{{ route('project_manager.sharedtask.view') }}">
+                            <i class="zmdi zmdi-accounts mr-2"></i> <span>Manager Shared Task List</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('project_manager.show_sharedtask_task.view') }}">
+                        <i class="zmdi zmdi-accounts mr-2"></i> <span>Shared Task</span>
                         </a>
                     </li>
 
@@ -475,6 +480,11 @@
                             <i class="fas fa-tasks mr-2"></i> <span>Manager Tasks</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('team-lead.sharedtask.view') }}">
+                            <i class="fas fa-tasks mr-2"></i> <span>Manager Shared Tasks</span>
+                        </a>
+                    </li>
 
                     @php
                         $user = null;
@@ -602,7 +612,11 @@
                             <i class="fas fa-users mr-2"></i> <span>TeamLeads</span>
                         </a>
                     </li>
-
+                    <li>
+                        <a href="{{ route('employee.sharedtask.view') }}">
+                            <i class="fas fa-tasks mr-2"></i> <span>TeamLead Shared Tasks</span>
+                        </a>
+                    </li>
                     <li>
                         <a href="{{ route('employee.logout') }}">
                             <i class="icon-power mr-2"></i> <span>Logout</span>
@@ -705,7 +719,7 @@
         @endif
 
 
-            @if (Auth::guard('visitor')->check())
+        @if (Auth::guard('visitor')->check())
             <div id="sidebar-wrapper" data-simplebar="" data-simplebar-auto-hide="true">
                 <div class="brand-logo">
                     <a href="#">
@@ -730,7 +744,7 @@
                             <i class="icon-wallet mr-2"></i> <span>Visit List</span>
                         </a>
                     </li>
-                    
+
                     @php
                         $user = null;
                         $guard = null;

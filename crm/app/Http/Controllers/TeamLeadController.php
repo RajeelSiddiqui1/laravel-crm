@@ -27,6 +27,7 @@ use Illuminate\Support\Str;
 use App\Models\EmployeeSubtask;
 use App\Models\Notification;
 use App\Models\ProjectManager;
+use App\Models\SharedTask;
 use Carbon\Carbon;
 use SweetAlert2\Laravel\Swal;
 
@@ -746,6 +747,80 @@ public function subtask_list($id)
         return view('team_lead.subtask_show_more', compact('subtask', 'employeeSubtasks', 'attachments'));
     }
 
+
+
+    public function showSharedTasks()
+    {
+        // TeamLead login
+        $teamlead = Auth::guard('team_lead')->user();
+
+        // Har teamlead ka single department_id hota hai
+        $departmentId = $teamlead->department_id;
+
+        // Employees fetch karo jo is teamlead ke department me hain
+        $employees = Employee::where('department_id', $departmentId)->get();
+
+        // Shared tasks jo iss teamlead ko assign hue hain
+        $sharedTasks = SharedTask::where('assigned_teamlead_id', $teamlead->id)->get();
+
+        $posResults = [];
+        $accountResults = [];
+
+        foreach ($sharedTasks as $shared) {
+            if ($shared->cell_center_pos_id) {
+                $pos = CellCenterPos::find($shared->cell_center_pos_id);
+                if ($pos) {
+                    $pos->shared_task_id = $shared->id;
+                    $pos->shared_status = $shared->status;
+                    $pos->assigned_employee_id = $shared->assigned_employee_id;
+                    $posResults[] = $pos;
+                }
+            } elseif ($shared->cell_center_account_id) {
+                $account = CellCenterAccount::find($shared->cell_center_account_id);
+                if ($account) {
+                    $account->shared_task_id = $shared->id;
+                    $account->shared_status = $shared->status;
+                    $account->assigned_employee_id = $shared->assigned_employee_id;
+                    $accountResults[] = $account;
+                }
+            }
+        }
+
+        return view(
+            'team_lead.shared_task_list',
+            compact('sharedTasks', 'posResults', 'accountResults', 'employees')
+        );
+    }
+
+    /**
+     * Assign an employee to shared task
+     */
+    public function assign_employee_shared_task(Request $request, $sharedTaskId)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:employees,id',
+        ]);
+
+        $sharedTask = SharedTask::findOrFail($sharedTaskId);
+        $sharedTask->assigned_employee_id = $request->employee_id;
+        $sharedTask->save();
+
+        return redirect()->back()->with('success', 'Employee assigned successfully.');
+    }
+
+
+    public function showPos($id)
+    {
+        $pos = CellCenterPos::findOrFail($id);
+        return view('team_lead.pos_detail', compact('pos'));
+    }
+
+    // Account Detail
+    public function showAccount($id)
+    {
+        $account = CellCenterAccount::findOrFail($id);
+        return view('team_lead.account_detail', compact('account'));
+    }
 
 
     function fetch_employee()

@@ -263,7 +263,7 @@
         </div>
 
         <div class="mt-4">
-            <a href="{{ route('visitor.sharedtask.view') }}" class="btn btn-secondary">Back</a>
+            <a href="{{ route('project_manager.sharedtask.view') }}" class="btn btn-secondary">Back</a>
         </div>
     </div>
 @endsection

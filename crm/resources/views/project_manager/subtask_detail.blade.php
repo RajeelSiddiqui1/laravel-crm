@@ -4,7 +4,7 @@
     <div class="container py-5">
         <div class="d-flex justify-content-between align-items-center mb-5">
             <h2 class="fw-bold text-light display-6">{{ $subtask->title }} - Details</h2>
-            <a href="{{ url()->previous() }}" class="btn btn-outline-light btn-lg rounded-pill">
+            <a href="{{ route('project_manager.subtask') }}" class="btn btn-outline-light btn-lg rounded-pill">
                 <i class="bi bi-arrow-left me-2"></i> Back
             </a>
         </div>
@@ -76,30 +76,39 @@
                                     </span>
 
                                     @php
-                                        $sharedVisitorIds = $sharedTasks
+                                        // Iss account k liye shared managers nikal lo
+                                        $sharedManagerIds = $sharedTasks
                                             ->where('cell_center_pos_id', $pos->id)
-                                            ->pluck('visitor_id')
+                                            ->pluck('assigend_manager_id')
                                             ->toArray();
-                                        $sharedVisitorRecords = $visitorRecords->whereIn('id', $sharedVisitorIds);
+
+                                        $sharedManagerRecords = $managers->whereIn('id', $sharedManagerIds);
                                     @endphp
 
-                                    @if ($sharedVisitorRecords->isNotEmpty())
+                                    @if ($sharedManagerRecords->isNotEmpty())
                                         <p class="mb-0"><strong>Shared with:</strong>
-                                            {{ $sharedVisitorRecords->pluck('name')->join(', ') }}</p>
+                                            {{ $sharedManagerRecords->pluck('name')->join(', ') }}
+                                        </p>
                                     @else
-                                        <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST">
+                                        <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST"
+                                            class="mt-2">
                                             @csrf
                                             <input type="hidden" name="pos_id" value="{{ $pos->id }}">
-                                            <select name="visitor_id" class="form-select mb-2" style="max-width: 300px;">
-                                                <option value="">Select a Visitor</option>
-                                                @foreach ($visitorRecords as $visitor)
-                                                    <option value="{{ $visitor->id }}">{{ $visitor->name }}</option>
+                                            <select name="manager_id" class="form-select mb-2" style="max-width: 300px;">
+                                                <option value="">Select a Manager</option>
+                                                @foreach ($managers as $m)
+                                                    <option value="{{ $m->id }}"
+                                                        {{ in_array($m->id, $sharedManagerIds) ? 'selected' : '' }}>
+                                                        {{ $m->name }}
+                                                    </option>
                                                 @endforeach
                                             </select>
-                                            <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">Share
-                                                Task</button>
+                                            <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">
+                                                Share Task
+                                            </button>
                                         </form>
                                     @endif
+
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6">
@@ -208,30 +217,38 @@
                                     </span>
 
                                     @php
-                                        $sharedVisitorIds = $sharedTasks
+                                        // Iss account k liye shared managers nikal lo
+                                        $sharedManagerIds = $sharedTasks
                                             ->where('cell_center_account_id', $account->id)
-                                            ->pluck('visitor_id')
+                                            ->pluck('assigend_manager_id') // 👈 assigend_manager_id
                                             ->toArray();
-                                        $sharedVisitorRecords = $visitorRecords->whereIn('id', $sharedVisitorIds);
+
+                                        $sharedManagerRecords = $managers->whereIn('id', $sharedManagerIds);
                                     @endphp
 
-                                    @if ($sharedVisitorRecords->isNotEmpty())
+                                    @if ($sharedManagerRecords->isNotEmpty())
                                         <p class="mb-0"><strong>Shared with:</strong>
-                                            {{ $sharedVisitorRecords->pluck('name')->join(', ') }}</p>
+                                            {{ $sharedManagerRecords->pluck('name')->join(', ') }}
+                                        </p>
                                     @else
-                                        <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST">
+                                        <form action="{{ route('shared-task.store', $subtask->id) }}" method="POST"
+                                            class="mt-2">
                                             @csrf
                                             <input type="hidden" name="account_id" value="{{ $account->id }}">
-                                            <select name="visitor_id" class="form-select mb-2" style="max-width: 300px;">
-                                                <option value="">Select a Visitor</option>
-                                                @foreach ($visitorRecords as $visitor)
-                                                    <option value="{{ $visitor->id }}">{{ $visitor->name }}</option>
+                                            <select name="manager_id" class="form-select mb-2" style="max-width: 300px;">
+                                                <option value="">Select a Manager</option>
+                                                @foreach ($managers as $m)
+                                                    <option value="{{ $m->id }}"
+                                                        {{ in_array($m->id, $sharedManagerIds) ? 'selected' : '' }}>
+                                                        {{ $m->name }}
+                                                    </option>
                                                 @endforeach
                                             </select>
-                                            <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">Share
-                                                Task</button>
+                                            <button type="submit" class="btn btn-outline-light btn-sm rounded-pill">
+                                                Share Task
+                                            </button>
                                         </form>
-@endif
+                                    @endif
 
 
 

@@ -8,6 +8,8 @@ class SharedTask extends Model
 {
     protected $fillable = [
         'manager_id',
+        'assigend_manager_id',
+        'assigned_employee_id',
         'teamlead_id',
         'employee_id',
         'visitor_id',
@@ -19,14 +21,10 @@ class SharedTask extends Model
         'status',
     ];
 
-    public function visitor()
-    {
-        return $this->belongsTo(Visitor::class);
-    }
-
+    
     public function manager()
     {
-        return $this->belongsTo(User::class, 'manager_id');
+        return $this->belongsTo(ProjectManager::class, 'manager_id');
     }
 
     public function teamlead()
