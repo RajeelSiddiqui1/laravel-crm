@@ -1174,23 +1174,17 @@ Task not associated with any owner task.');
             ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
             : collect();
 
-        $managerDeptIds = is_array($manager->department_ids)
-            ? $manager->department_ids
-            : json_decode($manager->department_ids, true);
+        // ✅ Visitor department ka ID nikal lo
+        $visitorDeptId = Department::where('name', 'Visitor')->value('id');
 
-        $managers = ModelsProjectManager::where('id', '!=', $manager->id)
-            ->where(function ($q) use ($managerDeptIds) {
-                foreach ($managerDeptIds as $deptId) {
-                    $q->orWhereJsonContains('department_ids', $deptId);
-                }
-            })->get();
+        // ✅ Sirf wo managers fetch karo jinka department_ids me Visitor ho
+        $managers = ModelsProjectManager::whereJsonContains('department_ids', (string) $visitorDeptId)->get();
 
         $sharedManagers = SharedTask::where('subtask_id', $subtask->id)
-            ->pluck('assigend_manager_id') // 👈 assigend_manager_id use karo
+            ->pluck('assigend_manager_id')
             ->toArray();
 
         $sharedTasks = SharedTask::where('subtask_id', $subtask->id)->get();
-
 
         return view('project_manager.subtask_detail', compact(
             'subtask',
@@ -1202,6 +1196,8 @@ Task not associated with any owner task.');
             'manager'
         ));
     }
+
+
 
 
 
@@ -1356,11 +1352,58 @@ Task not associated with any owner task.');
 
 
 
-    function shared_task_list(){
-         $manager = Auth::guard('project_manager')->user();
-        $shared_task = SharedTask::where('manager_id', $manager->id)->get();        
-        return view('project_manager.shared_task', compact('shared_task'));
+    function shared_task_list()
+    {
+        $manager = Auth::guard('project_manager')->user();
+        $shared_task = SharedTask::where('manager_id', $manager->id)->get();
+        $operationDeptId = Department::where('name', 'Operation')->value('id');
+
+        $project_managers = ModelsProjectManager::whereJsonContains('department_ids', (string) $operationDeptId)->get();
+        return view('project_manager.shared_task', compact('shared_task', 'project_managers'));
     }
+
+    public function assign_operation_shared_task(Request $request, $sharedTaskId)
+    {
+        $request->validate([
+            'operation_manager_id' => 'required|exists:project_managers,id',
+        ]);
+
+        $sharedTask = SharedTask::findOrFail($sharedTaskId);
+        $sharedTask->operation_manager_id = $request->operation_manager_id;
+        $sharedTask->save();
+
+        return redirect()->back()->with('success', 'Operation Manager assigned successfully.');
+    }
+
+
+   function signed_task_list()
+{
+    $manager = Auth::guard('project_manager')->user();
+    $shared_task = SharedTask::where('operation_manager_id', $manager->id)->get();
+
+    $operationDeptId = Department::where('name', 'Operation')->value('id');
+
+    $teamleads = $operationDeptId 
+        ? TeamLead::where('department_id', $operationDeptId)->get() 
+        : collect();
+
+    return view('project_manager.signed_task_list', compact('shared_task', 'teamleads'));
+}
+
+
+    public function assign_operation_teamlead_shared_task(Request $request, $sharedTaskId)
+    {
+        $request->validate([
+            'operation_teamlead_id' => 'required|exists:team_leads,id',
+        ]);
+
+        $sharedTask = SharedTask::findOrFail($sharedTaskId);
+        $sharedTask->operation_teamlead_id = $request->operation_teamlead_id;
+        $sharedTask->save();
+
+        return redirect()->back()->with('success_swal', 'Operation TeamLead assigned successfully.');
+    }
+
 
     public function teamleads()
     {

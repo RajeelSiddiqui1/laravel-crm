@@ -298,14 +298,14 @@
                             </td>
                             <td>
                                 @php
-                                    $employee = $employees->firstWhere('id', $pos->assigned_employee_id);
+                                    $employee = $employees->firstWhere('id', $account->assigned_employee_id);
                                 @endphp
 
                                 @if ($employee)
                                     <span class="badge bg-info">{{ $employee->name }}</span>
                                 @else
                                     <form
-                                        action="{{ route('team-lead.assign_employee_shared_task', $pos->shared_task_id) }}"
+                                        action="{{ route('team-lead.assign_employee_shared_task', $account->shared_task_id) }}"
                                         method="POST">
                                         @csrf
                                         <select name="employee_id" class="form-select form-select-sm d-inline-block"

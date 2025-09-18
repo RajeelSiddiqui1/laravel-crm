@@ -603,54 +603,54 @@ class TeamLeadController extends Controller
     }
 
 
-public function subtask_list($id)
-{
-    $task = null;
-    $taskType = null;
+    public function subtask_list($id)
+    {
+        $task = null;
+        $taskType = null;
 
-    $t1Task = AccountT1::find($id);
-    if ($t1Task) {
-        $task = $t1Task;
-        $taskType = 'account_t1_id';
-    }
-
-    if (!$task) {
-        $t2Task = AccountT2::find($id);
-        if ($t2Task) {
-            $task = $t2Task;
-            $taskType = 'account_t2_id';
+        $t1Task = AccountT1::find($id);
+        if ($t1Task) {
+            $task = $t1Task;
+            $taskType = 'account_t1_id';
         }
-    }
 
-    if (!$task) {
-        $hstTask = AccountHST::find($id);
-        if ($hstTask) {
-            $task = $hstTask;
-            $taskType = 'account_hst_id';
+        if (!$task) {
+            $t2Task = AccountT2::find($id);
+            if ($t2Task) {
+                $task = $t2Task;
+                $taskType = 'account_t2_id';
+            }
         }
-    }
 
-    if (!$task) {
-        $operationTask = ManagerOperation::find($id);
-        if ($operationTask) {
-            $task = $operationTask;
-            $taskType = 'manager_operation_id';
+        if (!$task) {
+            $hstTask = AccountHST::find($id);
+            if ($hstTask) {
+                $task = $hstTask;
+                $taskType = 'account_hst_id';
+            }
         }
+
+        if (!$task) {
+            $operationTask = ManagerOperation::find($id);
+            if ($operationTask) {
+                $task = $operationTask;
+                $taskType = 'manager_operation_id';
+            }
+        }
+
+        if (!$task) {
+            return redirect()->route('team_lead.manager_tasks')->with('error_swal', 'Task not found.');
+        }
+
+        $teamLeadId = Auth::guard('team_lead')->id();
+
+        $subtasks = Subtask::with('employee')
+            ->where($taskType, $id)
+            ->where('team_lead_id', $teamLeadId) // <--- Only show subtasks created by this team lead
+            ->get();
+
+        return view('team_lead.subtask_list', compact('task', 'subtasks'));
     }
-
-    if (!$task) {
-        return redirect()->route('team_lead.manager_tasks')->with('error_swal', 'Task not found.');
-    }
-
-    $teamLeadId = Auth::guard('team_lead')->id();
-
-    $subtasks = Subtask::with('employee')
-        ->where($taskType, $id)
-        ->where('team_lead_id', $teamLeadId) // <--- Only show subtasks created by this team lead
-        ->get();
-
-    return view('team_lead.subtask_list', compact('task', 'subtasks'));
-}
     public function subtask_update_status(Request $request, $id)
     {
         $request->validate([
@@ -822,6 +822,35 @@ public function subtask_list($id)
         return view('team_lead.account_detail', compact('account'));
     }
 
+
+
+    function signed_task_list()
+    {
+        $teamlead = Auth::guard('team_lead')->user();
+        $shared_task = SharedTask::where('operation_teamlead_id', $teamlead->id)->get();
+
+        $operationDeptId = Department::where('name', 'Operation')->value('id');
+
+        $employees = $operationDeptId
+            ? Employee::where('department_id', $operationDeptId)->get()
+            : collect();
+
+        return view('team_lead.signed_task_list', compact('shared_task', 'employees'));
+    }
+
+
+    public function assign_operation_employee_shared_task(Request $request, $sharedTaskId)
+    {
+        $request->validate([
+            'operation_employee_id' => 'required|exists:employees,id',
+        ]);
+
+        $sharedTask = SharedTask::findOrFail($sharedTaskId);
+        $sharedTask->operation_employee_id = $request->operation_employee_id;
+        $sharedTask->save();
+
+        return redirect()->back()->with('success_swal', 'Operation Employee assigned successfully.');
+    }
 
     function fetch_employee()
     {

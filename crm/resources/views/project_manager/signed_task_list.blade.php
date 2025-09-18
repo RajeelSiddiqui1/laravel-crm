@@ -245,7 +245,7 @@
                         <th>Comment</th>
                         <th>Attachment</th>
                         <th>Visitor Status</th>
-                        <th>Assigned Operaion Manager</th>
+                        <th>Assigned Operaion Teamlead</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -330,48 +330,40 @@
                                 @php
                                     $status = $shared->status ?? 'N/A';
                                     $badgeClass = match ($status) {
-                                        'signed' => 'success',
+                                        'active' => 'success',
                                         'pending' => 'warning',
                                         'deployed' => 'primary',
-                                        'not_avaiable' => 'info',
-                                        're_shedule' => 'secondary',
-                                        'not_intrested' => 'danger',
+                                        'on_leave' => 'info',
+                                        'inactive' => 'secondary',
                                         default => 'dark',
                                     };
                                 @endphp
                                 <span class="badge bg-{{ $badgeClass }}">{{ ucfirst($status) }}</span>
                             </td>
-
                             <td>
                                 @php
-                                    $operation_manager = $project_managers->firstWhere(
-                                        'id',
-                                        $shared->operation_manager_id,
-                                    );
+                                    $assignedTeamlead = $teamleads->firstWhere('id', $shared->operation_teamlead_id);
                                 @endphp
 
-                                @if ($operation_manager)
-                                    <span class="badge bg-info">{{ $operation_manager->name }}</span>
+                                @if ($assignedTeamlead)
+                                    <span class="badge bg-info">{{ $assignedTeamlead->name }}</span>
                                 @else
-                                    {{-- ✅ sirf tab dikhana jab status signed ho --}}
-                                    @if ($status === 'signed')
-                                        <form action="{{ route('project_manager.assign_operation_manager', $shared->id) }}"
-                                            method="POST">
-                                            @csrf
-                                            <select name="operation_manager_id"
-                                                class="form-select form-select-sm d-inline-block" style="width:auto;">
-                                                <option value="">-- Select --</option>
-                                                @foreach ($project_managers as $om)
-                                                    <option value="{{ $om->id }}">{{ $om->name }}</option>
-                                                @endforeach
-                                            </select>
-                                            <button type="submit" class="btn btn-sm btn-primary mt-1">Assign</button>
-                                        </form>
-                                    @else
-                                        <span class="text-muted">Only available when status is signed</span>
-                                    @endif
+                                    <form action="{{ route('project_manager.assign_operation_teamlead', $shared->id) }}"
+                                        method="POST">
+                                        @csrf
+                                        <select name="operation_teamlead_id"
+                                            class="form-select form-select-sm d-inline-block" style="width:auto;">
+                                            <option value="">-- Select --</option>
+                                            @foreach ($teamleads as $tm)
+                                                <option value="{{ $tm->id }}">{{ $tm->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary mt-1">Assign</button>
+                                    </form>
                                 @endif
+
                             </td>
+
 
                         </tr>
 

@@ -85,7 +85,16 @@
     <div id="particles-js"></div>
     <div id="wrapper">
 
+
         @if (Auth::guard('project_manager')->check())
+            @php
+                $manager = Auth::guard('project_manager')->user();
+                $managerDeptIds = is_array($manager->department_ids)
+                    ? $manager->department_ids
+                    : json_decode($manager->department_ids, true);
+
+                $managerDepartments = \App\Models\Department::whereIn('id', $managerDeptIds)->pluck('name')->toArray();
+            @endphp
             <div id="sidebar-wrapper" data-simplebar="" data-simplebar-auto-hide="true">
                 <div class="brand-logo">
                     <a href="{{ url(path: '/project-manager/home/') }}">
@@ -118,47 +127,56 @@
                             <i class="zmdi zmdi-power mr-2"></i> <span>Logout</span>
                         </a>
                     </li>
+                    @if (in_array('Visitor', $managerDepartments))
+                        <li>
+                            <a href="{{ route('project_manager.sharedtask.view') }}">
+                                <i class="zmdi zmdi-accounts mr-2"></i>
+                                <span>Manager Shared Task List</span>
+                            </a>
+                        </li>
+                    @else
+                        <li>
+                            <a href="{{ route('project_manager.tasks') }}">
+                                <i class="zmdi zmdi-assignment mr-2"></i> <span>Owner Tasks</span>
+                            </a>
+                        </li>
 
-                    <li>
-                        <a href="{{ route('project_manager.tasks') }}">
-                            <i class="zmdi zmdi-assignment mr-2"></i> <span>Owner Tasks</span>
-                        </a>
-                    </li>
+                        <li>
+                            <a href="{{ route('project_manager.mytask') }}">
+                                <i class="zmdi zmdi-check-square mr-2"></i> <span>My Tasks</span>
+                            </a>
+                        </li>
 
-                    <li>
-                        <a href="{{ route('project_manager.mytask') }}">
-                            <i class="zmdi zmdi-check-square mr-2"></i> <span>My Tasks</span>
-                        </a>
-                    </li>
+                        <li>
+                            <a href="{{ route('project_manager.subtask') }}">
+                                <i class="zmdi zmdi-format-list-bulleted mr-2"></i> <span>Subtask</span>
+                            </a>
+                        </li>
 
-                    <li>
-                        <a href="{{ route('project_manager.subtask') }}">
-                            <i class="zmdi zmdi-format-list-bulleted mr-2"></i> <span>Subtask</span>
-                        </a>
-                    </li>
+                        <li>
+                            <a href="{{ route('project_manager.teamleads') }}">
+                                <i class="zmdi zmdi-accounts-alt mr-2"></i> <span>TeamLeads</span>
+                            </a>
+                        </li>
 
-                    <li>
-                        <a href="{{ route('project_manager.teamleads') }}">
-                            <i class="zmdi zmdi-accounts-alt mr-2"></i> <span>TeamLeads</span>
-                        </a>
-                    </li>
+                        <li>
+                            <a href="{{ route('project_manager.employee') }}">
+                                <i class="zmdi zmdi-accounts mr-2"></i> <span>Employees</span>
+                            </a>
+                        </li>
 
-                    <li>
-                        <a href="{{ route('project_manager.employee') }}">
-                            <i class="zmdi zmdi-accounts mr-2"></i> <span>Employees</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('project_manager.sharedtask.view') }}">
-                            <i class="zmdi zmdi-accounts mr-2"></i> <span>Manager Shared Task List</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ route('project_manager.show_sharedtask_task.view') }}">
-                        <i class="zmdi zmdi-accounts mr-2"></i> <span>Shared Task</span>
-                        </a>
-                    </li>
+                        <li>
+                            <a href="{{ route('project_manager.show_sharedtask_task.view') }}">
+                                <i class="zmdi zmdi-accounts mr-2"></i> <span>Shared Task</span>
+                            </a>
+                        </li>
 
+                        <li>
+                            <a href="{{ route('project_manager.operation.task.view') }}">
+                                <i class="zmdi zmdi-accounts mr-2"></i> <span>Signed Task</span>
+                            </a>
+                        </li>
+                    @endif
                     {{-- 🔔 Notification Icon --}}
                     <li class="nav-item">
                         <a class="nav-link position-relative d-flex align-items-center"
@@ -483,6 +501,11 @@
                     <li>
                         <a href="{{ route('team-lead.sharedtask.view') }}">
                             <i class="fas fa-tasks mr-2"></i> <span>Manager Shared Tasks</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('team_lead.operation.task.view') }}">
+                            <i class="fas fa-tasks mr-2"></i> <span>Signed Tasks</span>
                         </a>
                     </li>
 

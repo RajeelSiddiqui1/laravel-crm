@@ -152,6 +152,7 @@
         </div>
 
         <!-- Shared POS -->
+        @if($posResults)
         <h3 class="account-type-header">Shared POS</h3>
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
@@ -236,8 +237,10 @@
                 </tbody>
             </table>
         </div>
+       @endif
 
         <!-- Shared Accounts -->
+        @if($accountResults)
         <h3 class="account-type-header">Shared Accounts</h3>
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
@@ -322,5 +325,6 @@
                 </tbody>
             </table>
         </div>
+        @endif
     </div>
 @endsection

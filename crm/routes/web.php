@@ -48,7 +48,12 @@ Route::controller(ProjectManager::class)->group(function () {
         Route::delete('/mytask/attachment/{id}', 'delete_attachment')->name('project_manager.delete_attachment');
         Route::delete('/project-manager/mytask/delete/{id}', 'mytask_destroy')->name('project_manager.mytask_destroy');
         Route::post('/my-tasks/share/{id}', 'share_task')->name('project_manager.share_task');
-        Route::post('/project-manager/shared-tasks', 'shareTask')->name('project_manager.share_task');
+        Route::post('/project-manager/project-manager/shared-tasks', 'shareTask')->name('project_manager.share_task');
+        Route::post('/project-manager/assign-operation-manager/{sharedTaskId}',  'assign_operation_shared_task')
+            ->name('project_manager.assign_operation_manager');
+        Route::get('/project-manager/operation/tasks', 'signed_task_list')->name('project_manager.operation.task.view');
+        Route::post('/project-manager/assign-operation-teamlead/{sharedTaskId}',  'assign_operation_teamlead_shared_task')
+            ->name('project_manager.assign_operation_teamlead');
         Route::patch('/project-manager/owner-tasks/{id}/status2', 'updateStatus2')->name('project_manager.update_status2');
         Route::patch('/project-manager/owner-tasks/{id}/status3', 'updateStatus3')->name('project_manager.update_status3');
         Route::get('/project-manager/employee/task/show/{id}', 'show_employee_task')->name('project_manager.show_employee_task.view');
@@ -142,6 +147,9 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::post('/team-lead/shared-task/{id}/assign-employee', 'assign_employee_shared_task')->name('team-lead.assign_employee_shared_task');
         Route::get('team-lead/pos/{id}',  'showPos')->name('team-lead.shared.pos.detail');
         Route::get('team-lead/account/{id}',  'showAccount')->name('team-lead.shared.account.detail');
+        Route::get('/team-lead/operation/tasks', 'signed_task_list')->name('team_lead.operation.task.view');
+        Route::post('/team-lead/assign-operation-teamlead/{sharedTaskId}',  'assign_operation_employee_shared_task')
+            ->name('team_lead.assign_employee_operation');
         Route::get('/team-lead/employees/', 'fetch_employee')->name('team_lead.employees');
         Route::get('/team-lead/message/{id}/employee', 'message_employee')->name('team_lead.message.employee');
         Route::post('/team-lead/message/send', 'send_message')->name('team_lead.message.send');
