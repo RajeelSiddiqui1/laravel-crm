@@ -1379,7 +1379,7 @@ Task not associated with any owner task.');
    function signed_task_list()
 {
     $manager = Auth::guard('project_manager')->user();
-    $shared_task = SharedTask::where('operation_manager_id', $manager->id)->get();
+    $shared_task = SharedTask::where('manager_id', $manager->id)->get();
 
     $operationDeptId = Department::where('name', 'Operation')->value('id');
 

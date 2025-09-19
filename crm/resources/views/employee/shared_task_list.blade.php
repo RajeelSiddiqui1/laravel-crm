@@ -187,11 +187,12 @@
                                     @php
                                         $status = $pos->shared_status ?? 'N/A';
                                         $badgeClass = match ($status) {
-                                            'active' => 'success',
+                                            'signed' => 'success',
                                             'pending' => 'warning',
                                             'deployed' => 'primary',
-                                            'on_leave' => 'info',
-                                            'inactive' => 'secondary',
+                                            'not_avaiable' => 'info',
+                                            're_shedule' => 'secondary',
+                                            'not_intrested' => 'danger',
                                             default => 'dark',
                                         };
                                     @endphp
@@ -258,11 +259,12 @@
                                     @php
                                         $status = $account->shared_status ?? 'N/A';
                                         $badgeClass = match ($status) {
-                                            'active' => 'success',
+                                            'signed' => 'success',
                                             'pending' => 'warning',
                                             'deployed' => 'primary',
-                                            'on_leave' => 'info',
-                                            'inactive' => 'secondary',
+                                            'not_avaiable' => 'info',
+                                            're_shedule' => 'secondary',
+                                            'not_intrested' => 'danger',
                                             default => 'dark',
                                         };
                                     @endphp

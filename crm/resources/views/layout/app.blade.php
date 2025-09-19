@@ -641,6 +641,11 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('employee.signed_task.view') }}">
+                            <i class="fas fa-tasks mr-2"></i> <span>Signed Tasks</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('employee.logout') }}">
                             <i class="icon-power mr-2"></i> <span>Logout</span>
                         </a>

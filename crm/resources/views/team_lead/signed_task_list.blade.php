@@ -242,7 +242,6 @@
                         <th>No</th>
                         <th>Visitor</th>
                         <th>Employee</th>
-                        <th>Comment</th>
                         <th>Attachment</th>
                         <th>Visitor Status</th>
                         <th>Assigned Operaion Teamlead</th>
@@ -254,19 +253,7 @@
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $shared->manager->name ?? 'N/A' }}</td>
                             <td>{{ $shared->employee->name ?? 'N/A' }}</td>
-                            @php
-                                $shortComment = Str::words($shared['comment'] ?? '', 4, '...');
-                            @endphp
-                            <td>
-                                {{ $shortComment }}
-
-                                @if (str_word_count($shared['comment'] ?? '') > 4)
-                                    <button class="btn btn-link p-0 ms-1" data-bs-toggle="modal"
-                                        data-bs-target="#commentModal{{ $shared['id'] }}">Show More</button>
-                                @endif
-
-                            </td>
-
+                          
                             <td>
                                 @if (!empty($shared['attachments']))
                                     <div class="mt-2 text-center">
@@ -330,11 +317,12 @@
                                 @php
                                     $status = $shared->status ?? 'N/A';
                                     $badgeClass = match ($status) {
-                                        'active' => 'success',
+                                       'signed' => 'success',
                                         'pending' => 'warning',
                                         'deployed' => 'primary',
-                                        'on_leave' => 'info',
-                                        'inactive' => 'secondary',
+                                        'not_avaiable' => 'info',
+                                        're_shedule' => 'secondary',
+                                        'not_intrested' => 'danger',
                                         default => 'dark',
                                     };
                                 @endphp
@@ -369,29 +357,7 @@
                         </tr>
 
                         <!-- Enhanced Modal -->
-                        @if (str_word_count($shared['comment'] ?? '') > 4)
-                            <div class="modal fade" id="commentModal{{ $shared['id'] }}" tabindex="-1"
-                                aria-labelledby="commentModalLabel{{ $shared['id'] }}" aria-hidden="true">
-                                <div class="modal-dialog modal-lg modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="commentModalLabel{{ $shared['id'] }}">
-                                                Comment Details
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>{{ $shared['comment'] ?? 'No comment available' }}</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-primary"
-                                                data-bs-dismiss="modal">Close</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
+                   
                     @empty
                         <tr>
                             <td colspan="6" class="text-center text-muted">No Shared Task Found</td>

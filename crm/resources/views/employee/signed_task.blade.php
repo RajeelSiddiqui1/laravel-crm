@@ -240,13 +240,12 @@
                 <thead>
                     <tr>
                         <th>No</th>
-                        <th>Visitor</th>
+                        <th>Manger</th>
                         <th>Employee</th>
                         <th>Attachment</th>
                         <th>Visitor Status</th>
                         <th>Vendor Status</th>
                         <th>Machine Status</th>
-                        <th>Assigned Operaion Teamlead</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -315,35 +314,6 @@
                                     <span class="text-muted">No Attachment</span>
                                 @endif
                             </td>
-                            {{-- Vendor Status --}}
-                            <td>
-                                @php
-                                    $vendorColor = match ($shared->vendor_status) {
-                                        'approved' => 'success',
-                                        'not_approved' => 'danger',
-                                        'pending' => 'warning',
-                                        default => 'secondary',
-                                    };
-                                @endphp
-                                <span class="badge bg-{{ $vendorColor }}">
-                                    {{ ucfirst(str_replace('_', ' ', $shared->vendor_status)) }}
-                                </span>
-                            </td>
-
-                            {{-- Machine Status --}}
-                            <td>
-                                @php
-                                    $machineColor = match ($shared->machine_status) {
-                                        'deployed' => 'success',
-                                        'cancelled' => 'danger',
-                                        'pending' => 'warning',
-                                        default => 'secondary',
-                                    };
-                                @endphp
-                                <span class="badge bg-{{ $machineColor }}">
-                                    {{ ucfirst($shared->machine_status) }}
-                                </span>
-                            </td>
 
                             <td>
                                 @php
@@ -360,29 +330,77 @@
                                 @endphp
                                 <span class="badge bg-{{ $badgeClass }}">{{ ucfirst($status) }}</span>
                             </td>
-                            <td>
-                                @php
-                                    $assignedTeamlead = $teamleads->firstWhere('id', $shared->operation_teamlead_id);
-                                @endphp
 
-                                @if ($assignedTeamlead)
-                                    <span class="badge bg-info">{{ $assignedTeamlead->name }}</span>
-                                @else
-                                    <form action="{{ route('project_manager.assign_operation_teamlead', $shared->id) }}"
+
+                            <td>
+                                @if ($shared->operation_employee_id == Auth::guard('employee')->id())
+                                    {{-- Dropdown form (operation_employee update kar sakta hai) --}}
+                                    <form action="{{ route('employee.update_vendor_status', $shared->id) }}"
                                         method="POST">
                                         @csrf
-                                        <select name="operation_teamlead_id"
-                                            class="form-select form-select-sm d-inline-block" style="width:auto;">
-                                            <option value="">-- Select --</option>
-                                            @foreach ($teamleads as $tm)
-                                                <option value="{{ $tm->id }}">{{ $tm->name }}</option>
-                                            @endforeach
+                                        <select name="vendor_status" class="form-select form-select-sm d-inline-block"
+                                            style="width:auto;" onchange="this.form.submit()">
+                                            <option value="pending"
+                                                {{ $shared->vendor_status == 'pending' ? 'selected' : '' }}>Pending
+                                            </option>
+                                            <option value="approved"
+                                                {{ $shared->vendor_status == 'approved' ? 'selected' : '' }}>Approved
+                                            </option>
+                                            <option value="not_approved"
+                                                {{ $shared->vendor_status == 'not_approved' ? 'selected' : '' }}>Not
+                                                Approved</option>
                                         </select>
-                                        <button type="submit" class="btn btn-sm btn-primary mt-1">Assign</button>
                                     </form>
+                                @else
+                                    {{-- Sirf badge show --}}
+                                    @php
+                                        $vendorColor = match ($shared->vendor_status) {
+                                            'approved' => 'success',
+                                            'not_approved' => 'danger',
+                                            default => 'secondary',
+                                        };
+                                    @endphp
+                                    <span class="badge bg-{{ $vendorColor }}">
+                                        {{ ucfirst(str_replace('_', ' ', $shared->vendor_status)) }}
+                                    </span>
                                 @endif
-
                             </td>
+
+
+                            <td>
+                                @if ($shared->operation_employee_id == Auth::guard('employee')->id())
+                                    {{-- Dropdown form (operation_employee update kar sakta hai) --}}
+                                    <form action="{{ route('employee.update_machine_status', $shared->id) }}"
+                                        method="POST">
+                                        @csrf
+                                        <select name="machine_status" class="form-select form-select-sm d-inline-block"
+                                            style="width:auto;" onchange="this.form.submit()">
+                                            <option value="pending"
+                                                {{ $shared->machine_status == 'pending' ? 'selected' : '' }}>Pending
+                                            </option>
+                                            <option value="deployed"
+                                                {{ $shared->machine_status == 'deployed' ? 'selected' : '' }}>Deployed
+                                            </option>
+                                            <option value="cancelled"
+                                                {{ $shared->machine_status == 'cancelled' ? 'selected' : '' }}>Cancelled
+                                            </option>
+                                        </select>
+                                    </form>
+                                @else
+                                    {{-- Sirf badge show --}}
+                                    @php
+                                        $machineColor = match ($shared->machine_status) {
+                                            'deployed' => 'success',
+                                            'cancelled' => 'danger',
+                                            default => 'secondary',
+                                        };
+                                    @endphp
+                                    <span class="badge bg-{{ $machineColor }}">
+                                        {{ ucfirst($shared->machine_status) }}
+                                    </span>
+                                @endif
+                            </td>
+
 
 
                         </tr>

@@ -14,14 +14,19 @@ class SharedTask extends Model
         'employee_id',
         'visitor_id',
         'subtask_id',
+        'operation_manager_id',
+        'operation_teamlead_id',
+        'operation_employee_id',
         'cell_center_pos_id',
         'cell_center_account_id',
         'comment',
         'attachments',
         'status',
+        'vendor_status',
+        'machine_status',
     ];
 
-    
+
     public function manager()
     {
         return $this->belongsTo(ProjectManager::class, 'manager_id');

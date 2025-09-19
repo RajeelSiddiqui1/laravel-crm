@@ -179,6 +179,9 @@ Route::controller(Employee::class)->group(function () {
         Route::get('/employee/subtask/{subtaskId}', 'employee_task_view')->name('employee.subtask.view');
         Route::put('/employee/subtasks/{id}/update', 'updateSubtask')->name('employee.subtask.update');
         Route::get('/employee/shared-task/list', 'showSharedTasks')->name('employee.sharedtask.view');
+        Route::get('/employee/signed-task/list', 'signed_task')->name('employee.signed_task.view');
+        Route::post('/employee/shared-task/{id}/vendor-status',  'updateVendorStatus')->name('employee.update_vendor_status');
+        Route::post('/employee/shared-task/{id}/machine-status', 'updateMachineStatus')->name('employee.update_machine_status');
         Route::get('employee/lead/info/{id}',  'task_info')->name('employee.task_info.view');
         Route::put('employee/lead/info/{id}',  'update_task_info')->name('employee.task_info.post');
         Route::get('/employee/pos/{id}',  'showPos')->name('employee.shared.pos.detail');
