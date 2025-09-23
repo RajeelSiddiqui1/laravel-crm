@@ -138,6 +138,9 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::get('/team-lead/subtask/{id}/view', 'subtask_view')->name('team_lead.subtask.view');
         Route::get('/team-lead/subtask/detail/{id}', 'subtask_detail')->name('team_lead.subtask.detail');
         Route::get('/team-lead/subtask/show-more/{id}', 'subtask_show_more')->name('team_subtask_show_more');
+        Route::get('/team-lead/task/subtask/create', 'subtask_create2')->name('team_lead.subtask.create2');
+        Route::get('/team-lead/subtask/list', 'subtask_list2')->name('team_lead.subtask.list2');
+        Route::post('/team-lead/subtask/store', 'subtask_store2')->name('team_lead.subtask.store2');
         Route::get('/team-lead/subtask/{id}/edit', 'subtask_edit')->name('team_lead.subtask.edit');
         Route::put('/subtask/update/{id}', 'subtask_update')->name('team_lead.subtask.update');
         Route::delete('/team-lead/subtask/{id}/delete', 'subtask_delete')->name('team_lead.subtask.delete');
@@ -210,10 +213,14 @@ Route::controller(VisitorController::class)->group(function () {
 
 
 // Group Chat Routes (protected by middleware)
-Route::middleware('check.roles')->group(function () {
-    Route::get('/chat/group/{id}', [GroupChatController::class, 'index'])->name('chat.group');
-    Route::post('/chat/group/send', [GroupChatController::class, 'send'])->name('chat.group.send');
-});
+Route::get('/chat/group/{id}', function () {
+    return response("Work in progress 🚧 Please check back later.", 503);
+})->name('chat.group');
+
+Route::post('/chat/group/send', function () {
+    return response("Work in progress 🚧 Please check back later.", 503);
+})->name('chat.group.send');
+
 
 // Notification Routes (protected by middleware)
 Route::middleware('check.roles')->group(function () {

@@ -499,6 +499,11 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ route('team_lead.subtask.list2') }}">
+                            <i class="fas fa-tasks mr-2"></i> <span>Subtask List</span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ route('team-lead.sharedtask.view') }}">
                             <i class="fas fa-tasks mr-2"></i> <span>Manager Shared Tasks</span>
                         </a>

@@ -430,6 +430,88 @@ class TeamLeadController extends Controller
     }
 
 
+    function subtask_create2(){
+           $assignedEmployees = Employee::whereIn('id', function ($query) {
+            $query->select('employee_id')->from('owner_tasks');
+        })->get();
+        return view('team_lead.create_subtask2',compact('assignedEmployees'));
+    }
+
+
+       public function subtask_store2(Request $request)
+    {
+        $request->validate([
+            'title'                => 'required|string|max:255',
+            'description'          => 'required|string',
+            'attachments'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+            'assigned_employee_id' => 'required|exists:employees,id',
+            'start_date'           => 'nullable|date',
+            'end_date'             => 'nullable|date|after_or_equal:start_date',
+            'start_time'           => 'nullable|date_format:H:i',
+            'end_time'             => 'nullable|date_format:H:i',
+            'lead'                 => 'required|numeric',
+            'task_type'            => 'nullable|string',
+        ]);
+
+        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
+            if ($request->filled('start_time') && $request->filled('end_time')) {
+                if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+                    return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
+                }
+            }
+        }
+
+        $teamLead = Auth::guard('team_lead')->user();
+
+        $subtask = new Subtask();
+        $subtask->title         = $request->title;
+        $subtask->description   = $request->description;
+        $subtask->lead          = $request->lead;
+        $subtask->task_type     = $request->task_type;
+        $subtask->start_date    = $request->start_date;
+        $subtask->end_date      = $request->end_date;
+        $subtask->start_time    = $request->start_time;
+        $subtask->end_time      = $request->end_time;
+
+        // IDs
+        $subtask->team_lead_id  = Auth::guard('team_lead')->id(); // team lead creating
+        $subtask->employee_id   = $request->assigned_employee_id;  // employee assigned
+       
+
+
+        if ($request->hasFile('attachments')) {
+            try {
+                $file = $request->file('attachments');
+                $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                    'public_id'     => 'subtasks/' . uniqid() . '_' . $file->getClientOriginalName(),
+                    'resource_type' => 'auto',
+                ]);
+                $subtask->attachments = $uploaded['secure_url'];
+            } catch (\Exception $e) {
+                Log::error('Cloudinary upload failed: ' . $e->getMessage());
+                return redirect()->back()->with('error_swal', 'Failed to upload attachment')->withInput();
+            }
+        }
+
+        $subtask->save();
+
+        return redirect()->route('team_lead.subtask.list2', $request->account_id)
+            ->with('success_swal_swal', 'Subtask created successfully.');
+    }
+
+
+
+    function subtask_list2(){
+
+        $teamLeadId = Auth::guard('team_lead')->id();
+
+        $subtasks = Subtask::with('employee')
+            ->where('team_lead_id', $teamLeadId) // <--- Only show subtasks created by this team lead
+            ->get();
+
+        return view('team_lead.subtask_list2', compact('subtasks'));
+    }
+
 
     public function subtask_store(Request $request)
     {
@@ -682,20 +764,20 @@ class TeamLeadController extends Controller
 
 
 
-    public function subtask_detail($id)
-    {
-        $subtask = Subtask::with(['employee.department', 'employeeSubtask'])->findOrFail($id);
+public function subtask_detail($id)
+{
+    // Fetch the subtask with related employee and department
+    $subtask = Subtask::with(['employee.department', 'employeeSubtask', 'teamLead'])
+        ->findOrFail($id);
 
-        $employeeId = $subtask->assigned_employee_id;
+    // Fetch all subtasks assigned to the same employee
+    $employeeSubtasks = Subtask::with('employeeSubtask')
+        ->where('employee_id', $subtask->employee_id)
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        // All subtasks assigned to this employee
-        $employeeSubtasks = Subtask::with('employeeSubtask')
-            ->where('assigned_employee_id', $employeeId)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return view('team_lead.subtask_detail', compact('subtask', 'employeeSubtasks'));
-    }
+    return view('team_lead.subtask_detail', compact('subtask', 'employeeSubtasks'));
+}
 
 
 

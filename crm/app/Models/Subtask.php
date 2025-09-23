@@ -46,6 +46,12 @@ class Subtask extends Model
     }
 
 
+    public function employeeSubtask()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
+
     public function cellCenterPos()
     {
         return $this->belongsTo(CellCenterPos::class, 'task_id');

@@ -25,7 +25,20 @@ class CheckUserRoles
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        // ✅ Redirect to login page instead of abort
-        return redirect()->route('project_owner.login');
+        // ✅ Har role ke liye alag login page
+        if ($request->is('team-lead/*')) {
+            return redirect()->route('team_lead.login');
+        } elseif ($request->is('project-owner/*')) {
+            return redirect()->route('project_owner.login');
+        } elseif ($request->is('project-manager/*')) {
+            return redirect()->route('project_manager.login');
+        } elseif ($request->is('employee/*')) {
+            return redirect()->route('employee.login');
+        } elseif ($request->is('visitor/*')) {
+            return redirect()->route('visitor.login');
+        }
+
+        // ✅ Default fallback (Admin/web)
+        return redirect()->route('login');
     }
 }
