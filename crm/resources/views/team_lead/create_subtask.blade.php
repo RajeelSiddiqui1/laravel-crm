@@ -91,7 +91,7 @@
                                 @php
                                     $teamLead = Auth::guard('team_lead')->user();
                                     $taskTypes = ($teamLead->department && $teamLead->department->name === 'Accounts')
-                                        ? ['Call_Center_POS', 'Call_Center_Accounts']
+                                        ? ['Call_Center_POS', 'Call_Center_Accounts','Client_Details']
                                         : ['Operations','Call_Center_POS'];
                                 @endphp
                                 @foreach ($taskTypes as $type)

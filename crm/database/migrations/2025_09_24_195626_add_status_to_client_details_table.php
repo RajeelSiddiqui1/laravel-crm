@@ -11,15 +11,15 @@ return new class extends Migration
      */
    public function up()
 {
-    Schema::table('group_messages', function (Blueprint $table) {
-        $table->unsignedBigInteger('account_id')->nullable()->after('id');
+    Schema::table('client_details', function (Blueprint $table) {
+        $table->enum('status', ['pending', 'in_progress', 'completed', 'rejected'])->default('pending');
     });
 }
 
 public function down()
 {
-    Schema::table('group_messages', function (Blueprint $table) {
-        $table->dropColumn([ 'account_type']);
+    Schema::table('client_details', function (Blueprint $table) {
+        $table->dropColumn('status');
     });
 }
 

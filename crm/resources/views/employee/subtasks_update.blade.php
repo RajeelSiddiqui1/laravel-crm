@@ -2,208 +2,207 @@
 
 @section('styles')
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<style>
-    :root {
-        --body-bg: rgba(0, 0, 0, 0.85);
-        /* --card-bg: rgba(25, 25, 25, 0.8); */
-        --accent: rgba(200, 200, 200, 0.3);
-        --text: rgba(245, 245, 245, 0.95);
-        /* --input-bg: rgba(35, 35, 35, 0.85); */
-        --border: rgba(70, 70, 70, 0.4);
-        /* --hover-bg: rgba(255, 255, 255, 0.05); */
-    }
+    <style>
+        :root {
+            --body-bg: rgba(0, 0, 0, 0.85);
+            --accent: rgba(200, 200, 200, 0.3);
+            --text: rgba(245, 245, 245, 0.95);
+            --border: rgba(70, 70, 70, 0.4);
+        }
 
-    body {
-        background: var(--body-bg);
-        color: var(--text);
-        font-family: 'Inter', sans-serif;
-    }
+        body {
+            background: var(--body-bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+        }
 
-    .container {
-        max-width: 1200px;
-    }
+        .container {
+            max-width: 1200px;
+        }
 
-    .card {
-        background: var(--card-bg);
-        border: none;
-        border-radius: 12px;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        transition: transform 0.2s, background 0.3s;
-    }
+        .card {
+            background: var(--card-bg);
+            border: none;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, background 0.3s;
+        }
 
-    .card:hover {
-        transform: translateY(-2px);
-        /* background: rgba(30, 30, 30, 0.85); */
-    }
+        .card:hover {
+            transform: translateY(-2px);
+        }
 
-    .card-header {
-        background:  rgba(25, 25, 25, 0.8);
-        color: var(--text);
-        font-weight: 500;
-        padding: 1rem 1.5rem;
-        border-radius: 12px 12px 0 0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
+        .card-header {
+            background: rgba(25, 25, 25, 0.8);
+            color: var(--text);
+            font-weight: 500;
+            padding: 1rem 1.5rem;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
 
-    .btn-primary {
-        background: rgba(100, 100, 100, 0.3);
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        color: var(--text);
-        transition: background 0.3s, transform 0.2s;
-    }
+        .btn-primary {
+            background: rgba(100, 100, 100, 0.3);
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: var(--text);
+            transition: background 0.3s, transform 0.2s;
+        }
 
-    .btn-primary:hover {
-        background: rgba(120, 120, 120, 0.35);
-        transform: translateY(-1px);
-    }
+        .btn-primary:hover {
+            background: rgba(120, 120, 120, 0.35);
+            transform: translateY(-1px);
+        }
 
-    .btn-outline-light {
-        border-color: rgba(255, 255, 255, 0.2);
-        color: var(--text);
-        border-radius: 8px;
-        transition: all 0.3s;
-    }
+        .btn-outline-light {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
 
-    .btn-outline-light:hover {
-        background: var(--hover-bg);
-        color: var(--text);
-    }
+        .btn-outline-light:hover {
+            background: var(--hover-bg);
+            color: var(--text);
+        }
 
-    .btn-outline-secondary {
-        border-color: var(--border);
-        color: var(--text);
-        border-radius: 8px;
-    }
+        .btn-outline-secondary {
+            border-color: var(--border);
+            color: var(--text);
+            border-radius: 8px;
+        }
 
-    .btn-outline-secondary:hover {
-        background: var(--hover-bg);
-    }
+        .btn-outline-secondary:hover {
+            background: var(--hover-bg);
+        }
 
-    .form-control,
-    .form-select {
-        background: var(--input-bg);
-        border: 1px solid var(--border);
-        color: var(--text);
-        border-radius: 8px;
-        padding: 0.5rem 0.75rem;
-        transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
-    }
+        .form-control,
+        .form-select {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+        }
 
-    .form-control:focus,
-    .form-select:focus {
-        background: var(--input-bg);
-        border-color: rgba(180, 180, 180, 0.6);
-        box-shadow: 0 0 0 3px rgba(200, 200, 200, 0.2);
-        outline: none;
-    }
+        .form-control:focus,
+        .form-select:focus {
+            background: var(--input-bg);
+            border-color: rgba(180, 180, 180, 0.6);
+            box-shadow: 0 0 0 3px rgba(200, 200, 200, 0.2);
+            outline: none;
+        }
 
-    .form-label {
-        font-size: 0.875rem;
-        color: rgba(200, 200, 200, 0.8);
-        margin-bottom: 0.25rem;
-    }
+        .form-label {
+            font-size: 0.875rem;
+            color: rgba(200, 200, 200, 0.8);
+            margin-bottom: 0.25rem;
+        }
 
-    .attachment-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        gap: 1rem;
-    }
+        .attachment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+        }
 
-    .attachment-item {
-        background: rgba(35, 35, 35, 0.85);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 0.75rem;
-        transition: transform 0.2s, background 0.3s;
-    }
+        .attachment-item {
+            background: rgba(35, 35, 35, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: transform 0.2s, background 0.3s;
+        }
 
-    .attachment-item:hover {
-        transform: scale(1.02);
-        background: rgba(40, 40, 40, 0.9);
-    }
+        .attachment-item:hover {
+            transform: scale(1.02);
+            background: rgba(40, 40, 40, 0.9);
+        }
 
-    .hidden {
-        display: none;
-    }
+        .hidden {
+            display: none;
+        }
 
-    .is-invalid {
-        border-color: rgba(255, 77, 79, 0.8);
-    }
+        .is-invalid {
+            border-color: rgba(255, 77, 79, 0.8);
+        }
 
-    .invalid-feedback {
-        color: rgba(255, 77, 79, 0.9);
-        font-size: 0.75rem;
-    }
+        .invalid-feedback {
+            color: rgba(255, 77, 79, 0.9);
+            font-size: 0.75rem;
+        }
 
-    .status-badge {
-        padding: 0.35rem 0.75rem;
-        border-radius: 6px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
+        .status-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
 
-    .status-pending {
-        background: rgba(108, 117, 125, 0.8);
-        color: #fff;
-    }
+        .status-pending {
+            background: rgba(108, 117, 125, 0.8);
+            color: #fff;
+        }
 
-    .status-in_progress {
-        background: rgba(180, 180, 50, 0.8);
-        color: #212529;
-    }
+        .status-in_progress {
+            background: rgba(180, 180, 50, 0.8);
+            color: #212529;
+        }
 
-    .status-completed {
-        background: rgba(40, 167, 69, 0.8);
-        color: #fff;
-    }
+        .status-completed {
+            background: rgba(40, 167, 69, 0.8);
+            color: #fff;
+        }
 
-    .status-rejected {
-        background: rgba(220, 53, 69, 0.8);
-        color: #fff;
-    }
+        .status-rejected {
+            background: rgba(220, 53, 69, 0.8);
+            color: #fff;
+        }
 
-    .readonly-field {
-        background: rgba(45, 45, 61, 0.85) !important;
-        cursor: not-allowed;
-    }
+        .readonly-field {
+            background: rgba(45, 45, 61, 0.85) !important;
+            cursor: not-allowed;
+        }
 
-    .text-danger {
-        color: rgba(255, 77, 79, 1) !important;
-    }
+        .text-danger {
+            color: rgba(255, 77, 79, 1) !important;
+        }
 
-    .text-muted {
-        color: rgba(255, 255, 255, 0.6) !important;
-    }
+        .text-muted {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
 
-    .form-row {
-        margin-bottom: 1.25rem;
-    }
+        .form-row {
+            margin-bottom: 1.25rem;
+        }
 
-    .alert {
-        background: rgba(220, 53, 69, 0.85);
-        border: none;
-        border-radius: 8px;
-        color: #fff;
-    }
+        .alert {
+            background: rgba(220, 53, 69, 0.85);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+        }
 
-    h2, h5, h6 {
-        color: var(--text);
-    }
+        h2,
+        h5,
+        h6 {
+            color: var(--text);
+        }
 
-    img, video, audio {
-        border-radius: 6px;
-    }
+        img,
+        video,
+        audio {
+            border-radius: 6px;
+        }
 
-    .shadow-sm {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
-</style>
- 
+        .shadow-sm {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -285,11 +284,11 @@
                                 @if (in_array($subtaskExt, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
                                     <img src="{{ $subtask->attachments }}" alt="Subtask Attachment"
                                         class="img-fluid rounded" style="max-height: 200px; max-width: 100%;">
-                                @elseif(in_array($subtaskExt, ['mp4', 'mov', 'avi', 'webm']))
+                                @elseif (in_array($subtaskExt, ['mp4', 'mov', 'avi', 'webm']))
                                     <video controls class="w-100 rounded" style="max-height: 200px;">
                                         <source src="{{ $subtask->attachments }}" type="video/{{ $subtaskExt }}">
                                     </video>
-                                @elseif(in_array($subtaskExt, ['mp3', 'wav', 'ogg']))
+                                @elseif (in_array($subtaskExt, ['mp3', 'wav', 'ogg']))
                                     <audio controls class="w-100">
                                         <source src="{{ $subtask->attachments }}" type="audio/{{ $subtaskExt }}">
                                     </audio>
@@ -315,6 +314,7 @@
 
                 $posRecord = $posRecords[$lead] ?? null;
                 $accountRecord = $accountRecords[$lead] ?? null;
+                $clientDetailRecord = $clientDetailRecords[$lead] ?? null;
 
                 if ($posRecord) {
                     $leadStatus = $posRecord->status ?? 'pending';
@@ -326,6 +326,11 @@
                     $leadComment = $accountRecord->comments ?? '';
                     $leadData = $accountRecord->toArray();
                     $leadAttachments = $accountRecord->attachments ?? [];
+                } elseif ($clientDetailRecord) {
+                    $leadStatus = $clientDetailRecord->status ?? 'pending';
+                    $leadComment = $clientDetailRecord->comments ?? '';
+                    $leadData = $clientDetailRecord->toArray();
+                    $leadAttachments = $clientDetailRecord->attachments ?? [];
                 } else {
                     $leadData = old('lead_data_' . $lead, []);
                 }
@@ -347,7 +352,10 @@
                     } else {
                         $leadAttachments = [$leadAttachments];
                     }
-                } elseif (!is_array($leadAttachments) && !($leadAttachments instanceof \Illuminate\Support\Collection)) {
+                } elseif (
+                    !is_array($leadAttachments) &&
+                    !($leadAttachments instanceof \Illuminate\Support\Collection)
+                ) {
                     $leadAttachments = [$leadAttachments];
                 } else {
                     if ($leadAttachments instanceof \Illuminate\Support\Collection) {
@@ -397,15 +405,19 @@
                                 <select name="status"
                                     class="form-select form-select-sm @error('status') is-invalid @enderror" required>
                                     <option value="pending"
-                                        {{ old('status_' . $lead, $leadStatus) == 'pending' ? 'selected' : '' }}>Pending</option>
+                                        {{ old('status_' . $lead, $leadStatus) == 'pending' ? 'selected' : '' }}>Pending
+                                    </option>
                                     <option value="in_progress"
-                                        {{ old('status_' . $lead, $leadStatus) == 'in_progress' ? 'selected' : '' }}>In Progress
+                                        {{ old('status_' . $lead, $leadStatus) == 'in_progress' ? 'selected' : '' }}>In
+                                        Progress
                                     </option>
                                     <option value="completed"
-                                        {{ old('status_' . $lead, $leadStatus) == 'completed' ? 'selected' : '' }}>Completed
+                                        {{ old('status_' . $lead, $leadStatus) == 'completed' ? 'selected' : '' }}>
+                                        Completed
                                     </option>
                                     <option value="rejected"
-                                        {{ old('status_' . $lead, $leadStatus) == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                        {{ old('status_' . $lead, $leadStatus) == 'rejected' ? 'selected' : '' }}>Rejected
+                                    </option>
                                 </select>
                                 @error('status')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -413,21 +425,34 @@
                             </div>
 
                             <div class="col-12 hidden row2{{ $lead }} form-row">
-                                <label class="form-label">{{ $subtask->task_type === 'cell_center_accounts' ? 'Comments' : 'Comment' }}</label>
-                                <textarea name="{{ $subtask->task_type === 'cell_center_accounts' ? 'comments' : 'comment' }}"
-                                    class="form-control form-control-sm @error($subtask->task_type === 'cell_center_accounts' ? 'comments' : 'comment') is-invalid @enderror"
+                                <label class="form-label">
+                                    @if ($subtask->task_type === 'cell_center_accounts')
+                                        Comments
+                                    @elseif ($subtask->task_type === 'client_details')
+                                        Comments
+                                    @else
+                                        Comment
+                                    @endif
+                                </label>
+                                <textarea
+                                    name="@if ($subtask->task_type === 'cell_center_accounts' || $subtask->task_type === 'client_details') comments @else comment @endif"
+                                    class="form-control form-control-sm @error($subtask->task_type === 'cell_center_accounts' || $subtask->task_type === 'client_details' ? 'comments' : 'comment') is-invalid @enderror"
                                     rows="4"
-                                    placeholder="Add your comments for Lead {{ $lead }}...">{{ old(($subtask->task_type === 'cell_center_accounts' ? 'comments_' : 'comment_') . $lead, $leadComment) }}</textarea>
-                                @error($subtask->task_type === 'cell_center_accounts' ? 'comments' : 'comment')
+                                    placeholder="Add your @if ($subtask->task_type === 'cell_center_accounts' || $subtask->task_type === 'client_details') comments @else comment @endif for Lead {{ $lead }}...">{{ old(
+                                        ($subtask->task_type === 'cell_center_accounts' || $subtask->task_type === 'client_details'
+                                            ? 'comments_'
+                                            : 'comment_') . $lead,
+                                        $leadComment,
+                                    ) }}</textarea>
+                                @error($subtask->task_type === 'cell_center_accounts' || $subtask->task_type === 'client_details' ? 'comments' : 'comment')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
 
-                            @if ($subtask->task_type === 'call_center_pos' || $isCallCenterPos)
+                            @if ($subtask->task_type === 'call_center_pos')
                                 <div class="col-12 hidden row2{{ $lead }}">
                                     <h6 class="mb-3"><i class="bi bi-building me-1"></i> POS Information</h6>
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Name</label>
                                     <input name="name"
@@ -438,7 +463,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Business Name</label>
                                     <input name="business_name"
@@ -449,10 +473,9 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Business Number</label>
-                                    <input type="tel" name="business_number"
+                                    <input type="text" name="business_number"
                                         class="form-control form-control-sm @error('business_number') is-invalid @enderror"
                                         value="{{ old('business_number_' . $lead, $leadData['business_number'] ?? '') }}"
                                         placeholder="Enter business number">
@@ -460,7 +483,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Personal Number</label>
                                     <input type="tel" name="personal_number"
@@ -471,7 +493,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Personal Email</label>
                                     <input type="email" name="personal_email"
@@ -482,7 +503,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Business Email</label>
                                     <input type="email" name="business_email"
@@ -493,18 +513,14 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-12 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Address</label>
-                                    <textarea name="address"
-                                        class="form-control form-control-sm @error('address') is-invalid @enderror"
-                                        rows="3"
+                                    <textarea name="address" class="form-control form-control-sm @error('address') is-invalid @enderror" rows="3"
                                         placeholder="Enter business address">{{ old('address_' . $lead, $leadData['address'] ?? '') }}</textarea>
                                     @error('address')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Provider</label>
                                     <input name="provider"
@@ -515,7 +531,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Category POS</label>
                                     <input name="category_pos"
@@ -526,7 +541,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-4 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">POS Type</label>
                                     <select name="pos_type"
@@ -546,18 +560,15 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-4 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Debt</label>
                                     <input type="number" step="0.01" name="debt"
                                         class="form-control form-control-sm @error('debt') is-invalid @enderror"
-                                        value="{{ old('debt_' . $lead, $leadData['debt'] ?? '') }}"
-                                        placeholder="0.00">
+                                        value="{{ old('debt_' . $lead, $leadData['debt'] ?? '') }}" placeholder="0.00">
                                     @error('debt')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-4 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Credit</label>
                                     <input type="number" step="0.01" name="credit"
@@ -568,7 +579,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Rental</label>
                                     <input type="number" step="0.01" name="rental"
@@ -579,7 +589,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Business Type</label>
                                     <input name="business_type"
@@ -590,7 +599,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Date</label>
                                     <input type="date" name="date"
@@ -600,7 +608,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Time</label>
                                     <input type="time" name="time"
@@ -610,12 +617,11 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
-                            @elseif($subtask->task_type === 'cell_center_accounts' || $isCallCenterAccount)
+                            @elseif ($subtask->task_type === 'cell_center_accounts')
                                 <div class="col-12 hidden row2{{ $lead }}">
-                                    <h6 class="mb-3"><i class="bi bi-person-lines-fill me-1"></i> Account Information</h6>
+                                    <h6 class="mb-3"><i class="bi bi-person-lines-fill me-1"></i> Account Information
+                                    </h6>
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Driving License</label>
                                     <input name="driving_license"
@@ -626,7 +632,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Email</label>
                                     <input type="email" name="email"
@@ -637,7 +642,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Phone</label>
                                     <input type="tel" name="phone"
@@ -648,67 +652,579 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Business Number</label>
-                                    <input type="text" name="bussiness_number"
-                                        class="form-control form-control-sm @error('bussiness_number') is-invalid @enderror"
-                                        value="{{ old('bussiness_number_' . $lead, $leadData['bussiness_number'] ?? '') }}"
+                                    <input type="text" name="business_number"
+                                        class="form-control form-control-sm @error('business_number') is-invalid @enderror"
+                                        value="{{ old('business_number_' . $lead, $leadData['business_number'] ?? '') }}"
                                         placeholder="Enter business number">
-                                    @error('bussiness_number')
+                                    @error('business_number')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Corporation Number</label>
-                                    <input type="text" name="corpuration_number"
-                                        class="form-control form-control-sm @error('corpuration_number') is-invalid @enderror"
-                                        value="{{ old('corpuration_number_' . $lead, $leadData['corpuration_number'] ?? '') }}"
+                                    <input type="text" name="corporation_number"
+                                        class="form-control form-control-sm @error('corporation_number') is-invalid @enderror"
+                                        value="{{ old('corporation_number_' . $lead, $leadData['corporation_number'] ?? '') }}"
                                         placeholder="Enter corporation number">
-                                    @error('corpuration_number')
+                                    @error('corporation_number')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Corporation Email</label>
-                                    <input type="email" name="corpuration_email"
-                                        class="form-control form-control-sm @error('corpuration_email') is-invalid @enderror"
-                                        value="{{ old('corpuration_email_' . $lead, $leadData['corpuration_email'] ?? '') }}"
+                                    <input type="email" name="corporation_email"
+                                        class="form-control form-control-sm @error('corporation_email') is-invalid @enderror"
+                                        value="{{ old('corporation_email_' . $lead, $leadData['corporation_email'] ?? '') }}"
                                         placeholder="Enter corporation email">
-                                    @error('corpuration_email')
+                                    @error('corporation_email')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-12 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Previous History</label>
-                                    <textarea name="pervious_history"
-                                        class="form-control form-control-sm @error('pervious_history') is-invalid @enderror"
-                                        rows="4"
-                                        placeholder="Enter previous account history">{{ old('pervious_history_' . $lead, $leadData['pervious_history'] ?? '') }}</textarea>
-                                    @error('pervious_history')
+                                    <textarea name="previous_history"
+                                        class="form-control form-control-sm @error('previous_history') is-invalid @enderror" rows="4"
+                                        placeholder="Enter previous account history">{{ old('previous_history_' . $lead, $leadData['previous_history'] ?? '') }}</textarea>
+                                    @error('previous_history')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Fees</label>
                                     <input type="number" step="0.01" name="fees"
                                         class="form-control form-control-sm @error('fees') is-invalid @enderror"
-                                        value="{{ old('fees_' . $lead, $leadData['fees'] ?? '') }}"
-                                        placeholder="0.00">
+                                        value="{{ old('fees_' . $lead, $leadData['fees'] ?? '') }}" placeholder="0.00">
                                     @error('fees')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Corporation Documents</label>
+                                    <input name="corporation_documents"
+                                        class="form-control form-control-sm @error('corporation_documents') is-invalid @enderror"
+                                        value="{{ old('corporation_documents_' . $lead, $leadData['corporation_documents'] ?? '') }}"
+                                        placeholder="Enter corporation documents details">
+                                    @error('corporation_documents')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            @elseif ($subtask->task_type === 'client_details')
+                                <div class="col-12 hidden row2{{ $lead }}">
+                                    <h6 class="mb-3"><i class="bi bi-person-lines-fill me-1"></i> Client Details</h6>
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">First Name</label>
+                                    <input name="first_name"
+                                        class="form-control form-control-sm @error('first_name') is-invalid @enderror"
+                                        value="{{ old('first_name_' . $lead, $leadData['first_name'] ?? '') }}"
+                                        placeholder="Enter first name">
+                                    @error('first_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Last Name</label>
+                                    <input name="last_name"
+                                        class="form-control form-control-sm @error('last_name') is-invalid @enderror"
+                                        value="{{ old('last_name_' . $lead, $leadData['last_name'] ?? '') }}"
+                                        placeholder="Enter last name">
+                                    @error('last_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Telephone</label>
+                                    <input type="tel" name="telephone"
+                                        class="form-control form-control-sm @error('telephone') is-invalid @enderror"
+                                        value="{{ old('telephone_' . $lead, $leadData['telephone'] ?? '') }}"
+                                        placeholder="Enter telephone number">
+                                    @error('telephone')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="email"
+                                        class="form-control form-control-sm @error('email') is-invalid @enderror"
+                                        value="{{ old('email_' . $lead, $leadData['email'] ?? '') }}"
+                                        placeholder="Enter email">
+                                    @error('email')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Date of Birth</label>
+                                    <input type="date" name="date_of_birth"
+                                        class="form-control form-control-sm @error('date_of_birth') is-invalid @enderror"
+                                        value="{{ old('date_of_birth_' . $lead, $leadData['date_of_birth'] ?? '') }}">
+                                    @error('date_of_birth')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">SIN</label>
+                                    <input name="sin"
+                                        class="form-control form-control-sm @error('sin') is-invalid @enderror"
+                                        value="{{ old('sin_' . $lead, $leadData['sin'] ?? '') }}"
+                                        placeholder="Enter SIN">
+                                    @error('sin')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-12 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Address</label>
+                                    <textarea name="address"
+                                        class="form-control form-control-sm @error('address') is-invalid @enderror"
+                                        rows="3"
+                                        placeholder="Enter address">{{ old('address_' . $lead, $leadData['address'] ?? '') }}</textarea>
+                                    @error('address')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-12 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Mailing Address</label>
+                                    <textarea name="mailing_address"
+                                        class="form-control form-control-sm @error('mailing_address') is-invalid @enderror"
+                                        rows="3"
+                                        placeholder="Enter mailing address">{{ old('mailing_address_' . $lead, $leadData['mailing_address'] ?? '') }}</textarea>
+                                    @error('mailing_address')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Marital Status</label>
+                                    <input name="marital_status"
+                                        class="form-control form-control-sm @error('marital_status') is-invalid @enderror"
+                                        value="{{ old('marital_status_' . $lead, $leadData['marital_status'] ?? '') }}"
+                                        placeholder="Enter marital status">
+                                    @error('marital_status')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Status in Canada</label>
+                                    <input name="status_in_canada"
+                                        class="form-control form-control-sm @error('status_in_canada') is-invalid @enderror"
+                                        value="{{ old('status_in_canada_' . $lead, $leadData['status_in_canada'] ?? '') }}"
+                                        placeholder="Enter status in Canada">
+                                    @error('status_in_canada')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">ID (Driving License/Passport)</label>
+                                    <input name="ids_driving_passport"
+                                        class="form-control form-control-sm @error('ids_driving_passport') is-invalid @enderror"
+                                        value="{{ old('ids_driving_passport_' . $lead, $leadData['ids_driving_passport'] ?? '') }}"
+                                        placeholder="Enter ID number">
+                                    @error('ids_driving_passport')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">ID Expiry Date</label>
+                                    <input type="date" name="ids_expiry_date"
+                                        class="form-control form-control-sm @error('ids_expiry_date') is-invalid @enderror"
+                                        value="{{ old('ids_expiry_date_' . $lead, $leadData['ids_expiry_date'] ?? '') }}">
+                                    @error('ids_expiry_date')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Education</label>
+                                    <input name="education"
+                                        class="form-control form-control-sm @error('education') is-invalid @enderror"
+                                        value="{{ old('education_' . $lead, $leadData['education'] ?? '') }}"
+                                        placeholder="Enter education details">
+                                    @error('education')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Corporation Registered Name</label>
+                                    <input name="corporation_registered_name"
+                                        class="form-control form-control-sm @error('corporation_registered_name') is-invalid @enderror"
+                                        value="{{ old('corporation_registered_name_' . $lead, $leadData['corporation_registered_name'] ?? '') }}"
+                                        placeholder="Enter corporation registered name">
+                                    @error('corporation_registered_name')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Fiscal Year T2</label>
+                                    <input name="fiscal_year_t2"
+                                        class="form-control form-control-sm @error('fiscal_year_t2') is-invalid @enderror"
+                                        value="{{ old('fiscal_year_t2_' . $lead, $leadData['fiscal_year_t2'] ?? '') }}"
+                                        placeholder="Enter fiscal year T2">
+                                    @error('fiscal_year_t2')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Ontario Corporation No</label>
+                                    <input name="ontario_corporation_no"
+                                        class="form-control form-control-sm @error('ontario_corporation_no') is-invalid @enderror"
+                                        value="{{ old('ontario_corporation_no_' . $lead, $leadData['ontario_corporation_no'] ?? '') }}"
+                                        placeholder="Enter Ontario corporation number">
+                                    @error('ontario_corporation_no')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Fiscal Year HST</label>
+                                    <input name="fiscal_year_hst"
+                                        class="form-control form-control-sm @error('fiscal_year_hst') is-invalid @enderror"
+                                        value="{{ old('fiscal_year_hst_' . $lead, $leadData['fiscal_year_hst'] ?? '') }}"
+                                        placeholder="Enter fiscal year HST">
+                                    @error('fiscal_year_hst')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Business No</label>
+                                    <input name="business_no"
+                                        class="form-control form-control-sm @error('business_no') is-invalid @enderror"
+                                        value="{{ old('business_no_' . $lead, $leadData['business_no'] ?? '') }}"
+                                        placeholder="Enter business number">
+                                    @error('business_no')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-12 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Business Activities</label>
+                                    <textarea name="business_activities"
+                                        class="form-control form-control-sm @error('business_activities') is-invalid @enderror"
+                                        rows="3"
+                                        placeholder="Enter business activities">{{ old('business_activities_' . $lead, $leadData['business_activities'] ?? '') }}</textarea>
+                                    @error('business_activities')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Date of Corporation</label>
+                                    <input type="date" name="date_of_corporation"
+                                        class="form-control form-control-sm @error('date_of_corporation') is-invalid @enderror"
+                                        value="{{ old('date_of_corporation_' . $lead, $leadData['date_of_corporation'] ?? '') }}">
+                                    @error('date_of_corporation')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Corporation Key</label>
+                                    <input name="corporation_key"
+                                        class="form-control form-control-sm @error('corporation_key') is-invalid @enderror"
+                                        value="{{ old('corporation_key_' . $lead, $leadData['corporation_key'] ?? '') }}"
+                                        placeholder="Enter corporation key">
+                                    @error('corporation_key')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Register in CRA For</label>
+                                    <input name="register_in_cra_for"
+                                        class="form-control form-control-sm @error('register_in_cra_for') is-invalid @enderror"
+                                        value="{{ old('register_in_cra_for_' . $lead, $leadData['register_in_cra_for'] ?? '') }}"
+                                        placeholder="Enter CRA registration details">
+                                    @error('register_in_cra_for')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-12 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Business Address</label>
+                                    <textarea name="business_address"
+                                        class="form-control form-control-sm @error('business_address') is-invalid @enderror"
+                                        rows="3"
+                                        placeholder="Enter business address">{{ old('business_address_' . $lead, $leadData['business_address'] ?? '') }}</textarea>
+                                    @error('business_address')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Corporation Website</label>
+                                    <input name="corporation_website"
+                                        class="form-control form-control-sm @error('corporation_website') is-invalid @enderror"
+                                        value="{{ old('corporation_website_' . $lead, $leadData['corporation_website'] ?? '') }}"
+                                        placeholder="Enter corporation website">
+                                    @error('corporation_website')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Corporation Type</label>
+                                    <input name="corporation_type"
+                                        class="form-control form-control-sm @error('corporation_type') is-invalid @enderror"
+                                        value="{{ old('corporation_type_' . $lead, $leadData['corporation_type'] ?? '') }}"
+                                        placeholder="Enter corporation type">
+                                    @error('corporation_type')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Ontario Business/Corporation/Partnership</label>
+                                    <input name="ontario_business_corporation_partnership"
+                                        class="form-control form-control-sm @error('ontario_business_corporation_partnership') is-invalid @enderror"
+                                        value="{{ old('ontario_business_corporation_partnership_' . $lead, $leadData['ontario_business_corporation_partnership'] ?? '') }}"
+                                        placeholder="Enter details">
+                                    @error('ontario_business_corporation_partnership')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Financial Institutions</label>
+                                    <input name="financial_institutions"
+                                        class="form-control form-control-sm @error('financial_institutions') is-invalid @enderror"
+                                        value="{{ old('financial_institutions_' . $lead, $leadData['financial_institutions'] ?? '') }}"
+                                        placeholder="Enter financial institutions">
+                                    @error('financial_institutions')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Account No/Void Cheque</label>
+                                    <input name="account_no_void_cheque"
+                                        class="form-control form-control-sm @error('account_no_void_cheque') is-invalid @enderror"
+                                        value="{{ old('account_no_void_cheque_' . $lead, $leadData['account_no_void_cheque'] ?? '') }}"
+                                        placeholder="Enter account number or void cheque details">
+                                    @error('account_no_void_cheque')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Credit Card Numbers From</label>
+                                    <input name="credit_card_nos_from"
+                                        class="form-control form-control-sm @error('credit_card_nos_from') is-invalid @enderror"
+                                        value="{{ old('credit_card_nos_from_' . $lead, $leadData['credit_card_nos_from'] ?? '') }}"
+                                        placeholder="Enter credit card source">
+                                    @error('credit_card_nos_from')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Outstanding Balance</label>
+                                    <input type="number" step="0.01" name="outstanding_balance"
+                                        class="form-control form-control-sm @error('outstanding_balance') is-invalid @enderror"
+                                        value="{{ old('outstanding_balance_' . $lead, $leadData['outstanding_balance'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('outstanding_balance')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Loans From Institutions</label>
+                                    <input name="loans_from_institutions"
+                                        class="form-control form-control-sm @error('loans_from_institutions') is-invalid @enderror"
+                                        value="{{ old('loans_from_institutions_' . $lead, $leadData['loans_from_institutions'] ?? '') }}"
+                                        placeholder="Enter loan sources">
+                                    @error('loans_from_institutions')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Loan Outstanding Balance/Installment</label>
+                                    <input type="number" step="0.01" name="loan_outstanding_balance_installment"
+                                        class="form-control form-control-sm @error('loan_outstanding_balance_installment') is-invalid @enderror"
+                                        value="{{ old('loan_outstanding_balance_installment_' . $lead, $leadData['loan_outstanding_balance_installment'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('loan_outstanding_balance_installment')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Mortgage From</label>
+                                    <input name="mortgage_from"
+                                        class="form-control form-control-sm @error('mortgage_from') is-invalid @enderror"
+                                        value="{{ old('mortgage_from_' . $lead, $leadData['mortgage_from'] ?? '') }}"
+                                        placeholder="Enter mortgage source">
+                                    @error('mortgage_from')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Mortgage Outstanding Balance/Installment</label>
+                                    <input type="number" step="0.01" name="mortgage_outstanding_balance_installment"
+                                        class="form-control form-control-sm @error('mortgage_outstanding_balance_installment') is-invalid @enderror"
+                                        value="{{ old('mortgage_outstanding_balance_installment_' . $lead, $leadData['mortgage_outstanding_balance_installment'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('mortgage_outstanding_balance_installment')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Auto Make & Year</label>
+                                    <input name="auto_make_year"
+                                        class="form-control form-control-sm @error('auto_make_year') is-invalid @enderror"
+                                        value="{{ old('auto_make_year_' . $lead, $leadData['auto_make_year'] ?? '') }}"
+                                        placeholder="Enter auto make and year">
+                                    @error('auto_make_year')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Lease or Loan</label>
+                                    <input name="lease_or_loan"
+                                        class="form-control form-control-sm @error('lease_or_loan') is-invalid @enderror"
+                                        value="{{ old('lease_or_loan_' . $lead, $leadData['lease_or_loan'] ?? '') }}"
+                                        placeholder="Enter lease or loan details">
+                                    @error('lease_or_loan')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">WSIB Account No</label>
+                                    <input name="wsib_account_no"
+                                        class="form-control form-control-sm @error('wsib_account_no') is-invalid @enderror"
+                                        value="{{ old('wsib_account_no_' . $lead, $leadData['wsib_account_no'] ?? '') }}"
+                                        placeholder="Enter WSIB account number">
+                                    @error('wsib_account_no')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Client Introduced By</label>
+                                    <input name="client_introduced_by"
+                                        class="form-control form-control-sm @error('client_introduced_by') is-invalid @enderror"
+                                        value="{{ old('client_introduced_by_' . $lead, $leadData['client_introduced_by'] ?? '') }}"
+                                        placeholder="Enter referrer name">
+                                    @error('client_introduced_by')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Category</label>
+                                    <input name="category"
+                                        class="form-control form-control-sm @error('category') is-invalid @enderror"
+                                        value="{{ old('category_' . $lead, $leadData['category'] ?? '') }}"
+                                        placeholder="Enter category">
+                                    @error('category')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">LMIA/Work Permit From</label>
+                                    <input name="lmia_work_permit_from"
+                                        class="form-control form-control-sm @error('lmia_work_permit_from') is-invalid @enderror"
+                                        value="{{ old('lmia_work_permit_from_' . $lead, $leadData['lmia_work_permit_from'] ?? '') }}"
+                                        placeholder="Enter LMIA or work permit source">
+                                    @error('lmia_work_permit_from')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Service Charges/Fees</label>
+                                    <input type="number" step="0.01" name="service_charges_fees"
+                                        class="form-control form-control-sm @error('service_charges_fees') is-invalid @enderror"
+                                        value="{{ old('service_charges_fees_' . $lead, $leadData['service_charges_fees'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('service_charges_fees')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Bookkeeping</label>
+                                    <input type="number" step="0.01" name="bookkeeping"
+                                        class="form-control form-control-sm @error('bookkeeping') is-invalid @enderror"
+                                        value="{{ old('bookkeeping_' . $lead, $leadData['bookkeeping'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('bookkeeping')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Corporation Tax</label>
+                                    <input type="number" step="0.01" name="corporation_tax"
+                                        class="form-control form-control-sm @error('corporation_tax') is-invalid @enderror"
+                                        value="{{ old('corporation_tax_' . $lead, $leadData['corporation_tax'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('corporation_tax')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">HST</label>
+                                    <input type="number" step="0.01" name="hst"
+                                        class="form-control form-control-sm @error('hst') is-invalid @enderror"
+                                        value="{{ old('hst_' . $lead, $leadData['hst'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('hst')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Financials</label>
+                                    <input type="number" step="0.01" name="financials"
+                                        class="form-control form-control-sm @error('financials') is-invalid @enderror"
+                                        value="{{ old('financials_' . $lead, $leadData['financials'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('financials')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Personal Tax</label>
+                                    <input type="number" step="0.01" name="personal_tax"
+                                        class="form-control form-control-sm @error('personal_tax') is-invalid @enderror"
+                                        value="{{ old('personal_tax_' . $lead, $leadData['personal_tax'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('personal_tax')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Immigration</label>
+                                    <input type="number" step="0.01" name="immigration"
+                                        class="form-control form-control-sm @error('immigration') is-invalid @enderror"
+                                        value="{{ old('immigration_' . $lead, $leadData['immigration'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('immigration')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Corporation Registration</label>
+                                    <input type="number" step="0.01" name="corporation_registration"
+                                        class="form-control form-control-sm @error('corporation_registration') is-invalid @enderror"
+                                        value="{{ old('corporation_registration_' . $lead, $leadData['corporation_registration'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('corporation_registration')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Accounting</label>
+                                    <input type="number" step="0.01" name="accounting"
+                                        class="form-control form-control-sm @error('accounting') is-invalid @enderror"
+                                        value="{{ old('accounting_' . $lead, $leadData['accounting'] ?? '') }}"
+                                        placeholder="0.00">
+                                    @error('accounting')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">MH Enterprises Signature</label>
+                                    <input name="mh_enterprises_signature"
+                                        class="form-control form-control-sm @error('mh_enterprises_signature') is-invalid @enderror"
+                                        value="{{ old('mh_enterprises_signature_' . $lead, $leadData['mh_enterprises_signature'] ?? '') }}"
+                                        placeholder="Enter MH Enterprises signature">
+                                    @error('mh_enterprises_signature')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 hidden row2{{ $lead }} form-row">
+                                    <label class="form-label">Client Signature</label>
+                                    <input name="client_signature"
+                                        class="form-control form-control-sm @error('client_signature') is-invalid @enderror"
+                                        value="{{ old('client_signature_' . $lead, $leadData['client_signature'] ?? '') }}"
+                                        placeholder="Enter client signature">
+                                    @error('client_signature')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
                             @else
                                 <div class="col-12 hidden row2{{ $lead }}">
                                     <h6 class="mb-3"><i class="bi bi-list-task me-1"></i> Additional Information</h6>
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Client Name</label>
                                     <input name="client_name"
@@ -719,7 +1235,6 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-md-6 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Contact Information</label>
                                     <input type="text" name="contact_info"
@@ -730,12 +1245,9 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="col-12 hidden row2{{ $lead }} form-row">
                                     <label class="form-label">Notes</label>
-                                    <textarea name="notes"
-                                        class="form-control form-control-sm @error('notes') is-invalid @enderror"
-                                        rows="3"
+                                    <textarea name="notes" class="form-control form-control-sm @error('notes') is-invalid @enderror" rows="3"
                                         placeholder="Additional notes for this lead...">{{ old('notes_' . $lead, $leadData['notes'] ?? '') }}</textarea>
                                     @error('notes')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -750,11 +1262,14 @@
                                         @foreach ($leadAttachments as $url)
                                             @if ($url)
                                                 @php
-                                                    $fileUrl = Str::startsWith($url, ['http://', 'https://']) ? $url : asset('storage/' . $url);
-                                                    $ext = strtolower(pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
+                                                    $fileUrl = Str::startsWith($url, ['http://', 'https://'])
+                                                        ? $url
+                                                        : asset('storage/' . $url);
+                                                    $ext = strtolower(
+                                                        pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION),
+                                                    );
                                                     $fileName = basename(parse_url($fileUrl, PHP_URL_PATH));
                                                 @endphp
-
                                                 <div class="attachment-item text-center">
                                                     @if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']))
                                                         <a href="{{ $fileUrl }}" target="_blank">
@@ -762,36 +1277,52 @@
                                                                 class="img-fluid mb-2"
                                                                 style="max-height: 100px; object-fit: cover; width: 100%;">
                                                         </a>
-                                                        <small class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
+                                                        <small
+                                                            class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
                                                     @elseif (in_array($ext, ['mp4', 'mov', 'avi', 'webm', 'mkv']))
                                                         <video src="{{ $fileUrl }}" controls class="mb-2 w-100"
                                                             style="max-height: 100px; object-fit: cover;">
                                                         </video>
-                                                        <small class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
+                                                        <small
+                                                            class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
                                                     @elseif (in_array($ext, ['mp3', 'wav', 'ogg', 'm4a']))
                                                         <audio controls class="w-100 mb-2">
-                                                            <source src="{{ $fileUrl }}" type="audio/{{ $ext }}">
+                                                            <source src="{{ $fileUrl }}"
+                                                                type="audio/{{ $ext }}">
                                                         </audio>
-                                                        <small class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
+                                                        <small
+                                                            class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
                                                     @elseif ($ext === 'pdf')
-                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/pdf.png" alt="PDF" class="mb-2" style="width: 32px;">
-                                                            <small class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
+                                                        <a href="{{ $fileUrl }}" target="_blank"
+                                                            title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/pdf.png"
+                                                                alt="PDF" class="mb-2" style="width: 32px;">
+                                                            <small
+                                                                class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
                                                         </a>
                                                     @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
-                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/ms-excel.png" alt="Excel" class="mb-2" style="width: 32px;">
-                                                            <small class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
+                                                        <a href="{{ $fileUrl }}" target="_blank"
+                                                            title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/ms-excel.png"
+                                                                alt="Excel" class="mb-2" style="width: 32px;">
+                                                            <small
+                                                                class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
                                                         </a>
                                                     @elseif (in_array($ext, ['doc', 'docx']))
-                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/ms-word.png" alt="Word" class="mb-2" style="width: 32px;">
-                                                            <small class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
+                                                        <a href="{{ $fileUrl }}" target="_blank"
+                                                            title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/ms-word.png"
+                                                                alt="Word" class="mb-2" style="width: 32px;">
+                                                            <small
+                                                                class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
                                                         </a>
                                                     @else
-                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/fluency/48/file.png" alt="File" class="mb-2" style="width: 32px;">
-                                                            <small class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
+                                                        <a href="{{ $fileUrl }}" target="_blank"
+                                                            title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/fluency/48/file.png"
+                                                                alt="File" class="mb-2" style="width: 32px;">
+                                                            <small
+                                                                class="text-muted d-block">{{ Str::limit($fileName, 15) }}</small>
                                                         </a>
                                                     @endif
                                                 </div>
@@ -806,7 +1337,8 @@
                                 <input type="file" name="attachments[]" multiple
                                     class="form-control form-control-sm @error('attachments.*') is-invalid @enderror"
                                     accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.csv">
-                                <small class="text-muted">Optional: Upload images, videos, audio, PDFs, or documents (Max 5MB each)</small>
+                                <small class="text-muted">Optional: Upload images, videos, audio, PDFs, or documents (Max
+                                    10MB each)</small>
                                 @error('attachments.*')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -871,7 +1403,9 @@
                     }
 
                     const leadId = form.querySelector('input[name="lead"]').value;
-                    const taskFields = form.querySelectorAll('.row2' + leadId + ' input:not([type="hidden"]), .row2' + leadId + ' select, .row2' + leadId + ' textarea');
+                    const taskFields = form.querySelectorAll('.row2' + leadId +
+                        ' input:not([type="hidden"]), .row2' + leadId + ' select, .row2' +
+                        leadId + ' textarea');
                     let hasRequiredData = false;
                     taskFields.forEach(field => {
                         if (field.value && field.value.trim()) {

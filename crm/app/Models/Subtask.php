@@ -27,12 +27,14 @@ class Subtask extends Model
         'account_hst_id',
         'manager_operation_id',
         'cell_center_account_ids',
-        'call_center_pos_ids'
+        'call_center_pos_ids',
+        'client_detail_ids'
     ];
 
     protected $casts = [
         'call_center_pos_ids' => 'array',
         'cell_center_account_ids' => 'array',
+        'client_detail_ids' => 'array',
     ];
 
     public function employee()
@@ -61,5 +63,10 @@ class Subtask extends Model
     public function cellCenterPosAccount()
     {
         return $this->belongsTo(CellCenterAccount::class, 'task_id');
+    }
+    
+    public function clientDetails()
+    {
+        return $this->belongsTo(ClientDetail::class, 'task_id');
     }
 }

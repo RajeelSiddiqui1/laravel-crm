@@ -204,8 +204,8 @@
                     @php
                         $teamLead = Auth::guard('team_lead')->user();
                         $taskTypes = $teamLead->department && $teamLead->department->name === 'Accounts'
-                            ? ['Call_Center_POS', 'Call_Center_Accounts']
-                            : ['Operations', 'Call_Center_POS'];
+                            ? ['Call_Center_POS', 'Call_Center_Accounts','Client_Details']
+                            : ['Operations', 'Call_Center_POS','Client_Details'];
                     @endphp
                     @foreach ($taskTypes as $type)
                         <option value="{{ $type }}" {{ old('task_type') == $type ? 'selected' : '' }}>
