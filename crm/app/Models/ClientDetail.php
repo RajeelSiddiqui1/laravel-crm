@@ -11,6 +11,7 @@ class ClientDetail extends Model
        protected $table = 'client_details';
       protected $fillable = [
         'employee_id',
+        'comments',
         'last_name',
         'first_name',
         'telephone',

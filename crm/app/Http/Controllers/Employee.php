@@ -272,9 +272,9 @@ class Employee extends Controller
     $isClientDetails     = $subtask->task_type === 'client_details';
 
     // Initialize data structures for lead-specific records
-    $posRecords     = [];
-    $accountRecords = [];
-    $clientRecords  = [];
+    $posRecords          = [];
+    $accountRecords      = [];
+    $clientDetailRecords = []; // Changed from clientRecords to clientDetailRecords
 
     // For POS type tasks
     if ($isCallCenterPos && $subtask->call_center_pos_ids) {
@@ -301,7 +301,7 @@ class Employee extends Controller
         $clientIds = $subtask->client_detail_ids; // Assuming cast as array
         foreach ($clientIds as $leadIndex => $clientId) {
             if ($clientId) {
-                $clientRecords[$leadIndex + 1] = ClientDetail::find($clientId);
+                $clientDetailRecords[$leadIndex + 1] = ClientDetail::find($clientId);
             }
         }
     }
@@ -314,7 +314,7 @@ class Employee extends Controller
         'isClientDetails',
         'posRecords',
         'accountRecords',
-        'clientRecords'
+        'clientDetailRecords' // Changed from clientRecords to clientDetailRecords
     ));
 }
 
@@ -480,7 +480,7 @@ public function updateSubtask(Request $request, $id)
     // 🔹 Task-specific assignments
     if ($isPos) {
         foreach ([
-            'name', 'business_name', 'business_number', 'personal_number', 'personal_email',
+            'name', 'business_name', 'business_number', 'personal_number', 'personal_email','comment',
             'business_email', 'address', 'provider', 'category_pos', 'pos_type',
             'debt', 'credit', 'rental', 'business_type', 'date', 'time'
         ] as $field) {
@@ -495,7 +495,7 @@ public function updateSubtask(Request $request, $id)
         }
     } elseif ($isClientDetails) {
         foreach ([
-            'last_name', 'first_name', 'telephone', 'email', 'date_of_birth', 'sin',
+            'last_name', 'first_name', 'telephone', 'email', 'date_of_birth', 'sin','comments',
             'address', 'mailing_address', 'marital_status', 'status_in_canada',
             'ids_driving_passport', 'ids_expiry_date', 'education',
             'corporation_registered_name', 'fiscal_year_t2', 'ontario_corporation_no',
@@ -547,10 +547,10 @@ public function updateSubtask(Request $request, $id)
     }
 
     $successMessage = $isPos
-        ? 'POS data updated successfully.'
+        ? 'POS task created successfully.'
         : ($isAccount
-            ? 'Account data updated successfully.'
-            : 'Client details updated successfully.');
+            ? 'Account task created successfully.'
+            : 'Client task created successfully.');
 
     return redirect()->back()->with('success_swal', $successMessage);
 }

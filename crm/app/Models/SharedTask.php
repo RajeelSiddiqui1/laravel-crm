@@ -19,6 +19,7 @@ class SharedTask extends Model
         'operation_employee_id',
         'cell_center_pos_id',
         'cell_center_account_id',
+        'client_details_id',
         'comment',
         'attachments',
         'status',
@@ -60,5 +61,9 @@ class SharedTask extends Model
     public function cellCenterAccount()
     {
         return $this->belongsTo(CellCenterAccount::class, 'cell_center_account_id', 'id');
+    }
+    public function clientDetail()
+    {
+        return $this->belongsTo(ClientDetail::class, 'client_details_id', 'id');
     }
 }

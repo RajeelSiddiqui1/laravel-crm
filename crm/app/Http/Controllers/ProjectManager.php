@@ -18,6 +18,7 @@ use App\Mail\AuthMail;
 use App\Models\AccountT1;
 use App\Models\AccountT2;
 use App\Models\CellCenterPos;
+use App\Models\ClientDetail;
 use App\Models\Notification;
 use App\Models\SharedTask;
 use App\Models\TeamLead;
@@ -1174,6 +1175,10 @@ Task not associated with any owner task.');
             ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
             : collect();
 
+        $clientDetailRecords = $subtask->client_detail_ids
+        ? ClientDetail::whereIn('id', $subtask->client_detail_ids)->get()
+        : collect();
+
         // ✅ Visitor department ka ID nikal lo
         $visitorDeptId = Department::where('name', 'Visitor')->value('id');
 
@@ -1190,6 +1195,7 @@ Task not associated with any owner task.');
             'subtask',
             'posRecords',
             'accountRecords',
+            'clientDetailRecords',
             'managers',
             'sharedManagers',
             'sharedTasks',
@@ -1204,53 +1210,64 @@ Task not associated with any owner task.');
 
 
     public function store_shared_task(Request $request, $subtaskId)
-    {
-        $request->validate([
-            'manager_id' => 'required|exists:project_managers,id', // 👈 yahan manager_id likho
-        ]);
+{
+    $request->validate([
+        'manager_id' => 'required|exists:project_managers,id',
+    ]);
 
-        $subtask = Subtask::findOrFail($subtaskId);
-        $managerId = $subtask->manager_id;
-        $teamleadId = $subtask->team_lead_id;
+    $subtask = Subtask::findOrFail($subtaskId);
+    $managerId = $subtask->manager_id;
+    $teamleadId = $subtask->team_lead_id;
 
-        $employeeId = null;
-        $posId = null;
-        $accountId = null;
+    $employeeId = null;
+    $posId = null;
+    $accountId = null;
+    $clientId = null;
 
-        // Agar account_id aya hai
-        if ($request->has('account_id')) {
-            $account = CellCenterAccount::find($request->account_id);
-            if ($account) {
-                $employeeId = $account->employee_id;
-                $accountId = $account->id;
-            }
+    // Agar account_id aya hai
+    if ($request->has('account_id')) {
+        $account = CellCenterAccount::find($request->account_id);
+        if ($account) {
+            $employeeId = $account->employee_id;
+            $accountId = $account->id;
         }
-
-        // Agar pos_id aya hai
-        if ($request->has('pos_id')) {
-            $pos = CellCenterPos::find($request->pos_id);
-            if ($pos) {
-                $employeeId = $pos->employee_id;
-                $posId = $pos->id;
-            }
-        }
-
-        if (!$employeeId) {
-            return redirect()->back()->with('error', 'No employee found in CallCenterAccount or POS record');
-        }
-
-        SharedTask::create([
-            'assigend_manager_id'   => $request->manager_id, // 👈 form se aya hua
-            'manager_id'            => $managerId,
-            'teamlead_id'           => $teamleadId,
-            'employee_id'           => $employeeId,
-            'subtask_id'            => $subtaskId,
-            'cell_center_pos_id'    => $posId,
-            'cell_center_account_id' => $accountId,
-        ]);
-
-        return redirect()->back()->with('success', 'Task shared successfully');
     }
+
+    // Agar pos_id aya hai
+    if ($request->has('pos_id')) {
+        $pos = CellCenterPos::find($request->pos_id);
+        if ($pos) {
+            $employeeId = $pos->employee_id;
+            $posId = $pos->id;
+        }
+    }
+
+    // Agar client_id aya hai
+    if ($request->has('client_id')) {
+        $client = ClientDetail::find($request->client_id);
+        if ($client) {
+            $employeeId = $client->employee_id;
+            $clientId = $client->id; // ✅ yahan sahi karein
+        }
+    }
+
+    if (!$employeeId) {
+        return redirect()->back()->with('error', 'No employee found in CallCenterAccount, POS, or Client record');
+    }
+
+    SharedTask::create([
+        'assigend_manager_id'     => $request->manager_id, // form se aya hua
+        'manager_id'              => $managerId,           // subtask ka manager
+        'teamlead_id'             => $teamleadId,
+        'employee_id'             => $employeeId,
+        'subtask_id'              => $subtaskId,
+        'cell_center_pos_id'      => $posId,
+        'cell_center_account_id'  => $accountId,
+        'client_details_id'       => $clientId,            // ✅ ab clientId store hoga
+    ]);
+
+    return redirect()->back()->with('success', 'Task shared successfully');
+}
 
 
     public function show_employee_task($id)
@@ -1267,6 +1284,8 @@ Task not associated with any owner task.');
             ? CellCenterAccount::find($shared_task->cell_center_account_id)
             : null;
 
+            
+
         return view("project_manager.show_employee_task", compact(
             'shared_task',
             'cell_center_pos',
@@ -1274,50 +1293,59 @@ Task not associated with any owner task.');
         ));
     }
 
-    public function showSharedTasks()
-    {
-        // Manager login
-        $manager = Auth::guard('project_manager')->user();
+public function showSharedTasks()
+{
+    // Manager login
+    $manager = Auth::guard('project_manager')->user();
 
-        // Manager ke department_ids (array/json handle karega)
-        $managerDeptIds = is_array($manager->department_ids)
-            ? $manager->department_ids
-            : json_decode($manager->department_ids, true);
+    // Manager ke department_ids (json ya array dono handle)
+    $managerDeptIds = is_array($manager->department_ids)
+        ? $manager->department_ids
+        : json_decode($manager->department_ids, true);
 
-        // Team leads jo manager ke department me hain
-        $teamLeads = TeamLead::whereIn('department_id', $managerDeptIds)->get();
+    // Team leads jo manager ke department me hain
+    $teamLeads = TeamLead::whereIn('department_id', $managerDeptIds)->get();
 
-        // Shared tasks jo iss manager ko assign hue hain
-        $sharedTasks = SharedTask::where('assigend_manager_id', $manager->id)->get();
+    // Shared tasks jo iss manager ko assign hue hain
+    $sharedTasks = SharedTask::where('assigend_manager_id', $manager->id)->get();
 
-        $posResults = [];
-        $accountResults = [];
+    $posResults = [];
+    $accountResults = [];
+    $clientResults = [];
 
-        foreach ($sharedTasks as $shared) {
-            if ($shared->cell_center_pos_id) {
-                $pos = CellCenterPos::find($shared->cell_center_pos_id);
-                if ($pos) {
-                    $pos->shared_task_id = $shared->id;
-                    $pos->shared_status = $shared->status;
-                    $pos->assigned_teamlead_id = $shared->assigned_teamlead_id;
-                    $posResults[] = $pos;
-                }
-            } elseif ($shared->cell_center_account_id) {
-                $account = CellCenterAccount::find($shared->cell_center_account_id);
-                if ($account) {
-                    $account->shared_task_id = $shared->id;
-                    $account->shared_status = $shared->status;
-                    $account->assigned_teamlead_id = $shared->assigned_teamlead_id;
-                    $accountResults[] = $account;
-                }
+    foreach ($sharedTasks as $shared) {
+        if ($shared->cell_center_pos_id) {
+            $pos = CellCenterPos::find($shared->cell_center_pos_id);
+            if ($pos) {
+                $pos->shared_task_id       = $shared->id;
+                $pos->shared_status        = $shared->status;
+                $pos->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                $posResults[] = $pos;
+            }
+        } elseif ($shared->cell_center_account_id) {
+            $account = CellCenterAccount::find($shared->cell_center_account_id);
+            if ($account) {
+                $account->shared_task_id       = $shared->id;
+                $account->shared_status        = $shared->status;
+                $account->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                $accountResults[] = $account;
+            }
+        } elseif ($shared->client_details_id) {
+            $client = ClientDetail::find($shared->client_details_id);
+            if ($client) {
+                $client->shared_task_id       = $shared->id;
+                $client->shared_status        = $shared->status;
+                $client->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                $clientResults[] = $client;
             }
         }
-
-        return view(
-            'project_manager.manager_shared_task_list',
-            compact('sharedTasks', 'posResults', 'accountResults', 'teamLeads')
-        );
     }
+
+    return view(
+        'project_manager.manager_shared_task_list',
+        compact('sharedTasks', 'posResults', 'accountResults', 'clientResults', 'teamLeads')
+    );
+}
 
     /**
      * Assign a teamlead to shared task

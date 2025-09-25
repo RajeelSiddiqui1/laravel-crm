@@ -140,7 +140,7 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::get('/team-lead/subtask/show-more/{id}', 'subtask_show_more')->name('team_subtask_show_more');
         Route::get('/team-lead/task/subtask/create', 'subtask_create2')->name('team_lead.subtask.create2');
         Route::get('/team-lead/subtask/list', 'subtask_list2')->name('team_lead.subtask.list2');
-        Route::post('/team-lead/subtask/store', 'subtask_store2')->name('team_lead.subtask.store2');
+        Route::post('/team-lead/subtask/store2', 'subtask_store2')->name('team_lead.subtask.store2');
         Route::get('/team-lead/subtask/{id}/edit', 'subtask_edit')->name('team_lead.subtask.edit');
         Route::put('/subtask/update/{id}', 'subtask_update')->name('team_lead.subtask.update');
         Route::delete('/team-lead/subtask/{id}/delete', 'subtask_delete')->name('team_lead.subtask.delete');

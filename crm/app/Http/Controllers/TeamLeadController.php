@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\ProjectManager as ControllersProjectManager;
 use App\Mail\AssignedEmployeeTask;
 use App\Models\AccountHST;
 use App\Models\CellCenterAccount;
 use App\Models\CellCenterPos;
+use App\Models\ClientDetail;
 use App\Models\ManagerOperation;
 use App\Models\Message;
 use App\Models\OnwerTask;
@@ -438,67 +440,74 @@ class TeamLeadController extends Controller
     }
 
 
-       public function subtask_store2(Request $request)
-    {
-        $request->validate([
-            'title'                => 'required|string|max:255',
-            'description'          => 'required|string',
-            'attachments'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
-            'assigned_employee_id' => 'required|exists:employees,id',
-            'start_date'           => 'nullable|date',
-            'end_date'             => 'nullable|date|after_or_equal:start_date',
-            'start_time'           => 'nullable|date_format:H:i',
-            'end_time'             => 'nullable|date_format:H:i',
-            'lead'                 => 'required|numeric',
-            'task_type'            => 'nullable|string',
-        ]);
+    public function subtask_store2(Request $request)
+{
+    $request->validate([
+        'title'                => 'required|string|max:255',
+        'description'          => 'required|string',
+        'attachments'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+        'assigned_employee_id' => 'required|exists:employees,id',
+        'start_date'           => 'nullable|date',
+        'end_date'             => 'nullable|date|after_or_equal:start_date',
+        'start_time'           => 'nullable|date_format:H:i',
+        'end_time'             => 'nullable|date_format:H:i',
+        'lead'                 => 'required|numeric',
+        'task_type'            => 'nullable|string',
+    ]);
 
-        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
-            if ($request->filled('start_time') && $request->filled('end_time')) {
-                if (strtotime($request->end_time) <= strtotime($request->start_time)) {
-                    return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
-                }
+    // validate timings
+    if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
+        if ($request->filled('start_time') && $request->filled('end_time')) {
+            if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+                return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
             }
         }
-
-        $teamLead = Auth::guard('team_lead')->user();
-
-        $subtask = new Subtask();
-        $subtask->title         = $request->title;
-        $subtask->description   = $request->description;
-        $subtask->lead          = $request->lead;
-        $subtask->task_type     = $request->task_type;
-        $subtask->start_date    = $request->start_date;
-        $subtask->end_date      = $request->end_date;
-        $subtask->start_time    = $request->start_time;
-        $subtask->end_time      = $request->end_time;
-
-        // IDs
-        $subtask->team_lead_id  = Auth::guard('team_lead')->id(); // team lead creating
-        $subtask->employee_id   = $request->assigned_employee_id;  // employee assigned
-       
-
-
-        if ($request->hasFile('attachments')) {
-            try {
-                $file = $request->file('attachments');
-                $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                    'public_id'     => 'subtasks/' . uniqid() . '_' . $file->getClientOriginalName(),
-                    'resource_type' => 'auto',
-                ]);
-                $subtask->attachments = $uploaded['secure_url'];
-            } catch (\Exception $e) {
-                Log::error('Cloudinary upload failed: ' . $e->getMessage());
-                return redirect()->back()->with('error_swal', 'Failed to upload attachment')->withInput();
-            }
-        }
-
-        $subtask->save();
-
-        return redirect()->route('team_lead.subtask.list2', $request->account_id)
-            ->with('success_swal_swal', 'Subtask created successfully.');
     }
 
+    $teamLead = Auth::guard('team_lead')->user();
+
+    // 🔹 Manager lookup based on department
+    $manager = ProjectManager::whereJsonContains('department_ids', (string)$teamLead->department_id)->first();
+
+    $subtask = new Subtask();
+    $subtask->title         = $request->title;
+    $subtask->description   = $request->description;
+    $subtask->lead          = $request->lead;
+    $subtask->task_type     = $request->task_type;
+    $subtask->start_date    = $request->start_date;
+    $subtask->end_date      = $request->end_date;
+    $subtask->start_time    = $request->start_time;
+    $subtask->end_time      = $request->end_time;
+
+    // IDs
+    $subtask->team_lead_id  = $teamLead->id; 
+    $subtask->employee_id   = $request->assigned_employee_id;  
+
+    // agar manager mila tu uska id set ho
+    if ($manager) {
+        $subtask->manager_id = $manager->id;
+    }
+
+    // File upload
+    if ($request->hasFile('attachments')) {
+        try {
+            $file = $request->file('attachments');
+            $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                'public_id'     => 'subtasks/' . uniqid() . '_' . $file->getClientOriginalName(),
+                'resource_type' => 'auto',
+            ]);
+            $subtask->attachments = $uploaded['secure_url'];
+        } catch (\Exception $e) {
+            Log::error('Cloudinary upload failed: ' . $e->getMessage());
+            return redirect()->back()->with('error_swal', 'Failed to upload attachment')->withInput();
+        }
+    }
+
+    $subtask->save();
+
+    return redirect()->route('team_lead.subtask.list2', $request->account_id)
+        ->with('success_swal_swal', 'Subtask created successfully.');
+}
 
 
     function subtask_list2(){
@@ -513,81 +522,87 @@ class TeamLeadController extends Controller
     }
 
 
-    public function subtask_store(Request $request)
-    {
-        $request->validate([
-            'title'                => 'required|string|max:255',
-            'description'          => 'required|string',
-            'attachments'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
-            'assigned_employee_id' => 'required|exists:employees,id',
-            'start_date'           => 'nullable|date',
-            'end_date'             => 'nullable|date|after_or_equal:start_date',
-            'start_time'           => 'nullable|date_format:H:i',
-            'end_time'             => 'nullable|date_format:H:i',
-            'lead'                 => 'required|numeric',
-            'task_type'            => 'nullable|string',
-            'account_type'         => 'required|string',
-            'account_id'           => 'required|numeric',
-        ]);
+ public function subtask_store(Request $request)
+{
+    $request->validate([
+        'title'                => 'required|string|max:255',
+        'description'          => 'required|string',
+        'attachments'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+        'assigned_employee_id' => 'required|exists:employees,id',
+        'start_date'           => 'nullable|date',
+        'end_date'             => 'nullable|date|after_or_equal:start_date',
+        'start_time'           => 'nullable|date_format:H:i',
+        'end_time'             => 'nullable|date_format:H:i',
+        'lead'                 => 'required|numeric',
+        'task_type'            => 'nullable|string',
+        'account_type'         => 'required|string',
+        'account_id'           => 'required|numeric',
+    ]);
 
-        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
-            if ($request->filled('start_time') && $request->filled('end_time')) {
-                if (strtotime($request->end_time) <= strtotime($request->start_time)) {
-                    return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
-                }
+    // validate timings
+    if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
+        if ($request->filled('start_time') && $request->filled('end_time')) {
+            if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+                return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
             }
         }
-
-        $teamLead = Auth::guard('team_lead')->user();
-
-        $subtask = new Subtask();
-        $subtask->title         = $request->title;
-        $subtask->description   = $request->description;
-        $subtask->lead          = $request->lead;
-        $subtask->task_type     = $request->task_type;
-        $subtask->start_date    = $request->start_date;
-        $subtask->end_date      = $request->end_date;
-        $subtask->start_time    = $request->start_time;
-        $subtask->end_time      = $request->end_time;
-
-        // IDs
-        $subtask->team_lead_id  = Auth::guard('team_lead')->id(); // team lead creating
-        $subtask->employee_id   = $request->assigned_employee_id;  // employee assigned
-        $subtask->manager_id    = $request->manager_id ?? null;    // manager owner of the account/task
-
-        // Account type mapping
-        if ($request->account_type === 'T1') {
-            $subtask->account_t1_id = $request->account_id;
-        } elseif ($request->account_type === 'T2') {
-            $subtask->account_t2_id = $request->account_id;
-        } elseif ($request->account_type === 'HST') {
-            $subtask->account_hst_id = $request->account_id;
-        } elseif ($request->account_type === 'MANAGER') {
-            $subtask->manager_operation_id = $request->account_id;
-        }
-
-
-
-        if ($request->hasFile('attachments')) {
-            try {
-                $file = $request->file('attachments');
-                $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                    'public_id'     => 'subtasks/' . uniqid() . '_' . $file->getClientOriginalName(),
-                    'resource_type' => 'auto',
-                ]);
-                $subtask->attachments = $uploaded['secure_url'];
-            } catch (\Exception $e) {
-                Log::error('Cloudinary upload failed: ' . $e->getMessage());
-                return redirect()->back()->with('error_swal', 'Failed to upload attachment')->withInput();
-            }
-        }
-
-        $subtask->save();
-
-        return redirect()->route('team_lead.subtask.list', $request->account_id)
-            ->with('success_swal_swal', 'Subtask created successfully.');
     }
 
+    $teamLead = Auth::guard('team_lead')->user();
+
+    // 🔹 Manager lookup based on department
+    $manager = ProjectManager::whereJsonContains('department_ids', (string)$teamLead->department_id)->first();
+
+    $subtask = new Subtask();
+    $subtask->title         = $request->title;
+    $subtask->description   = $request->description;
+    $subtask->lead          = $request->lead;
+    $subtask->task_type     = $request->task_type;
+    $subtask->start_date    = $request->start_date;
+    $subtask->end_date      = $request->end_date;
+    $subtask->start_time    = $request->start_time;
+    $subtask->end_time      = $request->end_time;
+
+    // IDs
+    $subtask->team_lead_id  = $teamLead->id; 
+    $subtask->employee_id   = $request->assigned_employee_id;  
+
+    // agar matching manager mila to uska id set ho
+    if ($manager) {
+        $subtask->manager_id = $manager->id;
+    }
+
+    // Account type mapping
+    if ($request->account_type === 'T1') {
+        $subtask->account_t1_id = $request->account_id;
+    } elseif ($request->account_type === 'T2') {
+        $subtask->account_t2_id = $request->account_id;
+    } elseif ($request->account_type === 'HST') {
+        $subtask->account_hst_id = $request->account_id;
+    } elseif ($request->account_type === 'MANAGER') {
+        $subtask->manager_operation_id = $request->account_id;
+    }
+
+    // File upload
+    if ($request->hasFile('attachments')) {
+        try {
+            $file = $request->file('attachments');
+            $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                'public_id'     => 'subtasks/' . uniqid() . '_' . $file->getClientOriginalName(),
+                'resource_type' => 'auto',
+            ]);
+            $subtask->attachments = $uploaded['secure_url'];
+        } catch (\Exception $e) {
+            Log::error('Cloudinary upload failed: ' . $e->getMessage());
+            return redirect()->back()->with('error_swal', 'Failed to upload attachment')->withInput();
+        }
+    }
+
+    $subtask->save();
+
+    return redirect()->route('team_lead.subtask.list', $request->account_id)
+        ->with('success_swal_swal', 'Subtask created successfully.');
+}
 
     public function subtask_edit($id)
     {
@@ -782,21 +797,23 @@ public function subtask_detail($id)
 
 
     public function EmployeeSubtasks($subtaskId)
-    {
-        $subtask = Subtask::findOrFail($subtaskId);
+{
+    $subtask = Subtask::findOrFail($subtaskId);
 
-        // Get POS records
-        $posRecords = $subtask->call_center_pos_ids
-            ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
-            : collect();
+    $posRecords = $subtask->call_center_pos_ids
+        ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
+        : collect();
 
-        // Get Account records
-        $accountRecords = $subtask->cell_center_account_ids
-            ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
-            : collect();
+    $accountRecords = $subtask->cell_center_account_ids
+        ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
+        : collect();
 
-        return view('team_lead.employee_subtasks', compact('subtask', 'posRecords', 'accountRecords'));
-    }
+    $clientDetailRecords = $subtask->client_detail_ids
+        ? ClientDetail::whereIn('id', $subtask->client_detail_ids)->get()
+        : collect();
+
+    return view('team_lead.employee_subtasks', compact('subtask', 'posRecords', 'accountRecords', 'clientDetailRecords'));
+}
 
     public function subtask_show_more($id)
     {
