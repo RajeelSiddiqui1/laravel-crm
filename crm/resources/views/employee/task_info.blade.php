@@ -219,13 +219,13 @@
                             </div>
 
                             <!-- Comments -->
-                            <div class="mb-3">
+                            {{-- <div class="mb-3">
                                 <label for="comment" class="form-label">Comments</label>
                                 <textarea name="comment" id="comment" class="form-control @error('comment') is-invalid @enderror" rows="5">{{ old('comment', $shared_task->comment) }}</textarea>
                                 @error('comment')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                            </div>
+                            </div> --}}
 
                             <!-- Attachments -->
                             <div class="mb-3">

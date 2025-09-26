@@ -113,7 +113,7 @@ class ProjectManager extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::guard('project_manager')->attempt($credentials)) {
-            return redirect()->route('project_manager.home')->with('success_swal', 'Login successfully');
+            return redirect()->route('project_manager.profile')->with('success_swal', 'Login successfully');
         }
 
         return redirect()->back()->with('error_swal', 'Invalid login credentials');
@@ -232,6 +232,43 @@ class ProjectManager extends Controller
         }
 
         return back()->with('success_swal', 'Team Lead assigned successfully!');
+    }
+
+
+    public function updateStatus(Request $request, $id, $type)
+    {
+        $request->validate([
+            'manager_status' => 'required|in:rejected,in_progress,completed,not_interested,in_completed',
+        ]);
+
+        try {
+            $status = $request->input('manager_status');
+
+            switch ($type) {
+                case 't1':
+                    $task = AccountT1::findOrFail($id);
+                    break;
+                case 't2':
+                    $task = AccountT2::findOrFail($id);
+                    break;
+                case 'hst':
+                    $task = AccountHST::findOrFail($id);
+                    break;
+                case 'operation':
+                    $task = Manageroperation::findOrFail($id);
+                    break;
+                default:
+                    return redirect()->back()->with('error', 'Invalid task type.');
+            }
+
+            $task->manager_status = $status;
+            $task->save();
+
+            return redirect()->back()->with('success', 'Status updated successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error updating status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update status.');
+        }
     }
 
     public function updateStatus2(Request $request, $id)
@@ -1376,6 +1413,12 @@ public function showSharedTasks()
     {
         $account = CellCenterAccount::findOrFail($id);
         return view('project_manager.account_detail', compact('account'));
+    }
+
+    public function showClient($id)
+    {
+        $client = ClientDetail::findOrFail($id);
+        return view('project_manager.client_details', compact('client'));
     }
 
 

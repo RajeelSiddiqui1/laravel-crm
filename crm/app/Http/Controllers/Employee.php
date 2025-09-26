@@ -583,6 +583,7 @@ public function updateSubtask(Request $request, $id)
 
         $posResults = [];
         $accountResults = [];
+        $clientResults = [];
 
         foreach ($sharedTasks as $shared) {
             if ($shared->cell_center_pos_id) {
@@ -599,12 +600,19 @@ public function updateSubtask(Request $request, $id)
                     $account->shared_status = $shared->status;
                     $accountResults[] = $account;
                 }
+            } elseif ($shared->client_details_id) {
+            $client = ClientDetail::find($shared->client_details_id);
+            if ($client) {
+               $client->shared_task_id = $shared->id;
+                    $client->shared_status = $shared->status;
+                    $clientResults[] = $client;
             }
+        }
         }
 
         return view(
             'employee.shared_task_list',
-            compact('sharedTasks', 'posResults', 'accountResults')
+            compact('sharedTasks', 'posResults', 'accountResults','clientResults')
         );
     }
 
@@ -684,6 +692,13 @@ public function updateSubtask(Request $request, $id)
     {
         $account = CellCenterAccount::findOrFail($id);
         return view('employee.account_detail', compact('account'));
+    }
+
+
+     public function showClient($id)
+    {
+        $client = ClientDetail::findOrFail($id);
+        return view('employee.client_details', compact('client'));
     }
 
 

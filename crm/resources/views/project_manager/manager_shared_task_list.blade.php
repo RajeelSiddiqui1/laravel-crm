@@ -152,179 +152,266 @@
         </div>
 
         <!-- Shared POS -->
-        @if($posResults)
-        <h3 class="account-type-header">Shared POS</h3>
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Shared Task ID</th>
-                        <th>POS Name</th>
-                        <th>Business</th>
-                        <th>Business Number</th>
-                        <th>POS Status</th>
-                        <th>Shared Task Status</th>
-                        <th>Action</th>
-                        <th>Assigned TeamLead</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($posResults as $index => $pos)
+        @if ($posResults)
+            <h3 class="account-type-header">Shared POS</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
                         <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $pos->shared_task_id ?? 'N/A' }}</td>
-                            <td>{{ $pos->name ?? 'N/A' }}</td>
-                            <td>{{ $pos->business_name ?? 'N/A' }}</td>
-                            <td>{{ $pos->business_number ?? 'N/A' }}</td>
-                            <td>
-                                <span
-                                    class="badge badge-{{ $pos->status == 'active' ? 'success' : ($pos->status == 'pending' ? 'warning' : 'danger') }}">
-                                    {{ ucfirst($pos->status ?? 'N/A') }}
-                                </span>
-                            </td>
-                            <td>
-                                @php
-                                    $status = $pos->shared_status ?? 'N/A';
-                                    $badgeClass = match ($status) {
-                                        'active' => 'success',
-                                        'pending' => 'warning',
-                                        'deployed' => 'primary',
-                                        'on_leave' => 'info',
-                                        'inactive' => 'secondary',
-                                        default => 'dark',
-                                    };
-                                @endphp
-
-                                <span class="badge bg-{{ $badgeClass }}">
-                                    {{ ucfirst($status) }}
-                                </span>
-                            </td>
-                            <td>
-                                <a href="{{ route('project-manager.shared.pos.detail', $pos->id) }}"
-                                    class="btn btn-sm btn-success">Show More</a>
-                            </td>
-                            <td>
-                                @php
-                                    $teamlead = $teamLeads->firstWhere('id', $pos->assigned_teamlead_id);
-                                @endphp
-
-                                @if ($teamlead)
-                                    <span class="badge bg-info">{{ $teamlead->name }}</span>
-                                @else
-                                    <form
-                                        action="{{ route('project_manager.assign_teamlead_shared_task', $pos->shared_task_id) }}"
-                                        method="POST">
-                                        @csrf
-                                        <select name="teamlead_id" class="form-select form-select-sm d-inline-block"
-                                            style="width:auto;">
-                                            <option value="">-- Select --</option>
-                                            @foreach ($teamLeads as $lead)
-                                                <option value="{{ $lead->id }}">{{ $lead->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-primary mt-1">Assign</button>
-                                    </form>
-                                @endif
-                            </td>
-
+                            <th>#</th>
+                            <th>Shared Task ID</th>
+                            <th>POS Name</th>
+                            <th>Business</th>
+                            <th>Business Number</th>
+                            <th>Status</th>
+                            <th>Shared Task Status</th>
+                            <th>Action</th>
+                            <th>Assigned TeamLead</th>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="9" class="text-center text-muted">No Shared POS Found</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-       @endif
+                    </thead>
+                    <tbody>
+                        @forelse($posResults as $index => $pos)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $pos->shared_task_id ?? 'N/A' }}</td>
+                                <td>{{ $pos->name ?? 'N/A' }}</td>
+                                <td>{{ $pos->business_name ?? 'N/A' }}</td>
+                                <td>{{ $pos->business_number ?? 'N/A' }}</td>
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $pos->status == 'active' ? 'success' : ($pos->status == 'pending' ? 'warning' : 'danger') }}">
+                                        {{ ucfirst($pos->status ?? 'N/A') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @php
+                                        $status = $pos->shared_status ?? 'N/A';
+                                        $badgeClass = match ($status) {
+                                            'active' => 'success',
+                                            'pending' => 'warning',
+                                            'deployed' => 'primary',
+                                            'on_leave' => 'info',
+                                            'inactive' => 'secondary',
+                                            default => 'dark',
+                                        };
+                                    @endphp
+
+                                    <span class="badge bg-{{ $badgeClass }}">
+                                        {{ ucfirst($status) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ route('project-manager.shared.pos.detail', $pos->id) }}"
+                                        class="btn btn-sm btn-success">Show More</a>
+                                </td>
+                                <td>
+                                    @php
+                                        $teamlead = $teamLeads->firstWhere('id', $pos->assigned_teamlead_id);
+                                    @endphp
+
+                                    @if ($teamlead)
+                                        <span class="badge bg-info">{{ $teamlead->name }}</span>
+                                    @else
+                                        <form
+                                            action="{{ route('project_manager.assign_teamlead_shared_task', $pos->shared_task_id) }}"
+                                            method="POST">
+                                            @csrf
+                                            <select name="teamlead_id" class="form-select form-select-sm d-inline-block"
+                                                style="width:auto;">
+                                                <option value="">-- Select --</option>
+                                                @foreach ($teamLeads as $lead)
+                                                    <option value="{{ $lead->id }}">{{ $lead->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-primary mt-1">Assign</button>
+                                        </form>
+                                    @endif
+                                </td>
+
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">No Shared POS Found</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
 
         <!-- Shared Accounts -->
-        @if($accountResults)
-        <h3 class="account-type-header">Shared Accounts</h3>
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Shared Task ID</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Business No</th>
-                        <th>Account Status</th>
-                        <th>Shared Task Status</th>
-                        <th>Action</th>
-                        <th>Assigned TeamLead</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($accountResults as $index => $account)
+        @if ($accountResults)
+            <h3 class="account-type-header">Shared Accounts</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
                         <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $account->shared_task_id ?? 'N/A' }}</td>
-                            <td>{{ $account->email ?? 'N/A' }}</td>
-                            <td>{{ $account->phone ?? 'N/A' }}</td>
-                            <td>{{ $account->bussiness_number ?? 'N/A' }}</td>
-                            <td>
-                                <span
-                                    class="badge badge-{{ $account->status == 'active' ? 'success' : ($account->status == 'pending' ? 'warning' : 'danger') }}">
-                                    {{ ucfirst($account->status ?? 'N/A') }}
-                                </span>
-                            </td>
-                            <td>
-                                @php
-                                    $status = $account->shared_status ?? 'N/A';
-                                    $badgeClass = match ($status) {
-                                        'active' => 'success',
-                                        'pending' => 'warning',
-                                        'deployed' => 'primary',
-                                        'on_leave' => 'info',
-                                        'inactive' => 'secondary',
-                                        default => 'dark',
-                                    };
-                                @endphp
-
-                                <span class="badge bg-{{ $badgeClass }}">
-                                    {{ ucfirst($status) }}
-                                </span>
-                            </td>
-
-                            <td>
-                                <a href="{{ route('project-manager.shared.account.detail', $account->id) }}"
-                                    class="btn btn-sm btn-success">Show More</a>
-                            </td>
-                            <td>
-                                @php
-                                    $teamlead = $teamLeads->firstWhere('id', $account->assigned_teamlead_id);
-                                @endphp
-
-                                @if ($teamlead)
-                                    <span class="badge bg-info">{{ $teamlead->name }}</span>
-                                @else
-                                    <form
-                                        action="{{ route('project_manager.assign_teamlead_shared_task', $account->shared_task_id) }}"
-                                        method="POST">
-                                        @csrf
-                                        <select name="teamlead_id" class="form-select form-select-sm d-inline-block"
-                                            style="width:auto;">
-                                            <option value="">-- Select --</option>
-                                            @foreach ($teamLeads as $lead)
-                                                <option value="{{ $lead->id }}">{{ $lead->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-primary mt-1">Assign</button>
-                                    </form>
-                                @endif
-                            </td>
-
-                        @empty
-                        <tr>
-                            <td colspan="9" class="text-center text-muted">No Shared Accounts Found</td>
+                            <th>#</th>
+                            <th>Shared Task ID</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Business No</th>
+                            <th>Status</th>
+                            <th>Shared Task Status</th>
+                            <th>Action</th>
+                            <th>Assigned TeamLead</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @forelse($accountResults as $index => $account)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $account->shared_task_id ?? 'N/A' }}</td>
+                                <td>{{ $account->email ?? 'N/A' }}</td>
+                                <td>{{ $account->phone ?? 'N/A' }}</td>
+                                <td>{{ $account->bussiness_number ?? 'N/A' }}</td>
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $account->status == 'active' ? 'success' : ($account->status == 'pending' ? 'warning' : 'danger') }}">
+                                        {{ ucfirst($account->status ?? 'N/A') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @php
+                                        $status = $account->shared_status ?? 'N/A';
+                                        $badgeClass = match ($status) {
+                                            'active' => 'success',
+                                            'pending' => 'warning',
+                                            'deployed' => 'primary',
+                                            'on_leave' => 'info',
+                                            'inactive' => 'secondary',
+                                            default => 'dark',
+                                        };
+                                    @endphp
+
+                                    <span class="badge bg-{{ $badgeClass }}">
+                                        {{ ucfirst($status) }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <a href="{{ route('project-manager.shared.account.detail', $account->id) }}"
+                                        class="btn btn-sm btn-success">Show More</a>
+                                </td>
+                                <td>
+                                    @php
+                                        $teamlead = $teamLeads->firstWhere('id', $account->assigned_teamlead_id);
+                                    @endphp
+
+                                    @if ($teamlead)
+                                        <span class="badge bg-info">{{ $teamlead->name }}</span>
+                                    @else
+                                        <form
+                                            action="{{ route('project_manager.assign_teamlead_shared_task', $account->shared_task_id) }}"
+                                            method="POST">
+                                            @csrf
+                                            <select name="teamlead_id" class="form-select form-select-sm d-inline-block"
+                                                style="width:auto;">
+                                                <option value="">-- Select --</option>
+                                                @foreach ($teamLeads as $lead)
+                                                    <option value="{{ $lead->id }}">{{ $lead->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-primary mt-1">Assign</button>
+                                        </form>
+                                    @endif
+                                </td>
+
+                            @empty
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">No Shared Accounts Found</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
+        @if ($clientResults)
+            <h3 class="account-type-header">Shared Client Details</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Shared Task ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Shared Task Status</th>
+                            <th>Action</th>
+                            <th>Assigned TeamLead</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($clientResults as $index => $client)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $client->shared_task_id ?? 'N/A' }}</td>
+                                <td>{{ $client->first_name . ' ' . $client->last_name ?? 'N/A' }}</td>
+                                <td>{{ $client->email ?? 'N/A' }}</td>
+                                <td>{{ $client->phone ?? 'N/A' }}</td>
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $client->status == 'active' ? 'success' : ($client->status == 'pending' ? 'warning' : 'danger') }}">
+                                        {{ ucfirst($client->status ?? 'N/A') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @php
+                                        $status = $client->shared_status ?? 'N/A';
+                                        $badgeClass = match ($status) {
+                                            'active' => 'success',
+                                            'pending' => 'warning',
+                                            'deployed' => 'primary',
+                                            'on_leave' => 'info',
+                                            'inactive' => 'secondary',
+                                            default => 'dark',
+                                        };
+                                    @endphp
+
+                                    <span class="badge bg-{{ $badgeClass }}">
+                                        {{ ucfirst($status) }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <a href="{{ route('project-manager.shared.client.detail', $client->id) }}"
+                                        class="btn btn-sm btn-success">Show More</a>
+                                </td>
+                                <td>
+                                    @php
+                                        $teamlead = $teamLeads->firstWhere('id', $client->assigned_teamlead_id);
+                                    @endphp
+
+                                    @if ($teamlead)
+                                        <span class="badge bg-info">{{ $teamlead->name }}</span>
+                                    @else
+                                        <form
+                                            action="{{ route('project_manager.assign_teamlead_shared_task', $client->shared_task_id) }}"
+                                            method="POST">
+                                            @csrf
+                                            <select name="teamlead_id" class="form-select form-select-sm d-inline-block"
+                                                style="width:auto;">
+                                                <option value="">-- Select --</option>
+                                                @foreach ($teamLeads as $lead)
+                                                    <option value="{{ $lead->id }}">{{ $lead->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-primary mt-1">Assign</button>
+                                        </form>
+                                    @endif
+                                </td>
+
+                            @empty
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">No Shared Accounts Found</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         @endif
     </div>
 @endsection

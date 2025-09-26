@@ -261,10 +261,11 @@
                             <th>Email</th>
                             <th>Year</th>
                             <th>Business</th>
+                            <th>Manager Status</th>
+                            <th>Team Status</th>
                             <th>Attachments</th>
                             <th>View</th>
-                            <th>Status</th>
-                            <th>Assigned Employees</th>
+                          ?? 'N/A'
                             <th>Subtask</th>
                             <th>Subtask View</th>
                             <th>Group Chat</th>
@@ -290,6 +291,25 @@
                                 <td>{{ $dueDateOrYear }}</td>
                                 <td>{{ $business }}</td>
                                 <td>
+                                    <span class="badge badge-{{ $task->manager_status == 'rejected' ? 'danger' : ($task->manager_status == 'in_progress' ? 'warning' : ($task->manager_status == 'completed' ? 'success' : ($task->manager_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $task->manager_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ route('team_lead.tasks.update_team_status', ['id' => $task->id, 'type' => 't1']) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="team_status" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 120px;">
+                                            <option value="" disabled {{ is_null($task->team_status) ? 'selected' : '' }}>Select Status</option>
+                                            <option value="rejected" {{ $task->team_status == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                            <option value="in_progress" {{ $task->team_status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                            <option value="completed" {{ $task->team_status == 'completed' ? 'selected' : '' }}>Completed</option>
+                                            <option value="not_interested" {{ $task->team_status == 'not_interested' ? 'selected' : '' }}>Not Interested</option>
+                                            <option value="in_completed" {{ $task->team_status == 'in_completed' ? 'selected' : '' }}>In Completed</option>
+                                        </select>
+                                    </form>
+                                </td>
+                                <td>
                                     @if (!empty($task->attachments))
                                         <div class="attachment-grid">
                                             @foreach ((array) $task->attachments as $url)
@@ -314,35 +334,26 @@
                                                         <video src="{{ $fileUrl }}" controls></video>
                                                     @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
                                                         <audio controls>
-                                                            <source src="{{ $fileUrl }}"
-                                                                type="audio/{{ $ext }}">
+                                                            <source src="{{ $fileUrl }}" type="audio/{{ $ext }}">
                                                         </audio>
                                                     @elseif (in_array($ext, ['pdf']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/pdf.png"
-                                                                alt="PDF" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
-                                                                alt="Excel" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/ms-excel.png" alt="Excel" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @elseif (in_array($ext, ['doc', 'docx']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/ms-word.png"
-                                                                alt="Word" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/ms-word.png" alt="Word" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @else
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/fluency/48/000000/file.png"
-                                                                alt="File" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/fluency/48/000000/file.png" alt="File" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @endif
@@ -354,84 +365,22 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('team_lead.task_detail', $task->id) }}"
-                                        class="btn btn-sm btn-success">View</a>
+                                    <a href="{{ route('team_lead.task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
+                                </td>
+                             ?? 'N/A'
+                                <td>
+                                    <a href="{{ route('team_lead.subtask.create', $task->id) }}" class="btn btn-sm btn-warning mb-1">Subtask</a>
                                 </td>
                                 <td>
-                                    <form method="POST" action="{{ route('team_lead.tasks.update_status', $task->id) }}">
-                                        @csrf
-                                        @method('PUT')
-                                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()"
-                                            style="min-width: 120px;">
-                                            <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>
-                                                Pending
-                                            </option>
-                                            <option value="in_progress"
-                                                {{ $task->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                            <option value="completed" {{ $task->status === 'completed' ? 'selected' : '' }}>
-                                                Completed
-                                            </option>
-                                            <option value="cancelled" {{ $task->status === 'cancelled' ? 'selected' : '' }}>
-                                                Cancelled
-                                            </option>
-                                        </select>
-                                    </form>
+                                    <a href="{{ route('team_lead.subtask.list', $task->id) }}" class="btn btn-sm btn-success">Subtask Assign</a>
                                 </td>
                                 <td>
-                                    @if ($assignedEmployees->isNotEmpty())
-                                        @foreach ($assignedEmployees as $employee)
-                                            <div class="employee-name">{{ $employee->name }}</div>
-                                        @endforeach
-                                    @else
-                                        <div class="employee-name text-muted">No employees assigned</div>
-                                    @endif
-                                    <form method="POST"
-                                        action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
-                                        @csrf
-                                        <div class="dropup mt-2">
-                                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                                                id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
-                                                aria-expanded="false">
-                                                Assign Employees
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
-                                                @foreach ($unassignedEmployees as $employee)
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox"
-                                                                name="employee_id[]" value="{{ $employee->id }}"
-                                                                id="emp-{{ $task->id }}-{{ $employee->id }}"
-                                                                {{ in_array($employee->id, $assignedEmployeeIds) ? 'checked' : '' }}>
-                                                            <label class="form-check-label"
-                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-                                                <li>
-                                                    <hr class="dropdown-divider">
-                                                </li>
-                                                <li><button type="submit"
-                                                        class="btn btn-sm btn-success w-100">Assign</button></li>
-                                            </ul>
-                                        </div>
-                                    </form>
-                                </td>
-                                <td>
-                                    <a href="{{ route('team_lead.subtask.create', $task->id) }}"
-                                        class="btn btn-sm btn-warning mb-1">Subtask</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('team_lead.subtask.list', $task->id) }}"
-                                        class="btn btn-sm btn-success">Subtask Assign</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('chat.group', $task->id) }}"
-                                        class="btn btn-sm btn-outline-primary">Group Chat</a>
+                                    <a href="{{ route('chat.group', $task->id) }}" class="btn btn-sm btn-outline-primary">Group Chat</a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="13" class="text-center text-muted">No T1 Tasks Found</td>
+                                <td colspan="14" class="text-center text-muted">No T1 Tasks Found</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -453,10 +402,11 @@
                             <th>Due Date</th>
                             <th>Business</th>
                             <th>Priority</th>
+                            <th>Manager Status</th>
+                            <th>Team Status</th>
                             <th>Attachments</th>
                             <th>View</th>
-                            <th>Status</th>
-                            <th>Assigned Employees</th>
+                          ?? 'N/A'
                             <th>Subtask</th>
                             <th>Subtask View</th>
                             <th>Group Chat</th>
@@ -470,9 +420,7 @@
                                 $business = $task->nature_of_business ?? 'N/A';
                                 $assignedEmployeeIds = array_filter(explode(',', $task->employee_id ?? ''));
                                 $assignedEmployees = $employees->whereIn('id', $assignedEmployeeIds);
-                                $unassignedEmployees = $employees
-                                    ->whereNotIn('id', $assignedEmployeeIds)
-                                    ->where('department', 'Accounts');
+                                $unassignedEmployees = $employees->whereNotIn('id', $assignedEmployeeIds)->where('department', 'Accounts');
                             @endphp
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
@@ -485,6 +433,25 @@
                                     <span class="badge badge-{{ $task->priority == 'high' ? 'danger' : ($task->priority == 'medium' ? 'warning' : 'success') }}">
                                         {{ ucfirst($task->priority ?? 'N/A') }}
                                     </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ $task->manager_status == 'rejected' ? 'danger' : ($task->manager_status == 'in_progress' ? 'warning' : ($task->manager_status == 'completed' ? 'success' : ($task->manager_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $task->manager_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ route('team_lead.tasks.update_team_status', ['id' => $task->id, 'type' => 't2']) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="team_status" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 120px;">
+                                            <option value="" disabled {{ is_null($task->team_status) ? 'selected' : '' }}>Select Status</option>
+                                            <option value="rejected" {{ $task->team_status == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                            <option value="in_progress" {{ $task->team_status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                            <option value="completed" {{ $task->team_status == 'completed' ? 'selected' : '' }}>Completed</option>
+                                            <option value="not_interested" {{ $task->team_status == 'not_interested' ? 'selected' : '' }}>Not Interested</option>
+                                            <option value="in_completed" {{ $task->team_status == 'in_completed' ? 'selected' : '' }}>In Completed</option>
+                                        </select>
+                                    </form>
                                 </td>
                                 <td>
                                     @if (!empty($task->attachments))
@@ -511,35 +478,26 @@
                                                         <video src="{{ $fileUrl }}" controls></video>
                                                     @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
                                                         <audio controls>
-                                                            <source src="{{ $fileUrl }}"
-                                                                type="audio/{{ $ext }}">
+                                                            <source src="{{ $fileUrl }}" type="audio/{{ $ext }}">
                                                         </audio>
                                                     @elseif (in_array($ext, ['pdf']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/pdf.png"
-                                                                alt="PDF" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
-                                                                alt="Excel" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/ms-excel.png" alt="Excel" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @elseif (in_array($ext, ['doc', 'docx']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/ms-word.png"
-                                                                alt="Word" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/ms-word.png" alt="Word" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @else
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/fluency/48/000000/file.png"
-                                                                alt="File" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/fluency/48/000000/file.png" alt="File" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @endif
@@ -551,84 +509,22 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('team_lead.task_detail', $task->id) }}"
-                                        class="btn btn-sm btn-success">View</a>
+                                    <a href="{{ route('team_lead.task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
+                                </td>
+                             ?? 'N/A'
+                                <td>
+                                    <a href="{{ route('team_lead.subtask.create', $task->id) }}" class="btn btn-sm btn-warning mb-1">Subtask</a>
                                 </td>
                                 <td>
-                                    <form method="POST" action="{{ route('team_lead.tasks.update_status', $task->id) }}">
-                                        @csrf
-                                        @method('PUT')
-                                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()"
-                                            style="min-width: 120px;">
-                                            <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>
-                                                Pending
-                                            </option>
-                                            <option value="in_progress"
-                                                {{ $task->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                            <option value="completed" {{ $task->status === 'completed' ? 'selected' : '' }}>
-                                                Completed
-                                            </option>
-                                            <option value="cancelled" {{ $task->status === 'cancelled' ? 'selected' : '' }}>
-                                                Cancelled
-                                            </option>
-                                        </select>
-                                    </form>
+                                    <a href="{{ route('team_lead.subtask.list', $task->id) }}" class="btn btn-sm btn-success">Subtask Assign</a>
                                 </td>
                                 <td>
-                                    @if ($assignedEmployees->isNotEmpty())
-                                        @foreach ($assignedEmployees as $employee)
-                                            <div class="employee-name">{{ $employee->name }}</div>
-                                        @endforeach
-                                    @else
-                                        <div class="employee-name text-muted">No employees assigned</div>
-                                    @endif
-                                    <form method="POST"
-                                        action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
-                                        @csrf
-                                        <div class="dropup mt-2">
-                                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                                                id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
-                                                aria-expanded="false">
-                                                Assign Employees
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
-                                                @foreach ($unassignedEmployees as $employee)
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox"
-                                                                name="employee_id[]" value="{{ $employee->id }}"
-                                                                id="emp-{{ $task->id }}-{{ $employee->id }}"
-                                                                {{ in_array($employee->id, $assignedEmployeeIds) ? 'checked' : '' }}>
-                                                            <label class="form-check-label"
-                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-                                                <li>
-                                                    <hr class="dropdown-divider">
-                                                </li>
-                                                <li><button type="submit"
-                                                        class="btn btn-sm btn-success w-100">Assign</button></li>
-                                            </ul>
-                                        </div>
-                                    </form>
-                                </td>
-                                <td>
-                                    <a href="{{ route('team_lead.subtask.create', $task->id) }}"
-                                        class="btn btn-sm btn-warning mb-1">Subtask</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('team_lead.subtask.list', $task->id) }}"
-                                        class="btn btn-sm btn-success">Subtask Assign</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('chat.group', $task->id) }}"
-                                        class="btn btn-sm btn-outline-primary">Group Chat</a>
+                                    <a href="{{ route('chat.group', $task->id) }}" class="btn btn-sm btn-outline-primary">Group Chat</a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="14" class="text-center text-muted">No T2 Tasks Found</td>
+                                <td colspan="15" class="text-center text-muted">No T2 Tasks Found</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -649,10 +545,11 @@
                             <th>Due Date</th>
                             <th>Business</th>
                             <th>Priority</th>
+                            <th>Manager Status</th>
+                            <th>Team Status</th>
                             <th>Attachments</th>
                             <th>View</th>
-                            <th>Status</th>
-                            <th>Assigned Employees</th>
+                          ?? 'N/A'
                             <th>Subtask</th>
                             <th>Subtask View</th>
                             <th>Group Chat</th>
@@ -666,9 +563,7 @@
                                 $business = $task->nature_of_business ?? 'N/A';
                                 $assignedEmployeeIds = array_filter(explode(',', $task->employee_id ?? ''));
                                 $assignedEmployees = $employees->whereIn('id', $assignedEmployeeIds);
-                                $unassignedEmployees = $employees
-                                    ->whereNotIn('id', $assignedEmployeeIds)
-                                    ->where('department', 'Accounts');
+                                $unassignedEmployees = $employees->whereNotIn('id', $assignedEmployeeIds)->where('department', 'Accounts');
                             @endphp
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
@@ -681,6 +576,25 @@
                                     <span class="badge badge-{{ $task->priority == 'high' ? 'danger' : ($task->priority == 'medium' ? 'warning' : 'success') }}">
                                         {{ ucfirst($task->priority ?? 'N/A') }}
                                     </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ $task->manager_status == 'rejected' ? 'danger' : ($task->manager_status == 'in_progress' ? 'warning' : ($task->manager_status == 'completed' ? 'success' : ($task->manager_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $task->manager_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ route('team_lead.tasks.update_team_status', ['id' => $task->id, 'type' => 'hst']) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="team_status" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 120px;">
+                                            <option value="" disabled {{ is_null($task->team_status) ? 'selected' : '' }}>Select Status</option>
+                                            <option value="rejected" {{ $task->team_status == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                            <option value="in_progress" {{ $task->team_status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                            <option value="completed" {{ $task->team_status == 'completed' ? 'selected' : '' }}>Completed</option>
+                                            <option value="not_interested" {{ $task->team_status == 'not_interested' ? 'selected' : '' }}>Not Interested</option>
+                                            <option value="in_completed" {{ $task->team_status == 'in_completed' ? 'selected' : '' }}>In Completed</option>
+                                        </select>
+                                    </form>
                                 </td>
                                 <td>
                                     @if (!empty($task->attachments))
@@ -707,35 +621,26 @@
                                                         <video src="{{ $fileUrl }}" controls></video>
                                                     @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
                                                         <audio controls>
-                                                            <source src="{{ $fileUrl }}"
-                                                                type="audio/{{ $ext }}">
+                                                            <source src="{{ $fileUrl }}" type="audio/{{ $ext }}">
                                                         </audio>
                                                     @elseif (in_array($ext, ['pdf']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/pdf.png"
-                                                                alt="PDF" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
-                                                                alt="Excel" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/ms-excel.png" alt="Excel" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @elseif (in_array($ext, ['doc', 'docx']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/ms-word.png"
-                                                                alt="Word" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/ms-word.png" alt="Word" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @else
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/fluency/48/000000/file.png"
-                                                                alt="File" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/fluency/48/000000/file.png" alt="File" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @endif
@@ -747,84 +652,22 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('team_lead.task_detail', $task->id) }}"
-                                        class="btn btn-sm btn-success">View</a>
+                                    <a href="{{ route('team_lead.task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
+                                </td>
+                             ?? 'N/A'
+                                <td>
+                                    <a href="{{ route('team_lead.subtask.create', $task->id) }}" class="btn btn-sm btn-warning mb-1">Subtask</a>
                                 </td>
                                 <td>
-                                    <form method="POST" action="{{ route('team_lead.tasks.update_status', $task->id) }}">
-                                        @csrf
-                                        @method('PUT')
-                                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()"
-                                            style="min-width: 120px;">
-                                            <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>
-                                                Pending
-                                            </option>
-                                            <option value="in_progress"
-                                                {{ $task->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                            <option value="completed" {{ $task->status === 'completed' ? 'selected' : '' }}>
-                                                Completed
-                                            </option>
-                                            <option value="cancelled" {{ $task->status === 'cancelled' ? 'selected' : '' }}>
-                                                Cancelled
-                                            </option>
-                                        </select>
-                                    </form>
+                                    <a href="{{ route('team_lead.subtask.list', $task->id) }}" class="btn btn-sm btn-success">Subtask Assign</a>
                                 </td>
                                 <td>
-                                    @if ($assignedEmployees->isNotEmpty())
-                                        @foreach ($assignedEmployees as $employee)
-                                            <div class="employee-name">{{ $employee->name }}</div>
-                                        @endforeach
-                                    @else
-                                        <div class="employee-name text-muted">No employees assigned</div>
-                                    @endif
-                                    <form method="POST"
-                                        action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
-                                        @csrf
-                                        <div class="dropup mt-2">
-                                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                                                id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
-                                                aria-expanded="false">
-                                                Assign Employees
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
-                                                @foreach ($unassignedEmployees as $employee)
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox"
-                                                                name="employee_id[]" value="{{ $employee->id }}"
-                                                                id="emp-{{ $task->id }}-{{ $employee->id }}"
-                                                                {{ in_array($employee->id, $assignedEmployeeIds) ? 'checked' : '' }}>
-                                                            <label class="form-check-label"
-                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-                                                <li>
-                                                    <hr class="dropdown-divider">
-                                                </li>
-                                                <li><button type="submit"
-                                                        class="btn btn-sm btn-success w-100">Assign</button></li>
-                                            </ul>
-                                        </div>
-                                    </form>
-                                </td>
-                                <td>
-                                    <a href="{{ route('team_lead.subtask.create', $task->id) }}"
-                                        class="btn btn-sm btn-warning mb-1">Subtask</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('team_lead.subtask.list', $task->id) }}"
-                                        class="btn btn-sm btn-success">Subtask Assign</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('chat.group', $task->id) }}"
-                                        class="btn btn-sm btn-outline-primary">Group Chat</a>
+                                    <a href="{{ route('chat.group', $task->id) }}" class="btn btn-sm btn-outline-primary">Group Chat</a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="14" class="text-center text-muted">No HST Tasks Found</td>
+                                <td colspan="15" class="text-center text-muted">No HST Tasks Found</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -843,10 +686,11 @@
                             <th>Title</th>
                             <th>Description</th>
                             <th>Due Date</th>
+                            <th>Manager Status</th>
+                            <th>Team Status</th>
                             <th>Attachments</th>
                             <th>View</th>
-                            <th>Status</th>
-                            <th>Assigned Employees</th>
+                          ?? 'N/A'
                             <th>Subtask</th>
                             <th>Subtask View</th>
                             <th>Group Chat</th>
@@ -858,9 +702,7 @@
                                 $dueDateOrYear = $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('M d, Y') : 'N/A';
                                 $assignedEmployeeIds = array_filter(explode(',', $task->employee_id ?? ''));
                                 $assignedEmployees = $employees->whereIn('id', $assignedEmployeeIds);
-                                $unassignedEmployees = $employees
-                                    ->whereNotIn('id', $assignedEmployeeIds)
-                                    ->where('department', 'Operations');
+                                $unassignedEmployees = $employees->whereNotIn('id', $assignedEmployeeIds)->where('department', 'Operations');
                             @endphp
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
@@ -868,6 +710,25 @@
                                 <td>{{ $task->title ?? 'N/A' }}</td>
                                 <td>{{ \Illuminate\Support\Str::limit($task->description ?? 'N/A', 50) }}</td>
                                 <td>{{ $dueDateOrYear }}</td>
+                                <td>
+                                    <span class="badge badge-{{ $task->manager_status == 'rejected' ? 'danger' : ($task->manager_status == 'in_progress' ? 'warning' : ($task->manager_status == 'completed' ? 'success' : ($task->manager_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $task->manager_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ route('team_lead.tasks.update_team_status', ['id' => $task->id, 'type' => 'operation']) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="team_status" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 120px;">
+                                            <option value="" disabled {{ is_null($task->team_status) ? 'selected' : '' }}>Select Status</option>
+                                            <option value="rejected" {{ $task->team_status == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                            <option value="in_progress" {{ $task->team_status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                            <option value="completed" {{ $task->team_status == 'completed' ? 'selected' : '' }}>Completed</option>
+                                            <option value="not_interested" {{ $task->team_status == 'not_interested' ? 'selected' : '' }}>Not Interested</option>
+                                            <option value="in_completed" {{ $task->team_status == 'in_completed' ? 'selected' : '' }}>In Completed</option>
+                                        </select>
+                                    </form>
+                                </td>
                                 <td>
                                     @if (!empty($task->attachments))
                                         <div class="attachment-grid">
@@ -893,35 +754,26 @@
                                                         <video src="{{ $fileUrl }}" controls></video>
                                                     @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
                                                         <audio controls>
-                                                            <source src="{{ $fileUrl }}"
-                                                                type="audio/{{ $ext }}">
+                                                            <source src="{{ $fileUrl }}" type="audio/{{ $ext }}">
                                                         </audio>
                                                     @elseif (in_array($ext, ['pdf']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/pdf.png"
-                                                                alt="PDF" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
-                                                                alt="Excel" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/ms-excel.png" alt="Excel" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @elseif (in_array($ext, ['doc', 'docx']))
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/color/48/000000/ms-word.png"
-                                                                alt="Word" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/color/48/000000/ms-word.png" alt="Word" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @else
-                                                        <a href="{{ $fileUrl }}" target="_blank"
-                                                            title="{{ $fileName }}">
-                                                            <img src="https://img.icons8.com/fluency/48/000000/file.png"
-                                                                alt="File" class="icon">
+                                                        <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
+                                                            <img src="https://img.icons8.com/fluency/48/000000/file.png" alt="File" class="icon">
                                                             <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
                                                         </a>
                                                     @endif
@@ -933,84 +785,22 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('team_lead.task_detail', $task->id) }}"
-                                        class="btn btn-sm btn-success">View</a>
+                                    <a href="{{ route('team_lead.task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
+                                </td>
+                             ?? 'N/A'
+                                <td>
+                                    <a href="{{ route('team_lead.subtask.create', $task->id) }}" class="btn btn-sm btn-warning mb-1">Subtask</a>
                                 </td>
                                 <td>
-                                    <form method="POST" action="{{ route('team_lead.tasks.update_status', $task->id) }}">
-                                        @csrf
-                                        @method('PUT')
-                                        <select name="status" class="form-select form-select-sm" onchange="this.form.submit()"
-                                            style="min-width: 120px;">
-                                            <option value="pending" {{ $task->status === 'pending' ? 'selected' : '' }}>
-                                                Pending
-                                            </option>
-                                            <option value="in_progress"
-                                                {{ $task->status === 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                            <option value="completed" {{ $task->status === 'completed' ? 'selected' : '' }}>
-                                                Completed
-                                            </option>
-                                            <option value="cancelled" {{ $task->status === 'cancelled' ? 'selected' : '' }}>
-                                                Cancelled
-                                            </option>
-                                        </select>
-                                    </form>
+                                    <a href="{{ route('team_lead.subtask.list', $task->id) }}" class="btn btn-sm btn-success">Subtask Assign</a>
                                 </td>
                                 <td>
-                                    @if ($assignedEmployees->isNotEmpty())
-                                        @foreach ($assignedEmployees as $employee)
-                                            <div class="employee-name">{{ $employee->name }}</div>
-                                        @endforeach
-                                    @else
-                                        <div class="employee-name text-muted">No employees assigned</div>
-                                    @endif
-                                    <form method="POST"
-                                        action="{{ route('team_lead.tasks.assign_employees', $task->id) }}">
-                                        @csrf
-                                        <div class="dropup mt-2">
-                                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                                                id="dropdown-{{ $task->id }}" data-bs-toggle="dropdown"
-                                                aria-expanded="false">
-                                                Assign Employees
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="dropdown-{{ $task->id }}">
-                                                @foreach ($unassignedEmployees as $employee)
-                                                    <li>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox"
-                                                                name="employee_id[]" value="{{ $employee->id }}"
-                                                                id="emp-{{ $task->id }}-{{ $employee->id }}"
-                                                                {{ in_array($employee->id, $assignedEmployeeIds) ? 'checked' : '' }}>
-                                                            <label class="form-check-label"
-                                                                for="emp-{{ $task->id }}-{{ $employee->id }}">{{ $employee->name }}</label>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-                                                <li>
-                                                    <hr class="dropdown-divider">
-                                                </li>
-                                                <li><button type="submit"
-                                                        class="btn btn-sm btn-success w-100">Assign</button></li>
-                                            </ul>
-                                        </div>
-                                    </form>
-                                </td>
-                                <td>
-                                    <a href="{{ route('team_lead.subtask.create', $task->id) }}"
-                                        class="btn btn-sm btn-warning mb-1">Subtask</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('team_lead.subtask.list', $task->id) }}"
-                                        class="btn btn-sm btn-success">Subtask Assign</a>
-                                </td>
-                                <td>
-                                    <a href="{{ route('chat.group', $task->id) }}"
-                                        class="btn btn-sm btn-outline-primary">Group Chat</a>
+                                    <a href="{{ route('chat.group', $task->id) }}" class="btn btn-sm btn-outline-primary">Group Chat</a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="12" class="text-center text-muted">No Operations Tasks Found</td>
+                                <td colspan="13" class="text-center text-muted">No Operations Tasks Found</td>
                             </tr>
                         @endforelse
                     </tbody>

@@ -22,6 +22,8 @@ class AccountT2 extends Model
         'department_id',
         'team_lead_id',
         'attachments',
+        'manager_status',
+        'team_status',
     ];
 
     public function ownerTask()

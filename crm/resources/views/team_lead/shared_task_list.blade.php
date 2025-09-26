@@ -331,5 +331,92 @@
             </div>
         @endif
 
+
+        <!-- Shared Client Details -->
+        @if ($clientResults)
+            <h3 class="account-type-header">Shared Client Details</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Shared Task ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Shared Task Status</th>
+                            <th>Action</th>
+                            <th>Assigned Employee</th> <!-- Updated header -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($clientResults as $index => $client)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $client->shared_task_id ?? 'N/A' }}</td>
+                                <td>{{ $client->first_name . ' ' . $client->last_name ?? 'N/A' }}</td>
+                                <td>{{ $client->email ?? 'N/A' }}</td>
+                                <td>{{ $client->telephone ?? 'N/A' }}</td> <!-- Use telephone as per ClientDetail model -->
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $client->status == 'active' ? 'success' : ($client->status == 'pending' ? 'warning' : 'danger') }}">
+                                        {{ ucfirst($client->status ?? 'N/A') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @php
+                                        $status = $client->shared_status ?? 'N/A';
+                                        $badgeClass = match ($status) {
+                                            'signed' => 'success', // Adjusted to match other sections
+                                            'pending' => 'warning',
+                                            'deployed' => 'primary',
+                                            'not_avaiable' => 'info',
+                                            're_shedule' => 'secondary',
+                                            'not_intrested' => 'danger',
+                                            default => 'dark',
+                                        };
+                                    @endphp
+                                    <span class="badge bg-{{ $badgeClass }}">
+                                        {{ ucfirst($status) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ route('team-lead.shared.client.detail', $client->id) }}"
+                                        class="btn btn-sm btn-success">Show More</a>
+                                </td>
+                                <td>
+                                    @php
+                                        $employee = $employees->firstWhere('id', $client->assigned_employee_id);
+                                    @endphp
+                                    @if ($employee)
+                                        <span class="badge bg-info">{{ $employee->name }}</span>
+                                    @else
+                                        <form
+                                            action="{{ route('team-lead.assign_employee_shared_task', $client->shared_task_id) }}"
+                                            method="POST">
+                                            @csrf
+                                            <select name="employee_id" class="form-select form-select-sm d-inline-block"
+                                                style="width:auto;">
+                                                <option value="">-- Select --</option>
+                                                @foreach ($employees as $emp)
+                                                    <option value="{{ $emp->id }}">{{ $emp->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-primary mt-1">Assign</button>
+                                        </form>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">No Shared Clients Found</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
     </div>
 @endsection

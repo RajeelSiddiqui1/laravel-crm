@@ -91,8 +91,8 @@
                                 @php
                                     $teamLead = Auth::guard('team_lead')->user();
                                     $taskTypes = ($teamLead->department && $teamLead->department->name === 'Accounts')
-                                        ? ['Call_Center_POS', 'Call_Center_Accounts','Client_Details']
-                                        : ['Operations','Call_Center_POS'];
+                                        ? ['call_center_pos', 'call_center_accounts','client_details']
+                                        : ['operations','call_center_pos'];
                                 @endphp
                                 @foreach ($taskTypes as $type)
                                     <option value="{{ $type }}"
@@ -143,40 +143,107 @@
 @endsection
 
 @section('styles')
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            --body-bg: #121217;
+            --primary: #4f46e5;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #d1d5db;
+            --border: #2d3748;
+            --table-bg: rgba(31, 41, 55, 0.6);
+            --hover-bg: rgba(75, 85, 99, 0.2);
+        }
+
+        body {
+            background: var(--body-bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
         .container {
-            background-color: #1a1a1a;
-            padding: 20px;
-            border-radius: 8px;
             max-width: 600px;
+            background: var(--table-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            margin-top: 2rem;
         }
-        .form-control, .form-select {
-            background-color: #2c2c2c;
-            color: #fff;
-            border: 1px solid #444;
+
+        .form-label {
+            color: var(--text);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
         }
-        .form-control:focus, .form-select:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+
+        .form-control,
+        .form-select {
+            background: rgba(31, 41, 55, 0.6);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
         }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 5px rgba(79, 70, 229, 0.5);
+            background: rgba(31, 41, 55, 0.8);
+        }
+
+        .btn {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
         .btn-success {
-            background-color: #28a745;
-            border-color: #28a745;
+            background: var(--success);
+            border: none;
         }
+
         .btn-success:hover {
-            background-color: #218838;
-            border-color: #1e7e34;
+            background: #16a34a;
+            transform: translateY(-1px);
         }
+
         .alert-danger {
-            background-color: #dc3545;
+            background: var(--danger);
             color: #fff;
-            border-radius: 5px;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
         }
+
         .text-muted {
-            color: #aaa !important;
+            color: #9ca3af !important;
+            font-size: 0.85rem;
         }
+
         .form-label .text-danger {
             font-size: 0.9em;
+            color: var(--danger);
+        }
+
+        .invalid-feedback {
+            color: var(--danger);
+            font-size: 0.85rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2rem;
+            text-align: center;
         }
     </style>
 @endsection

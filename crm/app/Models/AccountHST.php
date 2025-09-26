@@ -18,6 +18,8 @@ class AccountHST extends Model
         'priority',
         'department_id',
         'team_lead_id',
+        'manager_status',
+        'team_status',
         'attachments',
     ];
 

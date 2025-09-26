@@ -245,6 +245,43 @@ class TeamLeadController extends Controller
             'otherTeamLeads'
         ));
     }
+
+
+    public function updateTeamStatus(Request $request, $id, $type)
+    {
+        $request->validate([
+            'team_status' => 'required|in:rejected,in_progress,completed,not_interested,in_completed',
+        ]);
+
+        try {
+            $status = $request->input('team_status');
+
+            switch ($type) {
+                case 't1':
+                    $task = AccountT1::findOrFail($id);
+                    break;
+                case 't2':
+                    $task = AccountT2::findOrFail($id);
+                    break;
+                case 'hst':
+                    $task = AccountHST::findOrFail($id);
+                    break;
+                case 'operation':
+                    $task = Manageroperation::findOrFail($id);
+                    break;
+                default:
+                    return redirect()->back()->with('error', 'Invalid task type.');
+            }
+
+            $task->team_status = $status;
+            $task->save();
+
+            return redirect()->back()->with('success', 'Team status updated successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error updating team status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update team status.');
+        }
+    }
     public function assignEmployees(Request $request, OnwerTask $task)
     {
         $request->validate([
@@ -377,140 +414,157 @@ class TeamLeadController extends Controller
     }
 
 
+  public function subtask_create($id)
+{
+    $teamLead = Auth::guard('team_lead')->user();
 
+    $accountT1 = AccountT1::find($id);
+    $accountT2 = AccountT2::find($id);
+    $accountHST = AccountHST::find($id);
+    $accountManager = ManagerOperation::find($id);
 
-    public function subtask_create($id)
+    $account = null;
+    $accountType = null;
+    $task = null;
+    $managerId = null;
+
+    if ($accountT1) {
+        $account = $accountT1;
+        $accountType = 'T1';
+        $task = $accountT1->task;
+        $managerId = $task->project_manager_id ?? null;
+    } elseif ($accountT2) {
+        $account = $accountT2;
+        $accountType = 'T2';
+        $task = $accountT2->task;
+        $managerId = $task->project_manager_id ?? null;
+    } elseif ($accountHST) {
+        $account = $accountHST;
+        $accountType = 'HST';
+        $task = $accountHST->task;
+        $managerId = $task->project_manager_id ?? null;
+    } elseif ($accountManager) {
+        $account = $accountManager;
+        $accountType = 'MANAGER';
+        $task = $accountManager->task;
+        $managerId = $task->project_manager_id ?? null;
+    } else {
+        return redirect()->route('team_lead.manager_tasks')
+            ->with('error_swal', 'Account not found.');
+    }
+
+    // ✅ Sirf TeamLead ke department ka employees fetch karna
+    if (!$teamLead || !$teamLead->department_id) {
+        return redirect()->back()->with('error_swal', 'Department not found for this Team Lead.');
+    }
+
+    $assignedEmployees = Employee::where('department_id', $teamLead->department_id)->get();
+
+    return view('team_lead.create_subtask', compact(
+        'task',
+        'assignedEmployees',
+        'account',
+        'accountType',
+        'managerId'
+    ));
+}
+
+    public function subtask_create2()
     {
         $teamLead = Auth::guard('team_lead')->user();
 
-        $accountT1 = AccountT1::find($id);
-        $accountT2 = AccountT2::find($id);
-        $accountHST = AccountHST::find($id);
-        $accountManager = ManagerOperation::find($id);
-
-        $account = null;
-        $accountType = null;
-        $task = null;
-        $managerId = null; // <--- NEW
-
-        if ($accountT1) {
-            $account = $accountT1;
-            $accountType = 'T1';
-            $task = $accountT1->ownerTask;
-            $managerId = $task->project_manager_id ?? null;
-        } elseif ($accountT2) {
-            $account = $accountT2;
-            $accountType = 'T2';
-            $task = $accountT2->ownerTask;
-            $managerId = $task->project_manager_id ?? null;
-        } elseif ($accountHST) {
-            $account = $accountHST;
-            $accountType = 'HST';
-            $task = $accountHST->ownerTask;
-            $managerId = $task->project_manager_id ?? null;
-        } elseif ($accountManager) {
-            $account = $accountManager;
-            $accountType = 'MANAGER';
-            $task = $accountManager->ownerTask;
-            $managerId = $task->project_manager_id ?? null;
-        } else {
-            return redirect()->route('team_lead.manager_tasks')
-                ->with('error_swal', 'Account not found.');
+        if (!$teamLead) {
+            return redirect()->back()->with('error_swal', 'Team Lead not found.');
         }
 
-        $assignedEmployees = Employee::whereIn('id', function ($query) {
-            $query->select('employee_id')->from('owner_tasks');
-        })->get();
+        // TeamLead ka single department_id
+        $departmentId = $teamLead->department_id;
 
-        return view('team_lead.create_subtask', compact(
-            'task',
-            'assignedEmployees',
-            'account',
-            'accountType',
-            'managerId'  // pass manager_id to view
-        ));
+        if (!$departmentId) {
+            return redirect()->back()->with('error_swal', 'Department not assigned to this Team Lead.');
+        }
+
+        // Sirf usi department ke employees fetch karna
+        $assignedEmployees = Employee::where('department_id', $departmentId)->get();
+
+        return view('team_lead.create_subtask2', compact('assignedEmployees'));
     }
 
 
-    function subtask_create2(){
-           $assignedEmployees = Employee::whereIn('id', function ($query) {
-            $query->select('employee_id')->from('owner_tasks');
-        })->get();
-        return view('team_lead.create_subtask2',compact('assignedEmployees'));
-    }
 
 
     public function subtask_store2(Request $request)
-{
-    $request->validate([
-        'title'                => 'required|string|max:255',
-        'description'          => 'required|string',
-        'attachments'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
-        'assigned_employee_id' => 'required|exists:employees,id',
-        'start_date'           => 'nullable|date',
-        'end_date'             => 'nullable|date|after_or_equal:start_date',
-        'start_time'           => 'nullable|date_format:H:i',
-        'end_time'             => 'nullable|date_format:H:i',
-        'lead'                 => 'required|numeric',
-        'task_type'            => 'nullable|string',
-    ]);
+    {
+        $request->validate([
+            'title'                => 'required|string|max:255',
+            'description'          => 'required|string',
+            'attachments'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+            'assigned_employee_id' => 'required|exists:employees,id',
+            'start_date'           => 'nullable|date',
+            'end_date'             => 'nullable|date|after_or_equal:start_date',
+            'start_time'           => 'nullable|date_format:H:i',
+            'end_time'             => 'nullable|date_format:H:i',
+            'lead'                 => 'required|numeric',
+            'task_type'            => 'nullable|string',
+        ]);
 
-    // validate timings
-    if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
-        if ($request->filled('start_time') && $request->filled('end_time')) {
-            if (strtotime($request->end_time) <= strtotime($request->start_time)) {
-                return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
+        // validate timings
+        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
+            if ($request->filled('start_time') && $request->filled('end_time')) {
+                if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+                    return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
+                }
             }
         }
-    }
 
-    $teamLead = Auth::guard('team_lead')->user();
+        $teamLead = Auth::guard('team_lead')->user();
 
-    // 🔹 Manager lookup based on department
-    $manager = ProjectManager::whereJsonContains('department_ids', (string)$teamLead->department_id)->first();
+        // 🔹 Manager lookup based on department
+        $manager = ProjectManager::whereJsonContains('department_ids', (string)$teamLead->department_id)->first();
 
-    $subtask = new Subtask();
-    $subtask->title         = $request->title;
-    $subtask->description   = $request->description;
-    $subtask->lead          = $request->lead;
-    $subtask->task_type     = $request->task_type;
-    $subtask->start_date    = $request->start_date;
-    $subtask->end_date      = $request->end_date;
-    $subtask->start_time    = $request->start_time;
-    $subtask->end_time      = $request->end_time;
+        $subtask = new Subtask();
+        $subtask->title         = $request->title;
+        $subtask->description   = $request->description;
+        $subtask->lead          = $request->lead;
+        $subtask->task_type     = $request->task_type;
+        $subtask->start_date    = $request->start_date;
+        $subtask->end_date      = $request->end_date;
+        $subtask->start_time    = $request->start_time;
+        $subtask->end_time      = $request->end_time;
 
-    // IDs
-    $subtask->team_lead_id  = $teamLead->id; 
-    $subtask->employee_id   = $request->assigned_employee_id;  
+        // IDs
+        $subtask->team_lead_id  = $teamLead->id;
+        $subtask->employee_id   = $request->assigned_employee_id;
 
-    // agar manager mila tu uska id set ho
-    if ($manager) {
-        $subtask->manager_id = $manager->id;
-    }
-
-    // File upload
-    if ($request->hasFile('attachments')) {
-        try {
-            $file = $request->file('attachments');
-            $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                'public_id'     => 'subtasks/' . uniqid() . '_' . $file->getClientOriginalName(),
-                'resource_type' => 'auto',
-            ]);
-            $subtask->attachments = $uploaded['secure_url'];
-        } catch (\Exception $e) {
-            Log::error('Cloudinary upload failed: ' . $e->getMessage());
-            return redirect()->back()->with('error_swal', 'Failed to upload attachment')->withInput();
+        // agar manager mila tu uska id set ho
+        if ($manager) {
+            $subtask->manager_id = $manager->id;
         }
+
+        // File upload
+        if ($request->hasFile('attachments')) {
+            try {
+                $file = $request->file('attachments');
+                $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                    'public_id'     => 'subtasks/' . uniqid() . '_' . $file->getClientOriginalName(),
+                    'resource_type' => 'auto',
+                ]);
+                $subtask->attachments = $uploaded['secure_url'];
+            } catch (\Exception $e) {
+                Log::error('Cloudinary upload failed: ' . $e->getMessage());
+                return redirect()->back()->with('error_swal', 'Failed to upload attachment')->withInput();
+            }
+        }
+
+        $subtask->save();
+
+        return redirect()->route('team_lead.subtask.list2', $request->account_id)
+            ->with('success_swal_swal', 'Subtask created successfully.');
     }
 
-    $subtask->save();
 
-    return redirect()->route('team_lead.subtask.list2', $request->account_id)
-        ->with('success_swal_swal', 'Subtask created successfully.');
-}
-
-
-    function subtask_list2(){
+    function subtask_list2()
+    {
 
         $teamLeadId = Auth::guard('team_lead')->id();
 
@@ -522,87 +576,87 @@ class TeamLeadController extends Controller
     }
 
 
- public function subtask_store(Request $request)
-{
-    $request->validate([
-        'title'                => 'required|string|max:255',
-        'description'          => 'required|string',
-        'attachments'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
-        'assigned_employee_id' => 'required|exists:employees,id',
-        'start_date'           => 'nullable|date',
-        'end_date'             => 'nullable|date|after_or_equal:start_date',
-        'start_time'           => 'nullable|date_format:H:i',
-        'end_time'             => 'nullable|date_format:H:i',
-        'lead'                 => 'required|numeric',
-        'task_type'            => 'nullable|string',
-        'account_type'         => 'required|string',
-        'account_id'           => 'required|numeric',
-    ]);
+    public function subtask_store(Request $request)
+    {
+        $request->validate([
+            'title'                => 'required|string|max:255',
+            'description'          => 'required|string',
+            'attachments'          => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:2048',
+            'assigned_employee_id' => 'required|exists:employees,id',
+            'start_date'           => 'nullable|date',
+            'end_date'             => 'nullable|date|after_or_equal:start_date',
+            'start_time'           => 'nullable|date_format:H:i',
+            'end_time'             => 'nullable|date_format:H:i',
+            'lead'                 => 'required|numeric',
+            'task_type'            => 'nullable|string',
+            'account_type'         => 'required|string',
+            'account_id'           => 'required|numeric',
+        ]);
 
-    // validate timings
-    if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
-        if ($request->filled('start_time') && $request->filled('end_time')) {
-            if (strtotime($request->end_time) <= strtotime($request->start_time)) {
-                return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
+        // validate timings
+        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
+            if ($request->filled('start_time') && $request->filled('end_time')) {
+                if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+                    return back()->with('error_swal_swal', 'End time must be after start time on the same day.');
+                }
             }
         }
-    }
 
-    $teamLead = Auth::guard('team_lead')->user();
+        $teamLead = Auth::guard('team_lead')->user();
 
-    // 🔹 Manager lookup based on department
-    $manager = ProjectManager::whereJsonContains('department_ids', (string)$teamLead->department_id)->first();
+        // 🔹 Manager lookup based on department
+        $manager = ProjectManager::whereJsonContains('department_ids', (string)$teamLead->department_id)->first();
 
-    $subtask = new Subtask();
-    $subtask->title         = $request->title;
-    $subtask->description   = $request->description;
-    $subtask->lead          = $request->lead;
-    $subtask->task_type     = $request->task_type;
-    $subtask->start_date    = $request->start_date;
-    $subtask->end_date      = $request->end_date;
-    $subtask->start_time    = $request->start_time;
-    $subtask->end_time      = $request->end_time;
+        $subtask = new Subtask();
+        $subtask->title         = $request->title;
+        $subtask->description   = $request->description;
+        $subtask->lead          = $request->lead;
+        $subtask->task_type     = $request->task_type;
+        $subtask->start_date    = $request->start_date;
+        $subtask->end_date      = $request->end_date;
+        $subtask->start_time    = $request->start_time;
+        $subtask->end_time      = $request->end_time;
 
-    // IDs
-    $subtask->team_lead_id  = $teamLead->id; 
-    $subtask->employee_id   = $request->assigned_employee_id;  
+        // IDs
+        $subtask->team_lead_id  = $teamLead->id;
+        $subtask->employee_id   = $request->assigned_employee_id;
 
-    // agar matching manager mila to uska id set ho
-    if ($manager) {
-        $subtask->manager_id = $manager->id;
-    }
-
-    // Account type mapping
-    if ($request->account_type === 'T1') {
-        $subtask->account_t1_id = $request->account_id;
-    } elseif ($request->account_type === 'T2') {
-        $subtask->account_t2_id = $request->account_id;
-    } elseif ($request->account_type === 'HST') {
-        $subtask->account_hst_id = $request->account_id;
-    } elseif ($request->account_type === 'MANAGER') {
-        $subtask->manager_operation_id = $request->account_id;
-    }
-
-    // File upload
-    if ($request->hasFile('attachments')) {
-        try {
-            $file = $request->file('attachments');
-            $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                'public_id'     => 'subtasks/' . uniqid() . '_' . $file->getClientOriginalName(),
-                'resource_type' => 'auto',
-            ]);
-            $subtask->attachments = $uploaded['secure_url'];
-        } catch (\Exception $e) {
-            Log::error('Cloudinary upload failed: ' . $e->getMessage());
-            return redirect()->back()->with('error_swal', 'Failed to upload attachment')->withInput();
+        // agar matching manager mila to uska id set ho
+        if ($manager) {
+            $subtask->manager_id = $manager->id;
         }
+
+        // Account type mapping
+        if ($request->account_type === 'T1') {
+            $subtask->account_t1_id = $request->account_id;
+        } elseif ($request->account_type === 'T2') {
+            $subtask->account_t2_id = $request->account_id;
+        } elseif ($request->account_type === 'HST') {
+            $subtask->account_hst_id = $request->account_id;
+        } elseif ($request->account_type === 'MANAGER') {
+            $subtask->manager_operation_id = $request->account_id;
+        }
+
+        // File upload
+        if ($request->hasFile('attachments')) {
+            try {
+                $file = $request->file('attachments');
+                $uploaded = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                    'public_id'     => 'subtasks/' . uniqid() . '_' . $file->getClientOriginalName(),
+                    'resource_type' => 'auto',
+                ]);
+                $subtask->attachments = $uploaded['secure_url'];
+            } catch (\Exception $e) {
+                Log::error('Cloudinary upload failed: ' . $e->getMessage());
+                return redirect()->back()->with('error_swal', 'Failed to upload attachment')->withInput();
+            }
+        }
+
+        $subtask->save();
+
+        return redirect()->route('team_lead.subtask.list', $request->account_id)
+            ->with('success_swal_swal', 'Subtask created successfully.');
     }
-
-    $subtask->save();
-
-    return redirect()->route('team_lead.subtask.list', $request->account_id)
-        ->with('success_swal_swal', 'Subtask created successfully.');
-}
 
     public function subtask_edit($id)
     {
@@ -619,67 +673,82 @@ class TeamLeadController extends Controller
         return view('team_lead.subtask_edit', compact('subtask', 'assignedEmployees'));
     }
 
+public function subtask_update(Request $request, $id)
+{
+    $request->validate([
+        'title'                => 'required|string|max:255',
+        'description'          => 'required|string',
+        'assigned_employee_id' => 'required|exists:employees,id',
+        'start_date'           => 'nullable|date',
+        'end_date'             => 'nullable|date|after_or_equal:start_date',
+        'start_time'           => 'nullable|date_format:H:i',
+        'end_time'             => 'nullable|date_format:H:i',
+        'lead'                 => 'nullable|numeric',
+        'account_type'         => 'required|string',
+        'account_id'           => 'required|numeric',
+    ]);
 
-    public function subtask_update(Request $request, $id)
-    {
-        $request->validate([
-            'title'                => 'required|string|max:255',
-            'description'          => 'required|string',
-            'assigned_employee_id' => 'required|exists:employees,id',
-            'start_date'           => 'nullable|date',
-            'end_date'             => 'nullable|date|after_or_equal:start_date',
-            'start_time'           => 'nullable|date_format:H:i',
-            'end_time'             => 'nullable|date_format:H:i',
-            'lead'                 => 'nullable|numeric',
-            'account_type'         => 'required|string',
-            'account_id'           => 'required|numeric',
-        ]);
-
-        if ($request->filled('start_date') && $request->filled('end_date') && $request->start_date === $request->end_date) {
-            if ($request->filled('start_time') && $request->filled('end_time')) {
-                if (strtotime($request->end_time) <= strtotime($request->start_time)) {
-                    return back()->withErrors(['end_time' => 'End time must be after start time on the same day.']);
-                }
-            }
+    // same-day time validation
+    if (
+        $request->filled('start_date') &&
+        $request->filled('end_date') &&
+        $request->start_date === $request->end_date &&
+        $request->filled('start_time') &&
+        $request->filled('end_time')
+    ) {
+        if (strtotime($request->end_time) <= strtotime($request->start_time)) {
+            return back()->withErrors(['end_time' => 'End time must be after start time on the same day.']);
         }
-
-        $teamLead = Auth::guard('team_lead')->user();
-        $subtask  = Subtask::findOrFail($id);
-
-        $employee = Employee::findOrFail($request->assigned_employee_id);
-        if ($employee->department_id !== $teamLead->department_id) {
-            return back()->with('error_swal', 'Selected employee is not from your department.');
-        }
-
-        $subtask->title       = $request->title;
-        $subtask->description = $request->description;
-        $subtask->employee_id = $employee->id;
-        $subtask->start_date  = $request->start_date ?? null;
-        $subtask->end_date    = $request->end_date ?? null;
-        $subtask->start_time  = $request->start_time ?? null;
-        $subtask->end_time    = $request->end_time ?? null;
-        $subtask->lead        = $request->lead;
-
-        $subtask->account_t1_id = null;
-        $subtask->account_t2_id = null;
-        $subtask->account_hst_id = null;
-        $subtask->manager_operation_id = null;
-
-        if ($request->account_type === 'T1') {
-            $subtask->account_t1_id = $request->account_id;
-        } elseif ($request->account_type === 'T2') {
-            $subtask->account_t2_id = $request->account_id;
-        } elseif ($request->account_type === 'HST') {
-            $subtask->account_hst_id = $request->account_id;
-        } elseif ($request->account_type === 'MANAGER') {
-            $subtask->manager_operation_id = $request->account_id;
-        }
-
-        $subtask->save();
-
-        return redirect()->route('team_lead.subtask.list', $request->account_id)
-            ->with('success_swal', 'Subtask updated successfully.');
     }
+
+    $teamLead = Auth::guard('team_lead')->user();
+    $subtask  = Subtask::findOrFail($id);
+
+    $employee = Employee::findOrFail($request->assigned_employee_id);
+
+    // department check (loose comparison to avoid int/string mismatch)
+    if ((int) $employee->department_id !== (int) $teamLead->department_id) {
+        return back()->with('error_swal', 'Selected employee is not from your department.');
+    }
+
+    // assign basic fields
+    $subtask->title       = $request->title;
+    $subtask->description = $request->description;
+    $subtask->employee_id = $employee->id;
+    $subtask->start_date  = $request->start_date ?? null;
+    $subtask->end_date    = $request->end_date ?? null;
+    $subtask->start_time  = $request->start_time ?? null;
+    $subtask->end_time    = $request->end_time ?? null;
+    $subtask->lead        = $request->lead;
+
+    // reset account IDs
+    $subtask->account_t1_id         = null;
+    $subtask->account_t2_id         = null;
+    $subtask->account_hst_id        = null;
+    $subtask->manager_operation_id  = null;
+
+    // set correct account id based on account_type
+    switch ($request->account_type) {
+        case 'T1':
+            $subtask->account_t1_id = $request->account_id;
+            break;
+        case 'T2':
+            $subtask->account_t2_id = $request->account_id;
+            break;
+        case 'HST':
+            $subtask->account_hst_id = $request->account_id;
+            break;
+        case 'MANAGER':
+            $subtask->manager_operation_id = $request->account_id;
+            break;
+    }
+
+    $subtask->save();
+
+    return redirect()->route('team_lead.subtask.list', ['id' => $request->account_id])
+        ->with('success_swal', 'Subtask updated successfully.');
+}
+
 
 
     public function subtask_delete($id)
@@ -779,41 +848,41 @@ class TeamLeadController extends Controller
 
 
 
-public function subtask_detail($id)
-{
-    // Fetch the subtask with related employee and department
-    $subtask = Subtask::with(['employee.department', 'employeeSubtask', 'teamLead'])
-        ->findOrFail($id);
+    public function subtask_detail($id)
+    {
+        // Fetch the subtask with related employee and department
+        $subtask = Subtask::with(['employee.department', 'employeeSubtask', 'teamLead'])
+            ->findOrFail($id);
 
-    // Fetch all subtasks assigned to the same employee
-    $employeeSubtasks = Subtask::with('employeeSubtask')
-        ->where('employee_id', $subtask->employee_id)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        // Fetch all subtasks assigned to the same employee
+        $employeeSubtasks = Subtask::with('employeeSubtask')
+            ->where('employee_id', $subtask->employee_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    return view('team_lead.subtask_detail', compact('subtask', 'employeeSubtasks'));
-}
+        return view('team_lead.subtask_detail', compact('subtask', 'employeeSubtasks'));
+    }
 
 
 
     public function EmployeeSubtasks($subtaskId)
-{
-    $subtask = Subtask::findOrFail($subtaskId);
+    {
+        $subtask = Subtask::findOrFail($subtaskId);
 
-    $posRecords = $subtask->call_center_pos_ids
-        ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
-        : collect();
+        $posRecords = $subtask->call_center_pos_ids
+            ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
+            : collect();
 
-    $accountRecords = $subtask->cell_center_account_ids
-        ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
-        : collect();
+        $accountRecords = $subtask->cell_center_account_ids
+            ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
+            : collect();
 
-    $clientDetailRecords = $subtask->client_detail_ids
-        ? ClientDetail::whereIn('id', $subtask->client_detail_ids)->get()
-        : collect();
+        $clientDetailRecords = $subtask->client_detail_ids
+            ? ClientDetail::whereIn('id', $subtask->client_detail_ids)->get()
+            : collect();
 
-    return view('team_lead.employee_subtasks', compact('subtask', 'posRecords', 'accountRecords', 'clientDetailRecords'));
-}
+        return view('team_lead.employee_subtasks', compact('subtask', 'posRecords', 'accountRecords', 'clientDetailRecords'));
+    }
 
     public function subtask_show_more($id)
     {
@@ -861,9 +930,9 @@ public function subtask_detail($id)
 
         // Shared tasks jo iss teamlead ko assign hue hain
         $sharedTasks = SharedTask::where('assigned_teamlead_id', $teamlead->id)->get();
-
         $posResults = [];
         $accountResults = [];
+        $clientResults = [];
 
         foreach ($sharedTasks as $shared) {
             if ($shared->cell_center_pos_id) {
@@ -871,7 +940,8 @@ public function subtask_detail($id)
                 if ($pos) {
                     $pos->shared_task_id = $shared->id;
                     $pos->shared_status = $shared->status;
-                    $pos->assigned_employee_id = $shared->assigned_employee_id;
+                    $pos->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                    $pos->assigned_employee_id = $shared->assigned_employee_id; // Add this
                     $posResults[] = $pos;
                 }
             } elseif ($shared->cell_center_account_id) {
@@ -879,18 +949,27 @@ public function subtask_detail($id)
                 if ($account) {
                     $account->shared_task_id = $shared->id;
                     $account->shared_status = $shared->status;
-                    $account->assigned_employee_id = $shared->assigned_employee_id;
+                    $account->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                    $account->assigned_employee_id = $shared->assigned_employee_id; // Add this
                     $accountResults[] = $account;
+                }
+            } elseif ($shared->client_details_id) {
+                $client = ClientDetail::find($shared->client_details_id);
+                if ($client) {
+                    $client->shared_task_id = $shared->id;
+                    $client->shared_status = $shared->status;
+                    $client->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                    $client->assigned_employee_id = $shared->assigned_employee_id; // Add this
+                    $clientResults[] = $client;
                 }
             }
         }
 
         return view(
             'team_lead.shared_task_list',
-            compact('sharedTasks', 'posResults', 'accountResults', 'employees')
+            compact('sharedTasks', 'posResults', 'accountResults', 'clientResults', 'employees')
         );
     }
-
     /**
      * Assign an employee to shared task
      */
@@ -919,6 +998,12 @@ public function subtask_detail($id)
     {
         $account = CellCenterAccount::findOrFail($id);
         return view('team_lead.account_detail', compact('account'));
+    }
+
+    public function showClient($id)
+    {
+        $client = ClientDetail::findOrFail($id);
+        return view('team_lead.client_details', compact('client'));
     }
 
 

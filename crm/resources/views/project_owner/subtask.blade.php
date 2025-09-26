@@ -221,8 +221,6 @@
                             <th>Start Time</th>
                             <th>End Date</th>
                             <th>End Time</th>
-                            <th>Edit</th>
-                            <th>Delete</th>
                             <th>Employee Tasks</th>
                         </tr>
                     </thead>
@@ -258,20 +256,9 @@
                                 <td>{{ $subtask->end_date ?? '-' }}</td>
                                 <td>{{ $subtask->end_time ?? '-' }}</td>
                                
+                               
                                 <td>
-                                    <a href="{{ route('team_lead.subtask.edit', $subtask->id) }}"
-                                        class="btn btn-sm btn-warning">Edit</a>
-                                </td>
-                                <td>
-                                    <form action="{{ route('team_lead.subtask.delete', $subtask->id) }}" method="POST"
-                                        onsubmit="return confirm('Are you sure you want to delete this subtask?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                    </form>
-                                </td>
-                                <td>
-                                    <a href="{{ route('project_manager.subtask_detail', $subtask->id) }}"
+                                    <a href="{{ route('project_owner.subtask.detail', $subtask->id) }}"
                                         class="btn btn-success">
                                         Show
                                     </a>

@@ -26,7 +26,6 @@ Route::controller(ProjectManager::class)->group(function () {
 
     // Protected routes (require authentication via CheckUserRoles middleware)
     Route::middleware('check.roles')->group(function () {
-        Route::get('/project-manager/home', 'home')->name('project_manager.home');
         Route::get('/project-manager/profile', 'profile_view')->name('project_manager.profile');
         Route::put('/project-manager/profile', 'updateProfile')->name('project_manager.profile.update');
         Route::get('/project-manager/owner-tasks', 'onwertask')->name('project_manager.tasks');
@@ -38,6 +37,7 @@ Route::controller(ProjectManager::class)->group(function () {
         Route::get('/project-manager/subtask/detail/{id}', 'subtask_detail')->name('project_manager.subtask_detail');
         Route::post('/shared-task/{subtaskId}', 'store_shared_task')->name('shared-task.store');
         Route::get('/project-manager/mytasks', 'manager_task_list')->name('project_manager.mytask');
+
         Route::get('/project-manager/mytasks/detail/{id}', 'my_task_detail')->name('project_manager.my_task_detail');
         Route::get('/project-manager/mytasks/create/{id}', 'create_my_task')->name('project_manager.mytask_create');
         Route::post('/project-manager/mytasks/store/{id}', 'store_my_task')->name('project_manager.mytask_store');
@@ -54,6 +54,7 @@ Route::controller(ProjectManager::class)->group(function () {
         Route::get('/project-manager/operation/tasks', 'signed_task_list')->name('project_manager.operation.task.view');
         Route::post('/project-manager/assign-operation-teamlead/{sharedTaskId}',  'assign_operation_teamlead_shared_task')
             ->name('project_manager.assign_operation_teamlead');
+        Route::patch('/project-manager/task/{id}/{type}/status', 'updateStatus')->name('project_manager.update_status');
         Route::patch('/project-manager/owner-tasks/{id}/status2', 'updateStatus2')->name('project_manager.update_status2');
         Route::patch('/project-manager/owner-tasks/{id}/status3', 'updateStatus3')->name('project_manager.update_status3');
         Route::get('/project-manager/employee/task/show/{id}', 'show_employee_task')->name('project_manager.show_employee_task.view');
@@ -62,6 +63,7 @@ Route::controller(ProjectManager::class)->group(function () {
         Route::post('/project-manager/shared-task/{id}/assign-teamlead', 'assign_teamlead_shared_task')->name('project_manager.assign_teamlead_shared_task');
         Route::get('project-manager/pos/{id}',  'showPos')->name('project-manager.shared.pos.detail');
         Route::get('project-manager/account/{id}',  'showAccount')->name('project-manager.shared.account.detail');
+        Route::get('project-manager/client/{id}',  'showClient')->name('project-manager.shared.client.detail');
         Route::get('/project-manager/teamleads', 'teamleads')->name('project_manager.teamleads');
         Route::get('/project-manager/teamleads/create', 'create_teamlead_view')->name('project_manager.create_teamlead_view');
         Route::post('/project-manager/teamleads/create', 'create_teamlead')->name('project_manager.create_teamlead');
@@ -130,7 +132,7 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::get('/team-lead/manager-tasks', 'manager_tasks')->name('team_lead.manager_tasks');
         Route::post('/team-lead/tasks/{task}/assign-employees', 'assignEmployees')->name('team_lead.tasks.assign_employees');
         Route::put('/team-lead/subtask-update/{id}', 'subtask_update')->name('team_lead.subtask.update');
-        Route::put('/team-lead/tasks/{task}/update-status', 'updateStatus')->name('team_lead.tasks.update_status');
+        Route::patch('/team-lead/tasks/{id}/{type}/team-status', 'updateTeamStatus')->name('team_lead.tasks.update_team_status');
         Route::get('/team-lead/tasks/{id}/detail', 'manager_tasks_detail')->name('team_lead.task_detail');
         Route::get('/team-lead/task/{id}/subtask/create', 'subtask_create')->name('team_lead.subtask.create');
         Route::get('/team-lead/subtask/{id}/list', 'subtask_list')->name('team_lead.subtask.list');
@@ -141,8 +143,12 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::get('/team-lead/task/subtask/create', 'subtask_create2')->name('team_lead.subtask.create2');
         Route::get('/team-lead/subtask/list', 'subtask_list2')->name('team_lead.subtask.list2');
         Route::post('/team-lead/subtask/store2', 'subtask_store2')->name('team_lead.subtask.store2');
-        Route::get('/team-lead/subtask/{id}/edit', 'subtask_edit')->name('team_lead.subtask.edit');
-        Route::put('/subtask/update/{id}', 'subtask_update')->name('team_lead.subtask.update');
+        // Route::get('/team-lead/subtask/{id}/edit', 'subtask_edit')->name('team_lead.subtask.edit');
+        // Route::put('/subtask/update/{id}', 'subtask_update')->name('team_lead.subtask.update');
+        Route::get('/team-lead/subtask/{id}/edit', function () {
+            return response("Work in progress 🚧 Please check back later.", 503);
+        })->name('team_lead.subtask.edit');
+
         Route::delete('/team-lead/subtask/{id}/delete', 'subtask_delete')->name('team_lead.subtask.delete');
         Route::patch('/subtask/{id}/status', 'subtask_update_status')->name('team_lead.subtask.update_status');
         Route::get('/team-lead/subtask/{id}', 'EmployeeSubtasks')->name('teamlead.employee_subtask.details');
@@ -150,6 +156,7 @@ Route::controller(TeamLeadController::class)->group(function () {
         Route::post('/team-lead/shared-task/{id}/assign-employee', 'assign_employee_shared_task')->name('team-lead.assign_employee_shared_task');
         Route::get('team-lead/pos/{id}',  'showPos')->name('team-lead.shared.pos.detail');
         Route::get('team-lead/account/{id}',  'showAccount')->name('team-lead.shared.account.detail');
+        Route::get('team-lead/client/{id}',  'showClient')->name('team-lead.shared.client.detail');
         Route::get('/team-lead/operation/tasks', 'signed_task_list')->name('team_lead.operation.task.view');
         Route::post('/team-lead/assign-operation-teamlead/{sharedTaskId}',  'assign_operation_employee_shared_task')
             ->name('team_lead.assign_employee_operation');
@@ -189,6 +196,7 @@ Route::controller(Employee::class)->group(function () {
         Route::put('employee/lead/info/{id}',  'update_task_info')->name('employee.task_info.post');
         Route::get('/employee/pos/{id}',  'showPos')->name('employee.shared.pos.detail');
         Route::get('/employee/account/{id}',  'showAccount')->name('employee.shared.account.detail');
+        Route::get('/employee/client/{id}',  'showClient')->name('employee.shared.client.detail');
         Route::get('/employee/team-lead/', 'fetch_team_leads')->name('team_lead.teamleads');
         Route::get('/employee/message/{id}/team-lead', 'message_teamlead')->name('employee.message.teamlead');
         Route::post('/employee/message/send', 'send_message')->name('employee.message.send');

@@ -15,7 +15,9 @@ class AccountT1 extends Model
         'business_name',
         'family_name',
         'year',
-        'team_lead_id'
+        'team_lead_id',
+        'manager_status',
+        'team_status',
     ];
 
     public function ownerTask()

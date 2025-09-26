@@ -13,6 +13,7 @@ use App\Models\Notification;
 use App\Models\OnwerTask;
 use App\Models\ProjectManager;
 use App\Models\ProjectOwner;
+use App\Models\SharedTask;
 use App\Models\Subtask;
 use App\Models\TeamLead;
 use App\Models\Visitor;
@@ -430,7 +431,13 @@ class ProjectOnwer extends Controller
             ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
             : collect();
 
-        return view('project_owner.subtask_detail', compact('subtask', 'posRecords', 'accountRecords'));
+        $clientDetailRecords = $subtask->client_detail_ids
+            ? CellCenterAccount::whereIn('id', $subtask->client_detail_ids)->get()
+            : collect();
+
+        $sharedTasks = SharedTask::where('subtask_id', $subtask->id)->get();
+
+        return view('project_owner.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'clientDetailRecords','sharedTasks'));
     }
 
 

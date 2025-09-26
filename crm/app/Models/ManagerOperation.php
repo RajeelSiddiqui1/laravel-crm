@@ -12,10 +12,12 @@ class ManagerOperation extends Model
         'description',
         'attachments',
         'priority',
-        'team_lead_id'
+        'team_lead_id',
+        'manager_status',
+        'team_status',
     ];
 
-      public function ownerTask()
+    public function ownerTask()
     {
         return $this->belongsTo(OnwerTask::class, 'task_id');
     }

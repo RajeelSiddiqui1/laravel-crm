@@ -7,23 +7,14 @@
     <style>
         :root {
             --body-bg: #121217;
-            /* Darker, modern background */
             --primary: #4f46e5;
-            /* Vibrant indigo for primary actions */
             --success: #22c55e;
-            /* Green for success */
             --warning: #f59e0b;
-            /* Amber for warnings */
             --danger: #ef4444;
-            /* Red for destructive actions */
             --text: #d1d5db;
-            /* Light gray for text readability */
             --border: #2d3748;
-            /* Subtle border color */
             --table-bg: rgba(31, 41, 55, 0.6);
-            /* Semi-transparent table background */
             --hover-bg: rgba(75, 85, 99, 0.2);
-            /* Subtle hover effect */
         }
 
         body {
@@ -36,7 +27,6 @@
 
         .container {
             max-width: 1400px;
-            /* Wider container for modern dashboards */
         }
 
         .table {
@@ -46,7 +36,6 @@
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(8px);
-            /* Glassmorphism effect */
         }
 
         .table thead {
@@ -228,6 +217,8 @@
                             <th>Email</th>
                             <th>Year</th>
                             <th>Business</th>
+                            <th>Status</th>
+                            <th>Team Status</th>
                             <th>View</th>
                             <th>Group Chat</th>
                             <th>Actions</th>
@@ -242,26 +233,67 @@
                                 <td>{{ $account->year ?? 'N/A' }}</td>
                                 <td>{{ $account->bussiness_name ?? 'N/A' }}</td>
                                 <td>
+                                    <span
+                                        class="badge badge-{{ $account->manager_status == 'rejected' ? 'danger' : ($account->manager_status == 'in_progress' ? 'warning' : ($account->manager_status == 'completed' ? 'success' : ($account->manager_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $account->manager_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $account->team_status == 'rejected' ? 'danger' : ($account->team_status == 'in_progress' ? 'warning' : ($account->team_status == 'completed' ? 'success' : ($account->team_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $account->team_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
                                     <a href="{{ route('project_manager.my_task_detail', $account->id) }}"
                                         class="btn btn-sm btn-success">View</a>
                                 </td>
-                                <td> <a href="{{ route('chat.group', $account->id) }}" class="btn btn-primary btn-sm">Group
-                                        Chat</a>
                                 <td>
+                                    <a href="{{ route('chat.group', $account->id) }}" class="btn btn-primary btn-sm">Group
+                                        Chat</a>
+                                </td>
+                                <td>
+                                    <form
+                                        action="{{ route('project_manager.update_status', ['id' => $account->id, 'type' => 't1']) }}"
+                                        method="POST" style="display: inline-block;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="manager_status" class="form-select form-select-sm"
+                                            onchange="this.form.submit()">
+                                            <option value="" disabled
+                                                {{ is_null($account->manager_status) ? 'selected' : '' }}>Select Status
+                                            </option>
+                                            <option value="rejected"
+                                                {{ $account->manager_status == 'rejected' ? 'selected' : '' }}>Rejected
+                                            </option>
+                                            <option value="in_progress"
+                                                {{ $account->manager_status == 'in_progress' ? 'selected' : '' }}>In
+                                                Progress</option>
+                                            <option value="completed"
+                                                {{ $account->manager_status == 'completed' ? 'selected' : '' }}>Completed
+                                            </option>
+                                            <option value="not_interested"
+                                                {{ $account->manager_status == 'not_interested' ? 'selected' : '' }}>Not
+                                                Interested</option>
+                                            <option value="in_completed"
+                                                {{ $account->manager_status == 'in_completed' ? 'selected' : '' }}>In
+                                                Completed</option>
+                                        </select>
+                                    </form>
                                     <a href="{{ route('project_manager.mytask_edit', $account->id) }}"
-                                        class="btn btn-sm btn-warning">Edit</a>
+                                        class="btn btn-sm btn-warning mt-1">Edit</a>
                                     <form action="{{ route('project_manager.mytask_destroy', $account->id) }}"
                                         method="POST" style="display: inline-block;"
                                         onsubmit="return confirm('Are you sure you want to delete this task?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-danger mt-1">Delete</button>
                                     </form>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">No T1 Tasks Found</td>
+                                <td colspan="9" class="text-center text-muted">No T1 Tasks Found</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -282,6 +314,8 @@
                             <th>Due Date</th>
                             <th>Business</th>
                             <th>Priority</th>
+                            <th>Status</th>
+                            <th>Team Status</th>
                             <th>Attachments</th>
                             <th>View</th>
                             <th>Group Chat</th>
@@ -309,6 +343,18 @@
                                     </span>
                                 </td>
                                 <td>
+                                    <span
+                                        class="badge badge-{{ $account->manager_status == 'rejected' ? 'danger' : ($account->manager_status == 'in_progress' ? 'warning' : ($account->manager_status == 'completed' ? 'success' : ($account->manager_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $account->manager_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $account->team_status == 'rejected' ? 'danger' : ($account->team_status == 'in_progress' ? 'warning' : ($account->team_status == 'completed' ? 'success' : ($account->team_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $account->team_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
                                     @if ($account->attachments)
                                         @php
                                             $fileUrl = Str::startsWith($account->attachments, ['http://', 'https://'])
@@ -364,23 +410,52 @@
                                     <a href="{{ route('project_manager.my_task_detail', $account->id) }}"
                                         class="btn btn-sm btn-success">View</a>
                                 </td>
-                                <td> <a href="{{ route('chat.group', $account->id) }}" class="btn btn-primary btn-sm">Group
-                                        Chat</a>
                                 <td>
+                                    <a href="{{ route('chat.group', $account->id) }}" class="btn btn-primary btn-sm">Group
+                                        Chat</a>
+                                </td>
+                                <td>
+                                    <form
+                                        action="{{ route('project_manager.update_status', ['id' => $account->id, 'type' => 't2']) }}"
+                                        method="POST" style="display: inline-block;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="manager_status" class="form-select form-select-sm"
+                                            onchange="this.form.submit()">
+                                            <option value="" disabled
+                                                {{ is_null($account->manager_status) ? 'selected' : '' }}>Select Status
+                                            </option>
+                                            <option value="rejected"
+                                                {{ $account->manager_status == 'rejected' ? 'selected' : '' }}>Rejected
+                                            </option>
+                                            <option value="in_progress"
+                                                {{ $account->manager_status == 'in_progress' ? 'selected' : '' }}>In
+                                                Progress</option>
+                                            <option value="completed"
+                                                {{ $account->manager_status == 'completed' ? 'selected' : '' }}>Completed
+                                            </option>
+                                            <option value="not_interested"
+                                                {{ $account->manager_status == 'not_interested' ? 'selected' : '' }}>Not
+                                                Interested</option>
+                                            <option value="in_completed"
+                                                {{ $account->manager_status == 'in_completed' ? 'selected' : '' }}>In
+                                                Completed</option>
+                                        </select>
+                                    </form>
                                     <a href="{{ route('project_manager.mytask_edit', $account->id) }}"
-                                        class="btn btn-sm btn-warning">Edit</a>
+                                        class="btn btn-sm btn-warning mt-1">Edit</a>
                                     <form action="{{ route('project_manager.mytask_destroy', $account->id) }}"
                                         method="POST" style="display: inline-block;"
                                         onsubmit="return confirm('Are you sure you want to delete this task?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-danger mt-1">Delete</button>
                                     </form>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center text-muted">No T2 Tasks Found</td>
+                                <td colspan="11" class="text-center text-muted">No T2 Tasks Found</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -401,9 +476,11 @@
                             <th>Due Date</th>
                             <th>Business</th>
                             <th>Priority</th>
+                            <th>Status</th>
+                            <th>Team Status</th>
                             <th>Attachments</th>
                             <th>View</th>
-                            <th>Gropu Chat</th>
+                            <th>Group Chat</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -428,6 +505,18 @@
                                     </span>
                                 </td>
                                 <td>
+                                    <span
+                                        class="badge badge-{{ $account->manager_status == 'rejected' ? 'danger' : ($account->manager_status == 'in_progress' ? 'warning' : ($account->manager_status == 'completed' ? 'success' : ($account->manager_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $account->manager_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $account->team_status == 'rejected' ? 'danger' : ($account->team_status == 'in_progress' ? 'warning' : ($account->team_status == 'completed' ? 'success' : ($account->team_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $account->team_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
                                     @if ($account->attachments)
                                         @php
                                             $fileUrl = Str::startsWith($account->attachments, ['http://', 'https://'])
@@ -437,114 +526,6 @@
                                                 pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION),
                                             );
                                             $fileName = basename($account->attachments);
-                                        @endphp
-                                        <div class="attachment-item text-center">
-                                            @if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
-                                                <a href="{{ $fileUrl }}" target="_blank">
-                                                    <img src="{{ $fileUrl }}" alt="Image">
-                                                </a>
-                                            @elseif (in_array($ext, ['mp4', 'mov', 'avi', 'webm']))
-                                                <video src="{{ $fileUrl }}" controls></video>
-                                            @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
-                                                <audio controls>
-                                                    <source src="{{ $fileUrl }}" type="audio/{{ $ext }}">
-                                                </audio>
-                                            @elseif (in_array($ext, ['pdf']))
-                                                <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/pdf.png" alt="PDF"
-                                                        class="icon">
-                                                    <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
-                                                </a>
-                                            @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
-                                                <a href="{{ $fileUrl }}" target="_blank" title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
-                                                        alt="Excel" class="icon">
-                                                    <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
-                                                </a>
-                                            @elseif (in_array($ext, ['doc', 'docx']))
-                                                <a href="{{ $fileUrl }}" target="_blank"
-                                                    title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/color/48/000000/ms-word.png"
-                                                        alt="Word" class="icon">
-                                                    <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
-                                                </a>
-                                            @else
-                                                <a href="{{ $fileUrl }}" target="_blank"
-                                                    title="{{ $fileName }}">
-                                                    <img src="https://img.icons8.com/fluency/48/000000/file.png"
-                                                        alt="File" class="icon">
-                                                    <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
-                                                </a>
-                                            @endif
-                                        </div>
-                                    @else
-                                        <span class="text-muted">No Attachments</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <a href="{{ route('project_manager.my_task_detail', $account->id) }}"
-                                        class="btn btn-sm btn-success">View</a>
-                                </td>
-                                <td>  <a href="{{ route('chat.group', $account->id) }}" class="btn btn-primary btn-sm">Group Chat</a>
-                                <td>
-                                    <a href="{{ route('project_manager.mytask_edit', $account->id) }}"
-                                        class="btn btn-sm btn-warning">Edit</a>
-                                    <form action="{{ route('project_manager.mytask_destroy', $account->id) }}"
-                                        method="POST" style="display: inline-block;"
-                                        onsubmit="return confirm('Are you sure you want to delete this task?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="text-center text-muted">No HST Tasks Found</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        @endif
-
-        <!-- Operation Tasks -->
-        @if ($manageroperation->isNotEmpty())
-            <h3 class="account-type-header">Operation Tasks</h3>
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Description</th>
-                            <th>Priority</th>
-                            <th>Attachments</th>
-                            <th>View</th>
-                            <th>Grop Chat</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($manageroperation as $operation)
-                            <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $operation->description ?? 'N/A' }}</td>
-                                <td>
-                                    <span
-                                        class="badge badge-{{ $operation->priority == 'high' ? 'danger' : ($operation->priority == 'medium' ? 'warning' : 'success') }}">
-                                        {{ ucfirst($operation->priority ?? 'N/A') }}
-                                    </span>
-                                </td>
-                                <td>
-                                    @if ($operation->attachments)
-                                        @php
-                                            $fileUrl = Str::startsWith($operation->attachments, ['http://', 'https://'])
-                                                ? $operation->attachments
-                                                : asset('storage/' . $operation->attachments);
-                                            $ext = strtolower(
-                                                pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION),
-                                            );
-                                            $fileName = basename($operation->attachments);
                                         @endphp
                                         <div class="attachment-item text-center">
                                             @if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
@@ -592,25 +573,210 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('project_manager.my_task_detail', $operation->id) }}"
+                                    <a href="{{ route('project_manager.my_task_detail', $account->id) }}"
                                         class="btn btn-sm btn-success">View</a>
                                 </td>
-                                <td>  <a href="{{ route('chat.group', $operation->id) }}" class="btn btn-primary btn-sm">Group Chat</a>
                                 <td>
-                                    <a href="{{ route('project_manager.mytask_edit', $operation->id) }}"
-                                        class="btn btn-sm btn-warning">Edit</a>
-                                    <form action="{{ route('project_manager.mytask_destroy', $operation->id) }}"
+                                    <a href="{{ route('chat.group', $account->id) }}"
+                                        class="btn btn-primary btn-sm">Group Chat</a>
+                                </td>
+                                <td>
+                                    <form
+                                        action="{{ route('project_manager.update_status', ['id' => $account->id, 'type' => 'hst']) }}"
+                                        method="POST" style="display: inline-block;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="manager_status" class="form-select form-select-sm"
+                                            onchange="this.form.submit()">
+                                            <option value="" disabled
+                                                {{ is_null($account->manager_status) ? 'selected' : '' }}>Select Status
+                                            </option>
+                                            <option value="rejected"
+                                                {{ $account->manager_status == 'rejected' ? 'selected' : '' }}>Rejected
+                                            </option>
+                                            <option value="in_progress"
+                                                {{ $account->manager_status == 'in_progress' ? 'selected' : '' }}>In
+                                                Progress</option>
+                                            <option value="completed"
+                                                {{ $account->manager_status == 'completed' ? 'selected' : '' }}>Completed
+                                            </option>
+                                            <option value="not_interested"
+                                                {{ $account->manager_status == 'not_interested' ? 'selected' : '' }}>Not
+                                                Interested</option>
+                                            <option value="in_completed"
+                                                {{ $account->manager_status == 'in_completed' ? 'selected' : '' }}>In
+                                                Completed</option>
+                                        </select>
+                                    </form>
+                                    <a href="{{ route('project_manager.mytask_edit', $account->id) }}"
+                                        class="btn btn-sm btn-warning mt-1">Edit</a>
+                                    <form action="{{ route('project_manager.mytask_destroy', $account->id) }}"
                                         method="POST" style="display: inline-block;"
                                         onsubmit="return confirm('Are you sure you want to delete this task?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-danger mt-1">Delete</button>
                                     </form>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center text-muted">No Operation Tasks Found</td>
+                                <td colspan="11" class="text-center text-muted">No HST Tasks Found</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
+        <!-- Operation Tasks -->
+        @if ($manageroperation->isNotEmpty())
+            <h3 class="account-type-header">Operation Tasks</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Description</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Team Status</th>
+                            <th>Attachments</th>
+                            <th>View</th>
+                            <th>Group Chat</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($manageroperation as $operation)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $operation->description ?? 'N/A' }}</td>
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $operation->priority == 'high' ? 'danger' : ($operation->priority == 'medium' ? 'warning' : 'success') }}">
+                                        {{ ucfirst($operation->priority ?? 'N/A') }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $operation->manager_status == 'rejected' ? 'danger' : ($operation->manager_status == 'in_progress' ? 'warning' : ($operation->manager_status == 'completed' ? 'success' : ($operation->manager_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $operation->manager_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge badge-{{ $operation->team_status == 'rejected' ? 'danger' : ($operation->team_status == 'in_progress' ? 'warning' : ($operation->team_status == 'completed' ? 'success' : ($operation->team_status == 'not_interested' ? 'warning' : 'danger'))) }}">
+                                        {{ ucfirst(str_replace('_', ' ', $operation->team_status ?? 'N/A')) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if ($operation->attachments)
+                                        @php
+                                            $fileUrl = Str::startsWith($operation->attachments, ['http://', 'https://'])
+                                                ? $operation->attachments
+                                                : asset('storage/' . $operation->attachments);
+                                            $ext = strtolower(
+                                                pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION),
+                                            );
+                                            $fileName = basename($operation->attachments);
+                                        @endphp
+                                        <div class="attachment-item text-center">
+                                            @if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']))
+                                                <a href="{{ $fileUrl }}" target="_blank">
+                                                    <img src="{{ $fileUrl }}" alt="Image">
+                                                </a>
+                                            @elseif (in_array($ext, ['mp4', 'mov', 'avi', 'webm']))
+                                                <video src="{{ $fileUrl }}" controls></video>
+                                            @elseif (in_array($ext, ['mp3', 'wav', 'ogg']))
+                                                <audio controls>
+                                                    <source src="{{ $fileUrl }}"
+                                                        type="audio/{{ $ext }}">
+                                                </audio>
+                                            @elseif (in_array($ext, ['pdf']))
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/color/48/000000/pdf.png"
+                                                        alt="PDF" class="icon">
+                                                    <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                </a>
+                                            @elseif (in_array($ext, ['xls', 'xlsx', 'csv']))
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/color/48/000000/ms-excel.png"
+                                                        alt="Excel" class="icon">
+                                                    <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                </a>
+                                            @elseif (in_array($ext, ['doc', 'docx']))
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/color/48/000000/ms-word.png"
+                                                        alt="Word" class="icon">
+                                                    <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                </a>
+                                            @else
+                                                <a href="{{ $fileUrl }}" target="_blank"
+                                                    title="{{ $fileName }}">
+                                                    <img src="https://img.icons8.com/fluency/48/000000/file.png"
+                                                        alt="File" class="icon">
+                                                    <div>{{ \Illuminate\Support\Str::limit($fileName, 12) }}</div>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="text-muted">No Attachments</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <a href="{{ route('project_manager.my_task_detail', $operation->id) }}"
+                                        class="btn btn-sm btn-success">View</a>
+                                </td>
+                                <td>
+                                    <a href="{{ route('chat.group', $operation->id) }}"
+                                        class="btn btn-primary btn-sm">Group Chat</a>
+                                </td>
+                                <td>
+                                    <form
+                                        action="{{ route('project_manager.update_status', ['id' => $operation->id, 'type' => 'operation']) }}"
+                                        method="POST" style="display: inline-block;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <select name="manager_status" class="form-select form-select-sm"
+                                            onchange="this.form.submit()">
+                                            <option value="" disabled
+                                                {{ is_null($operation->manager_status) ? 'selected' : '' }}>Select Status
+                                            </option>
+                                            <option value="rejected"
+                                                {{ $operation->manager_status == 'rejected' ? 'selected' : '' }}>Rejected
+                                            </option>
+                                            <option value="in_progress"
+                                                {{ $operation->manager_status == 'in_progress' ? 'selected' : '' }}>In
+                                                Progress</option>
+                                            <option value="completed"
+                                                {{ $operation->manager_status == 'completed' ? 'selected' : '' }}>
+                                                Completed</option>
+                                            <option value="not_interested"
+                                                {{ $operation->manager_status == 'not_interested' ? 'selected' : '' }}>Not
+                                                Interested</option>
+                                            <option value="in_completed"
+                                                {{ $operation->manager_status == 'in_completed' ? 'selected' : '' }}>In
+                                                Completed</option>
+                                        </select>
+                                    </form>
+                                    <a href="{{ route('project_manager.mytask_edit', $operation->id) }}"
+                                        class="btn btn-sm btn-warning mt-1">Edit</a>
+                                    <form action="{{ route('project_manager.mytask_destroy', $operation->id) }}"
+                                        method="POST" style="display: inline-block;"
+                                        onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger mt-1">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">No Operation Tasks Found</td>
                             </tr>
                         @endforelse
                     </tbody>
