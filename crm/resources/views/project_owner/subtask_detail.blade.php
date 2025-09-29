@@ -62,7 +62,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="card-title text-light mb-0">{{ $pos->name ?? 'N/A' }}</h5>
                         <span class="badge {{ $pos->status === 'active' ? 'bg-success' : ($pos->status === 'inactive' ? 'bg-danger' : 'bg-warning') }}">{{ $pos->status }}</span>
-                       
+                      
                     </div>
                     <div class="row">
                         <div class="col-md-6">
@@ -215,7 +215,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="card-title text-light mb-0">{{ $client->email ?? 'N/A' }}</h5>
                         <span class="badge {{ $client->status === 'active' ? 'bg-success' : ($client->status === 'inactive' ? 'bg-danger' : 'bg-warning') }}">{{ $client->status }}</span>
-                   
+                    
                     </div>
                     <div class="row">
                         <div class="col-md-6">

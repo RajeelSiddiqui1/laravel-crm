@@ -177,7 +177,7 @@
                 <div class="card shadow rounded">
                     <div class="card-body">
                         <h2 class="card-title text-center">Create Task</h2>
-                        <form method="POST" action="{{ route('project_manager.tasks.post') }}" id="taskForm">
+                        <form method="POST" action="{{ route('project_owner.tasks.post') }}" id="taskForm">
                             @csrf
 
                             <fieldset>

@@ -5,10 +5,15 @@ namespace App\Http\Controllers;
 use App\Mail\EditTask;
 use App\Mail\TaskAssignedMail;
 use App\Mail\TaskDeletedMail;
+use App\Models\AccountHST;
+use App\Models\AccountT1;
+use App\Models\AccountT2;
 use App\Models\CellCenterAccount;
 use App\Models\CellCenterPos;
+use App\Models\ClientDetail;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\ManagerOperation;
 use App\Models\Notification;
 use App\Models\OnwerTask;
 use App\Models\ProjectManager;
@@ -228,9 +233,13 @@ class ProjectOnwer extends Controller
 
     function task_view()
     {
-        $tasks = OnwerTask::with(['department', 'projectManager'])->get();
+        $tasks = OnwerTask::with(['department', 'projectManager'])
+            ->whereJsonLength('managers', '>', 0) // array me koi bhi id exist karti ho
+            ->get();
+
         return view('project_owner.tasks', ['tasks' => $tasks]);
     }
+
 
     function task_detail($id)
     {
@@ -402,7 +411,7 @@ class ProjectOnwer extends Controller
     public function manager_task($id)
     {
         $tasks = OnwerTask::find($id);
-        return view('project_owner.project_manager_tasks', compact('tasks'));
+        return view('project_owner.project_manager_tasks2', compact('tasks'));
     }
 
     public function taskFullDetails($id)
@@ -411,7 +420,7 @@ class ProjectOnwer extends Controller
         return view('project_owner.full_detail', compact('task'));
     }
 
-    function subtask()
+    public function subtask()
     {
         $subtasks = Subtask::with('employee', 'teamLead')->get();
         return view('project_owner.subtask', compact('subtasks'));
@@ -419,26 +428,28 @@ class ProjectOnwer extends Controller
 
     public function subtask_detail($id)
     {
-        $subtask = Subtask::findOrFail($id);
-
-        // Get POS records
+        $subtask = Subtask::with('employee', 'teamLead')->findOrFail($id);
         $posRecords = $subtask->call_center_pos_ids
-            ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->get()
+            ? CellCenterPos::whereIn('id', $subtask->call_center_pos_ids)->with('employee')->get()
             : collect();
-
-        // Get Account records
         $accountRecords = $subtask->cell_center_account_ids
-            ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->get()
+            ? CellCenterAccount::whereIn('id', $subtask->cell_center_account_ids)->with('employee')->get()
             : collect();
-
         $clientDetailRecords = $subtask->client_detail_ids
-            ? CellCenterAccount::whereIn('id', $subtask->client_detail_ids)->get()
+            ? CellCenterAccount::whereIn('id', $subtask->client_detail_ids)->with('employee')->get()
             : collect();
-
         $sharedTasks = SharedTask::where('subtask_id', $subtask->id)->get();
 
-        return view('project_owner.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'clientDetailRecords','sharedTasks'));
+        return view('project_owner.subtask_detail', compact('subtask', 'posRecords', 'accountRecords', 'clientDetailRecords', 'sharedTasks'));
     }
+
+    public function signed()
+    {
+        $shared_task = SharedTask::all();
+
+        return view('project_owner.signed', compact('shared_task'));
+    }
+
 
 
 
@@ -514,6 +525,49 @@ class ProjectOnwer extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('project_owner.project_manager_tasks', compact('tasks'));
+        return view('project_owner.project_manager_tasks2', compact('tasks'));
     }
-}
+
+
+  public function all_manager_task()
+    {
+        $accountst1 = AccountT1::with(['department', 'teamLead'])->get();
+        $accountst2 = AccountT2::with(['department', 'teamLead'])->get();
+        $accountsthst = AccountHST::with(['department', 'teamLead'])->get();
+        $manageroperation = ManagerOperation::with(['department', 'teamLead'])->get();
+
+        return view('project_owner.project_manager_tasks', compact(
+            'accountst1',
+            'accountst2',
+            'accountsthst',
+            'manageroperation'
+        ));
+    }
+
+    public function all_manager_task_detail($type, $id)
+    {
+        $account = null;
+        $managerType = strtoupper($type);
+
+        // Fetch the main account or operation
+        if ($type === 't1') {
+            $account = AccountT1::with(['department', 'teamLead'])->find($id);
+        } elseif ($type === 't2') {
+            $account = AccountT2::with(['department', 'teamLead'])->find($id);
+        } elseif ($type === 'hst') {
+            $account = AccountHST::with(['department', 'teamLead'])->find($id);
+        } elseif ($type === 'operation') {
+            $account = ManagerOperation::with(['department', 'teamLead'])->find($id);
+        }
+
+        // If account is not found, redirect with error
+        if (!$account) {
+            return redirect()->route('project_owner.manager_tasks')
+                ->with('error_swal', 'Invalid account type or task not found.');
+        }
+
+        // Fetch all ManagerOperation tasks without any filter
+        $managerOperations = ManagerOperation::orderBy('created_at', 'desc')->get();
+
+        return view('project_owner.manager_task_detail', compact('account', 'managerType', 'managerOperations'));
+    }}

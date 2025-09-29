@@ -24,4 +24,14 @@ class AccountT1 extends Model
     {
         return $this->belongsTo(OnwerTask::class, 'task_id');
     }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+     public function teamLead()
+    {
+        return $this->belongsTo(Employee::class, 'team_lead_id');
+    }
 }

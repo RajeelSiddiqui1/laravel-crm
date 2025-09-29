@@ -105,12 +105,14 @@ Route::controller(ProjectOnwer::class)->group(function () {
         Route::get('/project-owner/task/full-details/{id}', 'taskFullDetails')->name('project_owner.task.details');
         Route::get('/project-owner/subtasks', 'subtask')->name('project_owner.subtask');
         Route::get('/project-owner/subtask/detail/{id}', 'subtask_detail')->name('project_owner.subtask.detail');
-        Route::get('/project-owner/manager-tasks', 'allOwnerTasks')->name('project_owner.manager_tasks');
+        Route::get('/project-owner/manager-tasks', 'all_manager_task')->name('project_owner.manager_tasks');
+        Route::get('/project-owner/manager-tasks/detail//{type}/{id}', 'all_manager_task_detail')->name('project_owner.manager_tasks.detail');
         Route::get('/project-managers/{departmentId}', 'getProjectManagers');
         Route::get('/project-owner/visitors', 'visitors')->name('project_owner.visitor'); // Fixed route path
         Route::get('/project-owner/create/visitor/view', 'create_visitor_view')->name('project_owner.create.visitor.view');
         Route::post('/project-owner/create/visitor', 'create_visitor')->name('project_owner.create.visitor');
         Route::get('/project-owner/manager-task/{id}', 'manager_task')->name('project_owner.tasks.view');
+        Route::get('/project-owner/signed-task', 'signed')->name('project_owner.signed.view');
     });
 });
 
