@@ -149,20 +149,15 @@ class TeamLeadController extends Controller
 
     function home()
     {
-        $teamLead = Auth::guard('team_lead')->user();
-        $departmentId = $teamLead->department_id;
-        $employees = Employee::where('department_id', $departmentId)->get();
-        $tasks = OnwerTask::with(['teamLead', 'department'])
-            ->where('team_lead_id', $teamLead->id)
-            ->get();
-        return view('team_lead.home', compact('tasks', 'employees'));
+          $manager = Auth::guard('team_lead')->user();
+        return view('team_lead.home', compact('manager'));
     }
 
-    function profile_view()
-    {
-        $manager = Auth::guard('team_lead')->user();
-        return view('team_lead.profile', compact('manager'));
-    }
+    // function profile_view()
+    // {
+    //     $manager = Auth::guard('team_lead')->user();
+    //     return view('team_lead.profile', compact('manager'));
+    // }
 
     function updateProfile(Request $request)
     {

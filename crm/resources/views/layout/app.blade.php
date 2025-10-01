@@ -134,7 +134,7 @@
                                 <span>Manager Shared Task List</span>
                             </a>
                         </li>
-                    @else
+                    @endif
                         <li>
                             <a href="{{ route('project_manager.tasks') }}">
                                 <i class="zmdi zmdi-assignment mr-2"></i> <span>Owner Tasks</span>
@@ -164,90 +164,90 @@
                                 <i class="zmdi zmdi-accounts mr-2"></i> <span>Employees</span>
                             </a>
                         </li>
-
-                        <li>
-                            <a href="{{ route('project_manager.show_sharedtask_task.view') }}">
-                                <i class="zmdi zmdi-accounts mr-2"></i> <span>Shared Task</span>
-                            </a>
-                        </li>
-
-                        <li>
-                            <a href="{{ route('project_manager.operation.task.view') }}">
-                                <i class="zmdi zmdi-accounts mr-2"></i> <span>Signed Task</span>
-                            </a>
-                        </li>
-                    @endif
-                    {{-- 🔔 Notification Icon --}}
-                    <li class="nav-item">
-                        <a class="nav-link position-relative d-flex align-items-center"
-                            href="{{ route('notifications.index') }}">
-                            <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
-                            <span id="notif-badge"
-                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm"
-                                style="display:none;">
-                                0
-                            </span>
-                        </a>
-                    </li>
-
-                    {{-- 🔊 Audio --}}
-                    <audio id="notif-sound" preload="auto">
-                        <source src="{{ asset('sounds/notification.mp3') }}" type="audio/mpeg">
-                    </audio>
-
-                    {{-- 🌐 Pusher via CDN (no npm) --}}
-                    <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
-                    <script>
-                        /* 1. Identify current user/guard */
-                        @php
-                            $user = null;
-                            $guard = null;
-                            foreach (['project_owner', 'project_manager', 'team_lead', 'employee'] as $g) {
-                                if (Auth::guard($g)->check()) {
-                                    $user = Auth::guard($g)->user();
-                                    $guard = $g;
-                                    break;
-                                }
-                            }
-                        @endphp
-
-                        /* 2. Initial unread count */
-                        let unreadCount = 0;
-
-                        function fetchCount() {
-                            fetch('{{ route('notifications.unread-count') }}')
-                                .then(r => r.json())
-                                .then(d => {
-                                    unreadCount = d.count;
-                                    updateBadge();
-                                });
-                        }
-                        fetchCount();
-
-                        /* 3. Badge DOM update */
-                        function updateBadge() {
-                            const badge = document.getElementById('notif-badge');
-                            badge.style.display = unreadCount > 0 ? 'block' : 'none';
-                            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                        }
-
-                        /* 4. Connect to Pusher and listen */
-                        @if ($user)
-                            (function() {
-                                const pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
-                                    cluster: '{{ env('PUSHER_APP_CLUSTER') }}'
-                                });
-
-                                const channel = pusher.subscribe('notifications.{{ $user->id }}.{{ $guard }}');
-
-                                channel.bind('NewNotification', () => {
-                                    unreadCount += 1;
-                                    updateBadge();
-                                    document.getElementById('notif-sound').play().catch(() => {});
-                                });
-                            })();
+                        @if (in_array('Operation', $managerDepartments))
+                            <li>
+                                <a href="{{ route('project_manager.show_sharedtask_task.view') }}">
+                                    <i class="zmdi zmdi-accounts mr-2"></i> <span>Shared Task</span>
+                                </a>
+                            </li>
                         @endif
-                    </script>
+                            <li>
+                                <a href="{{ route('project_manager.operation.task.view') }}">
+                                    <i class="zmdi zmdi-accounts mr-2"></i> <span>Signed Task</span>
+                                </a>
+                            </li>
+                      
+                        {{-- 🔔 Notification Icon --}}
+                        <li class="nav-item">
+                            <a class="nav-link position-relative d-flex align-items-center"
+                                href="{{ route('notifications.index') }}">
+                                <i class="zmdi zmdi-notifications zmdi-hc-lg"></i>
+                                <span id="notif-badge"
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm"
+                                    style="display:none;">
+                                    0
+                                </span>
+                            </a>
+                        </li>
+
+                        {{-- 🔊 Audio --}}
+                        <audio id="notif-sound" preload="auto">
+                            <source src="{{ asset('sounds/notification.mp3') }}" type="audio/mpeg">
+                        </audio>
+
+                        {{-- 🌐 Pusher via CDN (no npm) --}}
+                        <script src="https://js.pusher.com/7.2/pusher.min.js"></script>
+                        <script>
+                            /* 1. Identify current user/guard */
+                            @php
+                                $user = null;
+                                $guard = null;
+                                foreach (['project_owner', 'project_manager', 'team_lead', 'employee'] as $g) {
+                                    if (Auth::guard($g)->check()) {
+                                        $user = Auth::guard($g)->user();
+                                        $guard = $g;
+                                        break;
+                                    }
+                                }
+                            @endphp
+
+                            /* 2. Initial unread count */
+                            let unreadCount = 0;
+
+                            function fetchCount() {
+                                fetch('{{ route('notifications.unread-count') }}')
+                                    .then(r => r.json())
+                                    .then(d => {
+                                        unreadCount = d.count;
+                                        updateBadge();
+                                    });
+                            }
+                            fetchCount();
+
+                            /* 3. Badge DOM update */
+                            function updateBadge() {
+                                const badge = document.getElementById('notif-badge');
+                                badge.style.display = unreadCount > 0 ? 'block' : 'none';
+                                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                            }
+
+                            /* 4. Connect to Pusher and listen */
+                            @if ($user)
+                                (function() {
+                                    const pusher = new Pusher('{{ env('PUSHER_APP_KEY') }}', {
+                                        cluster: '{{ env('PUSHER_APP_CLUSTER') }}'
+                                    });
+
+                                    const channel = pusher.subscribe('notifications.{{ $user->id }}.{{ $guard }}');
+
+                                    channel.bind('NewNotification', () => {
+                                        unreadCount += 1;
+                                        updateBadge();
+                                        document.getElementById('notif-sound').play().catch(() => {});
+                                    });
+                                })();
+                            @endif
+                        </script>
                 </ul>
             </div>
 
@@ -463,6 +463,13 @@
         @endif
 
         @if (Auth::guard('team_lead')->check())
+            @php
+                $teamLead = Auth::guard('team_lead')->user();
+                $teamLeadDeptId = $teamLead->department_id;
+
+                $teamLeadDepartment = \App\Models\Department::where('id', $teamLeadDeptId)->pluck('name')->first();
+            @endphp
+
             <div id="sidebar-wrapper" data-simplebar="" data-simplebar-auto-hide="true">
                 <div class="brand-logo">
                     <a href="#">

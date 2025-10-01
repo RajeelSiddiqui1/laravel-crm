@@ -134,14 +134,15 @@ class Employee extends Controller
 
     function home()
     {
-        return view('employee.home');
+          $employee = Auth::guard('employee')->user();
+        return view('employee.home', compact('employee'));
     }
 
-    function profile_view()
-    {
-        $employee = Auth::guard('employee')->user();
-        return view('employee.profile', compact('employee'));
-    }
+    // function profile_view()
+    // {
+    //     $employee = Auth::guard('employee')->user();
+    //     return view('employee.profile', compact('employee'));
+    // }
 
     public function updateProfile(Request $request)
     {

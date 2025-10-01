@@ -71,12 +71,14 @@ class ProjectOnwer extends Controller
     }
 
 
-    function profile_view()
-    {
-        $owner = Auth::guard('project_owner')->user();
-        return view('project_owner.profile', compact('owner'));
-    }
 
+    function home()
+    {
+
+        $owner = Auth::guard('project_owner')->user();
+        return view('project_owner.home', compact('owner'));
+    }
+    
     function profile_update(Request $request)
     {
         /** @var  \App\Models\ProjectOwner owner **/
@@ -118,11 +120,6 @@ class ProjectOnwer extends Controller
         }
     }
 
-    function home()
-    {
-
-        return view('project_owner.home');
-    }
 
     function project_manager_view()
     {
@@ -529,7 +526,7 @@ class ProjectOnwer extends Controller
     }
 
 
-  public function all_manager_task()
+    public function all_manager_task()
     {
         $accountst1 = AccountT1::with(['department', 'teamLead'])->get();
         $accountst2 = AccountT2::with(['department', 'teamLead'])->get();
@@ -570,4 +567,5 @@ class ProjectOnwer extends Controller
         $managerOperations = ManagerOperation::orderBy('created_at', 'desc')->get();
 
         return view('project_owner.manager_task_detail', compact('account', 'managerType', 'managerOperations'));
-    }}
+    }
+}

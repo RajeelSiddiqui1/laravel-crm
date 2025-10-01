@@ -196,14 +196,10 @@
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <h2 class="text-center mb-4">My Tasks Dashboard</h2>
+                <h2 class="text-center mb-4">Managers Dashboard</h2>
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-12 d-flex justify-content-end">
-                <a href="{{ route('project_manager.owntask_create') }}" class="btn btn-primary mb-4">Create Task</a>
-            </div>
-        </div>
+      
 
         <!-- T1 Tasks -->
     <!-- T1 Tasks -->

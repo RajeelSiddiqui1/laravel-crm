@@ -28,6 +28,6 @@ class ManagerOperation extends Model
 
     public function teamLead()
     {
-        return $this->belongsTo(Employee::class, 'team_lead_id');
+        return $this->belongsTo(TeamLead::class, 'team_lead_id');
     }
 }
