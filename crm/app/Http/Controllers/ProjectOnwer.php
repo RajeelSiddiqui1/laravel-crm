@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\EditTask;
 use App\Mail\TaskAssignedMail;
 use App\Mail\TaskDeletedMail;
+use App\Mail\TaskUpdatedMail;
 use App\Models\AccountHST;
 use App\Models\AccountT1;
 use App\Models\AccountT2;
@@ -78,7 +79,7 @@ class ProjectOnwer extends Controller
         $owner = Auth::guard('project_owner')->user();
         return view('project_owner.home', compact('owner'));
     }
-    
+
     function profile_update(Request $request)
     {
         /** @var  \App\Models\ProjectOwner owner **/
@@ -251,18 +252,23 @@ class ProjectOnwer extends Controller
 
 
 
+
     public function tasks_createview()
     {
-
-
         $managers = ProjectManager::all()->map(function ($manager) {
+            $departmentNames = [];
+
+            if (!empty($manager->department_ids)) {
+                $departments = Department::whereIn('id', $manager->department_ids)->pluck('name')->toArray();
+                $departmentNames = $departments;
+            }
+
             return [
                 'id' => $manager->id,
                 'name' => $manager->name ?? 'Manager ' . $manager->id,
+                'departments' => $departmentNames,
             ];
         })->toArray();
-
-
 
         return view('project_owner.tasks_create', compact('managers'));
     }
@@ -281,46 +287,59 @@ class ProjectOnwer extends Controller
         $validated = $request->validate([
             'client_name' => 'required|string|max:255',
             'managers' => 'nullable|array',
-            'managers.*' => 'exists:project_managers,id', // Validate manager IDs exist
-            'audio_file' => 'nullable|string', // Base64 audio data
+            'managers.*' => 'exists:project_managers,id',
+            'audio_file' => 'nullable|string',
         ]);
 
         $task = new OnwerTask();
         $task->client_name = $validated['client_name'];
-        $task->managers = json_encode($validated['managers'] ?? []); // Store manager IDs as JSON array
+        $task->managers = json_encode($validated['managers'] ?? []);
 
         if ($request->filled('audio_file')) {
             try {
-                // Extract base64 data (format: data:audio/webm;base64,...)
                 [, $data] = explode(';', $request->audio_file);
                 [, $base64Data] = explode(',', $data);
                 $binary = base64_decode($base64Data);
 
-                // Create a temporary file for upload
                 $tempPath = tempnam(sys_get_temp_dir(), 'audio_');
                 file_put_contents($tempPath, $binary);
 
-                // Upload to Cloudinary (treat audio as video for best processing)
                 $uploaded = Cloudinary::uploadApi()->upload($tempPath, [
                     'folder' => 'task_audio',
-                    'resource_type' => 'video', // ⚡ use video for audio files
+                    'resource_type' => 'video',
                     'public_id' => 'task_audio/' . uniqid('audio_')
                 ]);
 
                 $task->audio_url = $uploaded['secure_url'];
 
-                // Clean up temp file
                 unlink($tempPath);
             } catch (\Exception $e) {
                 Log::error('Cloudinary audio upload failed: ' . $e->getMessage());
-                return redirect()->back()->with('error', 'Audio upload failed')->withInput();
+                return redirect()->back()->with('error_swal', 'Audio upload failed')->withInput();
             }
         }
 
+        // ✅ First save task to DB before sending emails
         $task->save();
 
-        return redirect()->back()->with('success_swal', 'Task created successfully!');
+        // 📧 Send emails after task is saved
+        try {
+            $managerIds = json_decode($task->managers, true);
+            if (!empty($managerIds)) {
+                $managers = ProjectManager::whereIn('id', $managerIds)->pluck('email')->toArray();
+
+                foreach ($managers as $email) {
+                    Mail::to($email)->send(new TaskAssignedMail($task));
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Task creation email send failed: ' . $e->getMessage());
+            // Continue execution even if email fails
+        }
+
+        return redirect()->route('project_owner.task')->with('success_swal', 'Task created successfully & emails sent!');
     }
+
 
 
     public function edit($id)
@@ -352,31 +371,27 @@ class ProjectOnwer extends Controller
         $task->managers = json_encode($validated['managers'] ?? []);
         $task->status = $task->status; // Preserve existing status
 
+        // 🎧 Handle audio re-upload (optional)
         if ($request->filled('audio_file')) {
             try {
-                // Extract base64 data
                 [, $data] = explode(';', $request->audio_file);
                 [, $base64Data] = explode(',', $data);
                 $binary = base64_decode($base64Data);
 
-                // Create a temporary file for upload
                 $tempPath = tempnam(sys_get_temp_dir(), 'audio_');
                 file_put_contents($tempPath, $binary);
 
-                // Use task ID as the Cloudinary public_id to overwrite same file
                 $publicId = 'task_audio/task_' . $task->id;
 
-                // Upload to Cloudinary (overwrite enabled)
                 $uploaded = Cloudinary::uploadApi()->upload($tempPath, [
                     'folder' => 'task_audio',
                     'resource_type' => 'video',
                     'public_id' => $publicId,
-                    'overwrite' => true,   // ⚡ ensures old file is replaced
+                    'overwrite' => true,
                 ]);
 
                 $task->audio_url = $uploaded['secure_url'];
 
-                // Clean up temp file
                 unlink($tempPath);
             } catch (\Exception $e) {
                 Log::error('Cloudinary audio upload failed: ' . $e->getMessage());
@@ -384,23 +399,59 @@ class ProjectOnwer extends Controller
             }
         }
 
-
         $task->save();
 
-        return redirect()->route('project_owner.task')->with('success_swal', 'Task updated successfully!');
+        // 📧 Send email notification to all managers
+        try {
+            $managerIds = json_decode($task->managers, true);
+            if (!empty($managerIds)) {
+                $managers = ProjectManager::whereIn('id', $managerIds)->pluck('email')->toArray();
+
+                foreach ($managers as $email) {
+                    Mail::to($email)->send(new TaskUpdatedMail($task));
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Task update email send failed: ' . $e->getMessage());
+            // Continue execution even if email fails
+        }
+
+        return redirect()->route('project_owner.task')->with('success_swal', 'Task updated successfully & emails sent!');
     }
 
+
     // Delete a task
+
     public function destroy($id)
     {
         try {
             $task = OnwerTask::findOrFail($id);
+            $deletedBy = 'Admin'; // 🔥 Always show as deleted by Admin
+
+            // Decode managers from JSON
+            $managerIds = json_decode($task->managers ?? '[]', true);
+            $managers = ProjectManager::whereIn('id', $managerIds)->get();
+
+            // Send email to each assigned manager
+            foreach ($managers as $manager) {
+                if (!empty($manager->email)) {
+                    Mail::to($manager->email)->send(new TaskDeletedMail($task, $deletedBy));
+                }
+            }
+
+            // Delete task from DB
             $task->delete();
 
-            return redirect()->route('project_owner.task')->with('success_swal', 'Task deleted successfully.');
+            return redirect()->route('project_owner.tasks')
+                ->with('success_swal', 'Task deleted successfully & email notifications sent!');
         } catch (\Exception $e) {
-            Log::error('Delete Task Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return redirect()->back()->with('error_swal', 'Failed to delete task: ' . $e->getMessage());
+            Log::error('Delete Task Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'task_id' => $id
+            ]);
+
+            return redirect()->back()
+                ->with('error_swal', 'Failed to delete task: ' . $e->getMessage());
         }
     }
 

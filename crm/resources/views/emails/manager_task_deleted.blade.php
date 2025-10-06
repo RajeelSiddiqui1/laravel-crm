@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <title>Task Deleted</title>
 </head>
-<body style="font-family: Arial, sans-serif;">
-    <h2>Hello {{ $task->manager_name ?? 'Manager' }},</h2>
-    <p>This is to inform you that your assigned task "<strong>{{ $task->name }}</strong>" has been <span style="color: red;">deleted</span>.</p>
-
-    <p><strong>Client:</strong> {{ $task->client_name }}</p>
-    <p><strong>Originally Scheduled:</strong> {{ $task->start_date }} to {{ $task->deadline }}</p>
-    
-    <br>
-    <p>If you have any questions, feel free to contact your supervisor.</p>
-    <p>Regards,</p>
-    <p><strong>AAR Accessories Task Management Team</strong></p>
+<body style="font-family: Arial, sans-serif; background-color: #f9fafb; padding: 20px;">
+    <div style="background-color: #fff; border-radius: 8px; padding: 20px;">
+        <h2 style="color: #e3342f;">🚨 Task Deleted</h2>
+        <p>Hello Manager,</p>
+        <p>The following task has been <strong>deleted</strong> by {{ $deletedBy }}:</p>
+        <ul>
+            <li><strong>Client Name:</strong> {{ $task->client_name }}</li>
+            <li><strong>Task ID:</strong> #{{ $task->id }}</li>
+            @if(!empty($task->audio_url))
+                <li><strong>Previous Audio URL:</strong> <a href="{{ $task->audio_url }}">View Audio</a></li>
+            @endif
+        </ul>
+        <p style="margin-top: 10px;">If this was a mistake, please contact the project owner.</p>
+    </div>
 </body>
 </html>

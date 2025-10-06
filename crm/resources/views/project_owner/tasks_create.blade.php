@@ -14,7 +14,8 @@
         position: relative;
     }
 
-    .form-control, select.form-control {
+    .form-control,
+    select.form-control {
         height: 2.5rem;
         font-size: 0.95rem;
         border-radius: 0.25rem;
@@ -26,7 +27,8 @@
         padding: 0.5rem;
     }
 
-    .form-control:focus, select.form-control:focus {
+    .form-control:focus,
+    select.form-control:focus {
         border-color: #007bff;
         background-color: #333;
         box-shadow: none;
@@ -114,8 +116,13 @@
     }
 
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     .char-count {
@@ -196,12 +203,21 @@
                                     <label class="text-white required" for="managers">Managers (Select Multiple)</label>
                                     <div class="checkbox-group">
                                         @foreach ($managers as $manager)
-                                            <label>
+                                            <label style="display: block; margin-bottom: 0.5rem;">
                                                 <input type="checkbox" name="managers[]" value="{{ $manager['id'] }}"
                                                     {{ in_array($manager['id'], old('managers', [])) ? 'checked' : '' }}>
-                                                {{ $manager['name'] }}
+                                                <strong>{{ $manager['name'] }}</strong>
+
+                                                @if (!empty($manager['departments']))
+                                                    <span style="color: #aaa; font-size: 0.85rem;">
+                                                        — ({{ implode(', ', $manager['departments']) }})
+                                                    </span>
+                                                @else
+                                                    <span style="color: #666; font-size: 0.85rem;">(No Departments)</span>
+                                                @endif
                                             </label>
                                         @endforeach
+
                                     </div>
                                     @error('managers')
                                         <span class="text-danger">{{ $message }}</span>
@@ -214,7 +230,8 @@
                                     <label class="text-white d-block">Record Audio (Admin)</label>
                                     <div id="recorderControls">
                                         <button type="button" id="startRecord" class="btn btn-danger">🎤 Start</button>
-                                        <button type="button" id="stopRecord" class="btn btn-warning" disabled>⏹ Stop</button>
+                                        <button type="button" id="stopRecord" class="btn btn-warning" disabled>⏹
+                                            Stop</button>
                                     </div>
                                     <audio id="audioPlayback" controls class="mt-3 d-none"></audio>
                                     <div id="saveCancelBtns" class="mt-3 d-none">
@@ -251,13 +268,17 @@
 
         if (startBtn && stopBtn) {
             startBtn.addEventListener("click", async () => {
-                let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                let stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
 
                 mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
-                    audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+                    audioBlob = new Blob(audioChunks, {
+                        type: "audio/webm"
+                    });
                     let audioURL = URL.createObjectURL(audioBlob);
                     audioPlayback.src = audioURL;
                     audioPlayback.classList.remove("d-none");

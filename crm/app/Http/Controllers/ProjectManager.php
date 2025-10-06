@@ -15,6 +15,8 @@ use App\Models\Subtask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
+use App\Mail\EmployeeCreatedMail;
+use App\Mail\TeamLeadCreatedMail;
 use App\Models\AccountT1;
 use App\Models\AccountT2;
 use App\Models\CellCenterPos;
@@ -1213,8 +1215,8 @@ Task not associated with any owner task.');
             : collect();
 
         $clientDetailRecords = $subtask->client_detail_ids
-        ? ClientDetail::whereIn('id', $subtask->client_detail_ids)->get()
-        : collect();
+            ? ClientDetail::whereIn('id', $subtask->client_detail_ids)->get()
+            : collect();
 
         // ✅ Visitor department ka ID nikal lo
         $visitorDeptId = Department::where('name', 'Visitor')->value('id');
@@ -1247,64 +1249,64 @@ Task not associated with any owner task.');
 
 
     public function store_shared_task(Request $request, $subtaskId)
-{
-    $request->validate([
-        'manager_id' => 'required|exists:project_managers,id',
-    ]);
+    {
+        $request->validate([
+            'manager_id' => 'required|exists:project_managers,id',
+        ]);
 
-    $subtask = Subtask::findOrFail($subtaskId);
-    $managerId = $subtask->manager_id;
-    $teamleadId = $subtask->team_lead_id;
+        $subtask = Subtask::findOrFail($subtaskId);
+        $managerId = $subtask->manager_id;
+        $teamleadId = $subtask->team_lead_id;
 
-    $employeeId = null;
-    $posId = null;
-    $accountId = null;
-    $clientId = null;
+        $employeeId = null;
+        $posId = null;
+        $accountId = null;
+        $clientId = null;
 
-    // Agar account_id aya hai
-    if ($request->has('account_id')) {
-        $account = CellCenterAccount::find($request->account_id);
-        if ($account) {
-            $employeeId = $account->employee_id;
-            $accountId = $account->id;
+        // Agar account_id aya hai
+        if ($request->has('account_id')) {
+            $account = CellCenterAccount::find($request->account_id);
+            if ($account) {
+                $employeeId = $account->employee_id;
+                $accountId = $account->id;
+            }
         }
-    }
 
-    // Agar pos_id aya hai
-    if ($request->has('pos_id')) {
-        $pos = CellCenterPos::find($request->pos_id);
-        if ($pos) {
-            $employeeId = $pos->employee_id;
-            $posId = $pos->id;
+        // Agar pos_id aya hai
+        if ($request->has('pos_id')) {
+            $pos = CellCenterPos::find($request->pos_id);
+            if ($pos) {
+                $employeeId = $pos->employee_id;
+                $posId = $pos->id;
+            }
         }
-    }
 
-    // Agar client_id aya hai
-    if ($request->has('client_id')) {
-        $client = ClientDetail::find($request->client_id);
-        if ($client) {
-            $employeeId = $client->employee_id;
-            $clientId = $client->id; // ✅ yahan sahi karein
+        // Agar client_id aya hai
+        if ($request->has('client_id')) {
+            $client = ClientDetail::find($request->client_id);
+            if ($client) {
+                $employeeId = $client->employee_id;
+                $clientId = $client->id; // ✅ yahan sahi karein
+            }
         }
+
+        if (!$employeeId) {
+            return redirect()->back()->with('error', 'No employee found in CallCenterAccount, POS, or Client record');
+        }
+
+        SharedTask::create([
+            'assigend_manager_id'     => $request->manager_id, // form se aya hua
+            'manager_id'              => $managerId,           // subtask ka manager
+            'teamlead_id'             => $teamleadId,
+            'employee_id'             => $employeeId,
+            'subtask_id'              => $subtaskId,
+            'cell_center_pos_id'      => $posId,
+            'cell_center_account_id'  => $accountId,
+            'client_details_id'       => $clientId,            // ✅ ab clientId store hoga
+        ]);
+
+        return redirect()->back()->with('success', 'Task shared successfully');
     }
-
-    if (!$employeeId) {
-        return redirect()->back()->with('error', 'No employee found in CallCenterAccount, POS, or Client record');
-    }
-
-    SharedTask::create([
-        'assigend_manager_id'     => $request->manager_id, // form se aya hua
-        'manager_id'              => $managerId,           // subtask ka manager
-        'teamlead_id'             => $teamleadId,
-        'employee_id'             => $employeeId,
-        'subtask_id'              => $subtaskId,
-        'cell_center_pos_id'      => $posId,
-        'cell_center_account_id'  => $accountId,
-        'client_details_id'       => $clientId,            // ✅ ab clientId store hoga
-    ]);
-
-    return redirect()->back()->with('success', 'Task shared successfully');
-}
 
 
     public function show_employee_task($id)
@@ -1321,7 +1323,7 @@ Task not associated with any owner task.');
             ? CellCenterAccount::find($shared_task->cell_center_account_id)
             : null;
 
-            
+
 
         return view("project_manager.show_employee_task", compact(
             'shared_task',
@@ -1330,59 +1332,59 @@ Task not associated with any owner task.');
         ));
     }
 
-public function showSharedTasks()
-{
-    // Manager login
-    $manager = Auth::guard('project_manager')->user();
+    public function showSharedTasks()
+    {
+        // Manager login
+        $manager = Auth::guard('project_manager')->user();
 
-    // Manager ke department_ids (json ya array dono handle)
-    $managerDeptIds = is_array($manager->department_ids)
-        ? $manager->department_ids
-        : json_decode($manager->department_ids, true);
+        // Manager ke department_ids (json ya array dono handle)
+        $managerDeptIds = is_array($manager->department_ids)
+            ? $manager->department_ids
+            : json_decode($manager->department_ids, true);
 
-    // Team leads jo manager ke department me hain
-    $teamLeads = TeamLead::whereIn('department_id', $managerDeptIds)->get();
+        // Team leads jo manager ke department me hain
+        $teamLeads = TeamLead::whereIn('department_id', $managerDeptIds)->get();
 
-    // Shared tasks jo iss manager ko assign hue hain
-    $sharedTasks = SharedTask::where('assigend_manager_id', $manager->id)->get();
+        // Shared tasks jo iss manager ko assign hue hain
+        $sharedTasks = SharedTask::where('assigend_manager_id', $manager->id)->get();
 
-    $posResults = [];
-    $accountResults = [];
-    $clientResults = [];
+        $posResults = [];
+        $accountResults = [];
+        $clientResults = [];
 
-    foreach ($sharedTasks as $shared) {
-        if ($shared->cell_center_pos_id) {
-            $pos = CellCenterPos::find($shared->cell_center_pos_id);
-            if ($pos) {
-                $pos->shared_task_id       = $shared->id;
-                $pos->shared_status        = $shared->status;
-                $pos->assigned_teamlead_id = $shared->assigned_teamlead_id;
-                $posResults[] = $pos;
-            }
-        } elseif ($shared->cell_center_account_id) {
-            $account = CellCenterAccount::find($shared->cell_center_account_id);
-            if ($account) {
-                $account->shared_task_id       = $shared->id;
-                $account->shared_status        = $shared->status;
-                $account->assigned_teamlead_id = $shared->assigned_teamlead_id;
-                $accountResults[] = $account;
-            }
-        } elseif ($shared->client_details_id) {
-            $client = ClientDetail::find($shared->client_details_id);
-            if ($client) {
-                $client->shared_task_id       = $shared->id;
-                $client->shared_status        = $shared->status;
-                $client->assigned_teamlead_id = $shared->assigned_teamlead_id;
-                $clientResults[] = $client;
+        foreach ($sharedTasks as $shared) {
+            if ($shared->cell_center_pos_id) {
+                $pos = CellCenterPos::find($shared->cell_center_pos_id);
+                if ($pos) {
+                    $pos->shared_task_id       = $shared->id;
+                    $pos->shared_status        = $shared->status;
+                    $pos->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                    $posResults[] = $pos;
+                }
+            } elseif ($shared->cell_center_account_id) {
+                $account = CellCenterAccount::find($shared->cell_center_account_id);
+                if ($account) {
+                    $account->shared_task_id       = $shared->id;
+                    $account->shared_status        = $shared->status;
+                    $account->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                    $accountResults[] = $account;
+                }
+            } elseif ($shared->client_details_id) {
+                $client = ClientDetail::find($shared->client_details_id);
+                if ($client) {
+                    $client->shared_task_id       = $shared->id;
+                    $client->shared_status        = $shared->status;
+                    $client->assigned_teamlead_id = $shared->assigned_teamlead_id;
+                    $clientResults[] = $client;
+                }
             }
         }
-    }
 
-    return view(
-        'project_manager.manager_shared_task_list',
-        compact('sharedTasks', 'posResults', 'accountResults', 'clientResults', 'teamLeads')
-    );
-}
+        return view(
+            'project_manager.manager_shared_task_list',
+            compact('sharedTasks', 'posResults', 'accountResults', 'clientResults', 'teamLeads')
+        );
+    }
 
     /**
      * Assign a teamlead to shared task
@@ -1447,19 +1449,19 @@ public function showSharedTasks()
     }
 
 
-   function signed_task_list()
-{
-    $manager = Auth::guard('project_manager')->user();
-    $shared_task = SharedTask::where('manager_id', $manager->id)->get();
+    function signed_task_list()
+    {
+        $manager = Auth::guard('project_manager')->user();
+        $shared_task = SharedTask::where('manager_id', $manager->id)->get();
 
-    $operationDeptId = Department::where('name', 'Operation')->value('id');
+        $operationDeptId = Department::where('name', 'Operation')->value('id');
 
-    $teamleads = $operationDeptId 
-        ? TeamLead::where('department_id', $operationDeptId)->get() 
-        : collect();
+        $teamleads = $operationDeptId
+            ? TeamLead::where('department_id', $operationDeptId)->get()
+            : collect();
 
-    return view('project_manager.signed_task_list', compact('shared_task', 'teamleads'));
-}
+        return view('project_manager.signed_task_list', compact('shared_task', 'teamleads'));
+    }
 
 
     public function assign_operation_teamlead_shared_task(Request $request, $sharedTaskId)
@@ -1494,51 +1496,58 @@ public function showSharedTasks()
         return view('project_manager.create_teamlead', compact('departments'));
     }
 
-    public function create_teamlead(Request $request)
-    {
-        $manager = Auth::guard('project_manager')->user();
-        $deptIds = $manager->department_ids;
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:team_leads',
-            'phone' => 'required|string|max:15',
-            'password' => 'required|string|min:3|confirmed',
-            'department_id' => '    exists:departments,id|in:' . implode(',', $deptIds),
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+public function create_teamlead(Request $request)
+{
+    $manager = Auth::guard('project_manager')->user();
+    $deptIds = $manager->department_ids;
 
-        $teamLead = new TeamLead();
-        $teamLead->name = $request->name;
-        $teamLead->email = $request->email;
-        $teamLead->phone = $request->phone;
-        $teamLead->password = bcrypt($request->password);
-        $teamLead->department_id = $request->department_id;
-        $teamLead->manager_id = $manager->id;
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:team_leads',
+        'phone' => 'required|string|max:15',
+        'department_id' => 'exists:departments,id|in:' . implode(',', $deptIds),
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('images/team_leads'), $imageName);
+    $teamLead = new TeamLead();
+    $teamLead->name = $request->name;
+    $teamLead->email = $request->email;
+    $teamLead->phone = $request->phone;
+    $teamLead->password = bcrypt('000');
+    $teamLead->department_id = $request->department_id;
+    $teamLead->manager_id = $manager->id;
+
+    if ($request->hasFile('image')) {
+        $image = $request->file('image');
+        $imageName = time() . '.' . $image->getClientOriginalExtension();
+        $image->move(public_path('images/team_leads'), $imageName);
+        $teamLead->image = $imageName;
+    } else {
+        $randomId = rand(1, 30);
+        $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
+        if ($imageContent !== false) {
+            $imageName = time() . '_auto.jpg';
+            file_put_contents(public_path("images/team_leads/$imageName"), $imageContent);
             $teamLead->image = $imageName;
-        } else {
-            $randomId = rand(1, 30);
-            $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
-            if ($imageContent !== false) {
-                $imageName = time() . '_auto.jpg';
-                file_put_contents(public_path("images/team_leads/$imageName"), $imageContent);
-                $teamLead->image = $imageName;
-            }
         }
-
-        if ($teamLead->save()) {
-            session()->flash('success_swal', 'Team Lead created successfully.');
-            return redirect()->route('project_manager.teamleads');
-        }
-
-        session()->flash('error_swal', 'Failed to create Team Lead.');
-        return redirect()->back()->withInput();
     }
+
+    if ($teamLead->save()) {
+        // ✅ Send Email Notification
+        try {
+            Mail::to($teamLead->email)->send(new TeamLeadCreatedMail($teamLead, $manager));
+        } catch (\Exception $e) {
+            Log::error('Mail Send Error: '.$e->getMessage());
+        }
+
+        session()->flash('success_swal', 'Team Lead created successfully and email sent.');
+        return redirect()->route('project_manager.teamleads');
+    }
+
+    session()->flash('error_swal', 'Failed to create Team Lead.');
+    return redirect()->back()->withInput();
+}
     public function employees()
     {
         $manager = Auth::guard('project_manager')->user();
@@ -1557,49 +1566,56 @@ public function showSharedTasks()
         return view('project_manager.create_employee', compact('departments'));
     }
 
-    public function create_employee(Request $request)
-    {
-        $manager = Auth::guard('project_manager')->user();
-        $deptIds = $manager->department_ids;
+  
+public function create_employee(Request $request)
+{
+    $manager = Auth::guard('project_manager')->user();
+    $deptIds = $manager->department_ids;
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:team_leads',
-            'phone' => 'required|string|max:15',
-            'password' => 'required|string|min:3|confirmed',
-            'department_id' => 'exists:departments,id|in:' . implode(',', $deptIds),
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|max:255|unique:employees', // ✅ corrected table
+        'phone' => 'required|string|max:15',
+        'department_id' => 'exists:departments,id|in:' . implode(',', $deptIds),
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
 
-        $employee = new Employee();
-        $employee->name = $request->name;
-        $employee->email = $request->email;
-        $employee->phone = $request->phone;
-        $employee->password = bcrypt($request->password);
-        $employee->department_id = $request->department_id;
-        $employee->manager_id = $manager->id;
+    $employee = new Employee();
+    $employee->name = $request->name;
+    $employee->email = $request->email;
+    $employee->phone = $request->phone;
+    $employee->password = bcrypt('000');
+    $employee->department_id = $request->department_id;
+    $employee->manager_id = $manager->id;
 
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->move(public_path('images/employees'), $imageName);
+    if ($request->hasFile('image')) {
+        $image = $request->file('image');
+        $imageName = time() . '.' . $image->getClientOriginalExtension();
+        $image->move(public_path('images/employees'), $imageName);
+        $employee->image = $imageName;
+    } else {
+        $randomId = rand(1, 30);
+        $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
+        if ($imageContent !== false) {
+            $imageName = time() . '_auto.jpg';
+            file_put_contents(public_path("images/employees/$imageName"), $imageContent);
             $employee->image = $imageName;
-        } else {
-            $randomId = rand(1, 30);
-            $imageContent = file_get_contents("https://avatar.iran.liara.run/public/$randomId");
-            if ($imageContent !== false) {
-                $imageName = time() . '_auto.jpg';
-                file_put_contents(public_path("images/team_leads/$imageName"), $imageContent);
-                $employee->image = $imageName;
-            }
         }
-
-        if ($employee->save()) {
-            session()->flash('success_swal', 'Team Lead created successfully.');
-            return redirect()->route('project_manager.employee');
-        }
-
-        session()->flash('error_swal', 'Failed to create Team Lead.');
-        return redirect()->back()->withInput();
     }
+
+    if ($employee->save()) {
+        // ✅ Send Welcome Email
+        try {
+            Mail::to($employee->email)->send(new EmployeeCreatedMail($employee, $manager));
+        } catch (\Exception $e) {
+            Log::error('Employee Mail Send Error: ' . $e->getMessage());
+        }
+
+        session()->flash('success_swal', 'Employee created successfully and welcome email sent.');
+        return redirect()->route('project_manager.employee');
+    }
+
+    session()->flash('error_swal', 'Failed to create Employee.');
+    return redirect()->back()->withInput();
+}
 }

@@ -48,21 +48,7 @@ select.form-control option {
                         @enderror
                     </div>
 
-                    <div class="form-group">
-                        <label class="text-white">Password</label>
-                        <input type="password" name="password" class="form-control">
-                        @error('password')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label class="text-white">Confirm Password</label>
-                        <input type="password" name="password_confirmation" class="form-control">
-                        @error('password_confirmation')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
-                    </div>
+                    
 
                     <div class="form-group">
                         <label class="text-white">Image (optional)</label>
