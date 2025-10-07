@@ -17,8 +17,6 @@ use Illuminate\Support\Facades\Auth;
 use App\Mail\AuthMail;
 use App\Mail\EmployeeCreatedMail;
 use App\Mail\ManagerTaskCreatedMail;
-use App\Mail\OperationTeamLeadAssignedMail;
-use App\Mail\TaskStatusUpdatedMail;
 use App\Mail\TaskUpdatedMail;
 use App\Mail\TeamLeadCreatedMail;
 use App\Models\AccountT1;
@@ -35,7 +33,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Log;
-use TaskStatusUpdatedMail as GlobalTaskStatusUpdatedMail;
 
 class ProjectManager extends Controller
 {
@@ -241,56 +238,42 @@ class ProjectManager extends Controller
         return back()->with('success_swal', 'Team Lead assigned successfully!');
     }
 
-public function updateStatus(Request $request, $id, $type)
-{
-    $request->validate([
-        'manager_status' => 'required|in:rejected,in_progress,completed,not_interested,in_completed',
-    ]);
 
-    try {
-        $status = $request->input('manager_status');
-        $teamLeadId = null;
+    public function updateStatus(Request $request, $id, $type)
+    {
+        $request->validate([
+            'manager_status' => 'required|in:rejected,in_progress,completed,not_interested,in_completed',
+        ]);
 
-        switch ($type) {
-            case 't1':
-                $task = AccountT1::findOrFail($id);
-                $teamLeadId = $task->teamlead_id ?? null;
-                break;
-            case 't2':
-                $task = AccountT2::findOrFail($id);
-                $teamLeadId = $task->teamlead_id ?? null;
-                break;
-            case 'hst':
-                $task = AccountHST::findOrFail($id);
-                $teamLeadId = $task->teamlead_id ?? null;
-                break;
-            case 'operation':
-                $task = Manageroperation::findOrFail($id);
-                $teamLeadId = $task->operation_teamlead_id ?? null;
-                break;
-            default:
-                return redirect()->back()->with('error_swal', 'Invalid task type.');
-        }
+        try {
+            $status = $request->input('manager_status');
 
-        // ✅ Update status
-        $task->manager_status = $status;
-        $task->save();
-
-        // ✅ Send email only to Team Lead
-        if ($teamLeadId) {
-            $teamLead = TeamLead::find($teamLeadId);
-            if ($teamLead && $teamLead->email) {
-                Mail::to($teamLead->email)->send(new TaskStatusUpdatedMail($task, $teamLead, $status));
+            switch ($type) {
+                case 't1':
+                    $task = AccountT1::findOrFail($id);
+                    break;
+                case 't2':
+                    $task = AccountT2::findOrFail($id);
+                    break;
+                case 'hst':
+                    $task = AccountHST::findOrFail($id);
+                    break;
+                case 'operation':
+                    $task = Manageroperation::findOrFail($id);
+                    break;
+                default:
+                    return redirect()->back()->with('error', 'Invalid task type.');
             }
+
+            $task->manager_status = $status;
+            $task->save();
+
+            return redirect()->back()->with('success', 'Status updated successfully.');
+        } catch (\Exception $e) {
+            Log::error('Error updating status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update status.');
         }
-
-        return redirect()->back()->with('success_swal', 'Status updated successfully and email sent to Team Lead.');
-    } catch (\Exception $e) {
-        Log::error('Error updating status: ' . $e->getMessage());
-        return redirect()->back()->with('error_swal', 'Failed to update status.');
     }
-}
-
 
     public function updateStatus2(Request $request, $id)
     {
@@ -1299,84 +1282,66 @@ public function mytask_update(Request $request, $id)
 
 
 
-public function store_shared_task(Request $request, $subtaskId)
-{
-    $request->validate([
-        'manager_id' => 'required|exists:project_managers,id',
-    ]);
 
-    $subtask = Subtask::findOrFail($subtaskId);
-    $managerId = $subtask->manager_id;
-    $teamleadId = $subtask->team_lead_id;
+    public function store_shared_task(Request $request, $subtaskId)
+    {
+        $request->validate([
+            'manager_id' => 'required|exists:project_managers,id',
+        ]);
 
-    $employeeId = null;
-    $posId = null;
-    $accountId = null;
-    $clientId = null;
+        $subtask = Subtask::findOrFail($subtaskId);
+        $managerId = $subtask->manager_id;
+        $teamleadId = $subtask->team_lead_id;
 
-    // Account check
-    if ($request->has('account_id')) {
-        $account = CellCenterAccount::find($request->account_id);
-        if ($account) {
-            $employeeId = $account->employee_id;
-            $accountId = $account->id;
+        $employeeId = null;
+        $posId = null;
+        $accountId = null;
+        $clientId = null;
+
+        // Agar account_id aya hai
+        if ($request->has('account_id')) {
+            $account = CellCenterAccount::find($request->account_id);
+            if ($account) {
+                $employeeId = $account->employee_id;
+                $accountId = $account->id;
+            }
         }
-    }
 
-    // POS check
-    if ($request->has('pos_id')) {
-        $pos = CellCenterPos::find($request->pos_id);
-        if ($pos) {
-            $employeeId = $pos->employee_id;
-            $posId = $pos->id;
+        // Agar pos_id aya hai
+        if ($request->has('pos_id')) {
+            $pos = CellCenterPos::find($request->pos_id);
+            if ($pos) {
+                $employeeId = $pos->employee_id;
+                $posId = $pos->id;
+            }
         }
-    }
 
-    // Client check
-    if ($request->has('client_id')) {
-        $client = ClientDetail::find($request->client_id);
-        if ($client) {
-            $employeeId = $client->employee_id;
-            $clientId = $client->id;
+        // Agar client_id aya hai
+        if ($request->has('client_id')) {
+            $client = ClientDetail::find($request->client_id);
+            if ($client) {
+                $employeeId = $client->employee_id;
+                $clientId = $client->id; // ✅ yahan sahi karein
+            }
         }
+
+        if (!$employeeId) {
+            return redirect()->back()->with('error', 'No employee found in CallCenterAccount, POS, or Client record');
+        }
+
+        SharedTask::create([
+            'assigend_manager_id'     => $request->manager_id, // form se aya hua
+            'manager_id'              => $managerId,           // subtask ka manager
+            'teamlead_id'             => $teamleadId,
+            'employee_id'             => $employeeId,
+            'subtask_id'              => $subtaskId,
+            'cell_center_pos_id'      => $posId,
+            'cell_center_account_id'  => $accountId,
+            'client_details_id'       => $clientId,            // ✅ ab clientId store hoga
+        ]);
+
+        return redirect()->back()->with('success', 'Task shared successfully');
     }
-
-    if (!$employeeId) {
-        return redirect()->back()->with('error', 'No employee found in CallCenterAccount, POS, or Client record');
-    }
-
-    $sharedTask = SharedTask::create([
-        'assigend_manager_id'     => $request->manager_id,
-        'manager_id'              => $managerId,
-        'teamlead_id'             => $teamleadId,
-        'employee_id'             => $employeeId,
-        'subtask_id'              => $subtaskId,
-        'cell_center_pos_id'      => $posId,
-        'cell_center_account_id'  => $accountId,
-        'client_details_id'       => $clientId,
-    ]);
-
-    // Send Email Notification
-    $assigner = Auth::guard('project_manager')->user();
-    $assignedManager = ModelsProjectManager::find($request->manager_id);
-
-    if ($assignedManager) {
-        $emailData = [
-            'assigner_name' => $assigner->name,
-            'subtask_name'  => $subtask->title ?? 'Untitled Subtask',
-            'shared_at'     => now()->format('F j, Y, g:i A'),
-        ];
-
-        Mail::send('emails.manager.task_shared', $emailData, function ($message) use ($assignedManager, $assigner) {
-            $message->to($assignedManager->email)
-                    ->subject('New Shared Task Assigned to You | Project Management Portal')
-                    ->from($assigner->email, $assigner->name);
-        });
-    }
-
-    return redirect()->back()->with('success', 'Task shared successfully and email sent.');
-}
-
 
 
     public function show_employee_task($id)
@@ -1456,41 +1421,21 @@ public function store_shared_task(Request $request, $subtaskId)
         );
     }
 
-   
-public function assign_teamlead_shared_task(Request $request, $sharedTaskId)
-{
-    $request->validate([
-        'teamlead_id' => 'required|exists:team_leads,id',
-    ]);
+    /**
+     * Assign a teamlead to shared task
+     */
+    public function assign_teamlead_shared_task(Request $request, $sharedTaskId)
+    {
+        $request->validate([
+            'teamlead_id' => 'required|exists:team_leads,id',
+        ]);
 
-    $sharedTask = SharedTask::findOrFail($sharedTaskId);
-    $sharedTask->assigned_teamlead_id = $request->teamlead_id;
-    $sharedTask->save();
+        $sharedTask = SharedTask::findOrFail($sharedTaskId);
+        $sharedTask->assigned_teamlead_id = $request->teamlead_id;
+        $sharedTask->save();
 
-    // Fetch related info
-    $assigner = Auth::guard('project_manager')->user();
-    $teamLead = TeamLead::find($request->teamlead_id);
-    $manager = ModelsProjectManager::find($sharedTask->assigend_manager_id);
-    $subtask = Subtask::find($sharedTask->subtask_id);
-
-    if ($teamLead && $manager) {
-        $emailData = [
-            'assigner_name' => $assigner->name,
-            'manager_name'  => $manager->name,
-            'subtask_name'  => $subtask->title ?? 'Untitled Subtask',
-            'assigned_at'   => now()->format('F j, Y, g:i A'),
-        ];
-
-        Mail::send('emails.manager.teamlead_assigned_shared_task', $emailData, function ($message) use ($teamLead, $assigner) {
-            $message->to($teamLead->email)
-                    ->subject('You Have Been Assigned a Shared Task | Project Management Portal')
-                    ->from($assigner->email, $assigner->name);
-        });
+        return redirect()->back()->with('success_swal', 'Team Lead assigned successfully.');
     }
-
-    return redirect()->back()->with('success_swal', 'Team Lead assigned successfully and email sent.');
-}
-
 
 
 
@@ -1525,41 +1470,18 @@ public function assign_teamlead_shared_task(Request $request, $sharedTaskId)
         return view('project_manager.shared_task', compact('shared_task', 'project_managers'));
     }
 
+    public function assign_operation_shared_task(Request $request, $sharedTaskId)
+    {
+        $request->validate([
+            'operation_manager_id' => 'required|exists:project_managers,id',
+        ]);
 
-public function assign_operation_shared_task(Request $request, $sharedTaskId)
-{
-    $request->validate([
-        'operation_manager_id' => 'required|exists:project_managers,id',
-    ]);
+        $sharedTask = SharedTask::findOrFail($sharedTaskId);
+        $sharedTask->operation_manager_id = $request->operation_manager_id;
+        $sharedTask->save();
 
-    $sharedTask = SharedTask::findOrFail($sharedTaskId);
-    $sharedTask->operation_manager_id = $request->operation_manager_id;
-    $sharedTask->save();
-
-    // Get assigner (current manager) and assigned manager info
-    $assigner = Auth::guard('project_manager')->user();
-    $assignedManager = ModelsProjectManager::find($request->operation_manager_id);
-    $subtask = Subtask::find($sharedTask->subtask_id);
-
-    if ($assignedManager) {
-        $emailData = [
-            'assigner_name' => $assigner->name,
-            'manager_name' => $assignedManager->name,
-            'subtask_name' => $subtask->title ?? 'Untitled Subtask',
-            'assigned_at' => now()->format('F j, Y, g:i A'),
-        ];
-
-        // Send email notification
-        Mail::send('emails.manager.operation_manager_assigned_shared_task', $emailData, function ($message) use ($assignedManager, $assigner) {
-            $message->to($assignedManager->email)
-                    ->subject('New Shared Task Assigned | Project Management Portal')
-                    ->from($assigner->email, $assigner->name);
-        });
+        return redirect()->back()->with('success', 'Operation Manager assigned successfully.');
     }
-
-    return redirect()->back()->with('success_swal', 'Operation Manager assigned successfully and email sent.');
-}
-
 
 
     function signed_task_list()
@@ -1577,26 +1499,18 @@ public function assign_operation_shared_task(Request $request, $sharedTaskId)
     }
 
 
-  public function assign_operation_teamlead_shared_task(Request $request, $sharedTaskId)
-{
-    $request->validate([
-        'operation_teamlead_id' => 'required|exists:team_leads,id',
-    ]);
+    public function assign_operation_teamlead_shared_task(Request $request, $sharedTaskId)
+    {
+        $request->validate([
+            'operation_teamlead_id' => 'required|exists:team_leads,id',
+        ]);
 
-    $sharedTask = SharedTask::findOrFail($sharedTaskId);
-    $sharedTask->operation_teamlead_id = $request->operation_teamlead_id;
-    $sharedTask->save();
+        $sharedTask = SharedTask::findOrFail($sharedTaskId);
+        $sharedTask->operation_teamlead_id = $request->operation_teamlead_id;
+        $sharedTask->save();
 
-    // ✅ Fetch the assigned team lead
-    $teamLead = TeamLead::find($request->operation_teamlead_id);
-
-    if ($teamLead && $teamLead->email) {
-        // ✅ Send email notification
-        Mail::to($teamLead->email)->send(new OperationTeamLeadAssignedMail($sharedTask, $teamLead));
+        return redirect()->back()->with('success_swal', 'Operation TeamLead assigned successfully.');
     }
-
-    return redirect()->back()->with('success_swal', 'Operation TeamLead assigned successfully and notified by email.');
-}
 
 
     public function teamleads()
@@ -1740,6 +1654,3 @@ public function create_employee(Request $request)
     return redirect()->back()->withInput();
 }
 }
-
-
-
