@@ -278,66 +278,62 @@ class TeamLeadController extends Controller
         }
     }
     public function assignEmployees(Request $request, OnwerTask $task)
-    {
-        $request->validate([
-            'employee_id' => 'nullable|array',
-            'employee_id.*' => 'exists:employees,id',
-        ]);
+ {
+    $request->validate([
+        'employee_id' => 'nullable|array',
+        'employee_id.*' => 'exists:employees,id',
+    ]);
 
-        $teamLead = Auth::guard('team_lead')->user();
+    $teamLead = Auth::guard('team_lead')->user();
 
-        // ✅ Ensure the task belongs to the current team lead
-        if ($task->team_lead_id !== $teamLead->id) {
-            session('error_swal', 'Unauthorized action. This task is not assigned to you.');
-            abort(403, 'Unauthorized action. This task is not assigned to you.');
-        }
-
-        // ✅ Get employee IDs
-        $newIds = $request->input('employee_id', []);
-        $existingIds = $task->employee_id ? explode(',', $task->employee_id) : [];
-        $mergedIds = array_unique(array_merge($existingIds, $newIds));
-
-        // ✅ Ensure all employees belong to same department
-        foreach ($mergedIds as $employeeId) {
-            $employee = Employee::find($employeeId);
-            if (!$employee || $employee->department_id !== $teamLead->department_id) {
-
-                return redirect()->back()->with('error_swal', 'You can only assign employees from your own department.');
-            }
-        }
-
-        // ✅ Save updated employee_id string to task
-        $task->employee_id = implode(',', $mergedIds);
-        $task->save();
-
-        // ✅ Notify and email each employee
-        foreach ($mergedIds as $employeeId) {
-            $employee = Employee::find($employeeId);
-
-            if ($employee) {
-                // Send email (if email exists)
-                if ($employee->email) {
-                    try {
-                        Mail::to($employee->email)->send(new AssignedEmployeeTask($task));
-                    } catch (\Exception $e) {
-                        // Optionally log error_swal
-                    }
-                }
-
-                // Create notification
-                Notification::create([
-                    'title' => 'New Task Assigned',
-                    'message' => 'You have been assigned a new task: "' . $task->name . '".',
-                    'user_id' => $employee->id,
-                    'user_type' => 'employee',
-                ]);
-            }
-        }
-
-        session('success_swal', 'Employees assigned and notified success_swalfully!');
-        return redirect()->back()->with('success_swal', 'Employees assigned success_swalfully!');
+    // ✅ Ensure the task belongs to the current team lead
+    if ($task->team_lead_id !== $teamLead->id) {
+        return redirect()->back()->with('error_swal', 'Unauthorized action. This task is not assigned to you.');
     }
 
+    // ✅ Get new and existing employee IDs
+    $newIds = $request->input('employee_id', []);
+    $existingIds = $task->employee_id ? explode(',', $task->employee_id) : [];
+    $mergedIds = array_unique(array_merge($existingIds, $newIds));
+
+    // ✅ Ensure all employees belong to same department
+    foreach ($mergedIds as $employeeId) {
+        $employee = Employee::find($employeeId);
+        if (!$employee || $employee->department_id !== $teamLead->department_id) {
+            return redirect()->back()->with('error_swal', 'You can only assign employees from your own department.');
+        }
+    }
+
+    // ✅ Save updated employee_id string to task
+    $task->employee_id = implode(',', $mergedIds);
+    $task->save();
+
+    // ✅ Notify and send mail to each employee
+    foreach ($mergedIds as $employeeId) {
+        $employee = Employee::find($employeeId);
+
+        if ($employee) {
+            // Send email
+            if ($employee->email) {
+                try {
+                    Mail::to($employee->email)->send(new AssignedEmployeeTask($task, $employee));
+                } catch (\Exception $e) {
+                    Log::error("Failed to send mail to {$employee->email}: " . $e->getMessage());
+                }
+            }
+
+            // Create notification
+            Notification::create([
+                'title' => 'New Task Assigned',
+                'message' => 'You have been assigned a new task: "' . $task->name . '".',
+                'user_id' => $employee->id,
+                'user_type' => 'employee',
+            ]);
+        }
+    }
+
+    return redirect()->back()->with('success_swal', 'Employees assigned successfully & emails sent!');
+}
 
 
     public function updateStatus(Request $request, OnwerTask $task)

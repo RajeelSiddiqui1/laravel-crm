@@ -265,7 +265,7 @@
                             <th>Team Status</th>
                             <th>Attachments</th>
                             <th>View</th>
-                          ?? 'N/A'
+                      
                             <th>Subtask</th>
                             <th>Subtask View</th>
                             <th>Group Chat</th>
@@ -367,7 +367,7 @@
                                 <td>
                                     <a href="{{ route('team_lead.task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
                                 </td>
-                             ?? 'N/A'
+                            
                                 <td>
                                     <a href="{{ route('team_lead.subtask.create', $task->id) }}" class="btn btn-sm btn-warning mb-1">Subtask</a>
                                 </td>
@@ -406,7 +406,7 @@
                             <th>Team Status</th>
                             <th>Attachments</th>
                             <th>View</th>
-                          ?? 'N/A'
+                        
                             <th>Subtask</th>
                             <th>Subtask View</th>
                             <th>Group Chat</th>
@@ -511,7 +511,7 @@
                                 <td>
                                     <a href="{{ route('team_lead.task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
                                 </td>
-                             ?? 'N/A'
+                          
                                 <td>
                                     <a href="{{ route('team_lead.subtask.create', $task->id) }}" class="btn btn-sm btn-warning mb-1">Subtask</a>
                                 </td>
@@ -548,8 +548,7 @@
                             <th>Manager Status</th>
                             <th>Team Status</th>
                             <th>Attachments</th>
-                            <th>View</th>
-                          ?? 'N/A'
+                     
                             <th>Subtask</th>
                             <th>Subtask View</th>
                             <th>Group Chat</th>
@@ -654,7 +653,7 @@
                                 <td>
                                     <a href="{{ route('team_lead.task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
                                 </td>
-                             ?? 'N/A'
+                        
                                 <td>
                                     <a href="{{ route('team_lead.subtask.create', $task->id) }}" class="btn btn-sm btn-warning mb-1">Subtask</a>
                                 </td>
@@ -690,7 +689,7 @@
                             <th>Team Status</th>
                             <th>Attachments</th>
                             <th>View</th>
-                          ?? 'N/A'
+                    
                             <th>Subtask</th>
                             <th>Subtask View</th>
                             <th>Group Chat</th>
@@ -787,7 +786,7 @@
                                 <td>
                                     <a href="{{ route('team_lead.task_detail', $task->id) }}" class="btn btn-sm btn-success">View</a>
                                 </td>
-                             ?? 'N/A'
+                           
                                 <td>
                                     <a href="{{ route('team_lead.subtask.create', $task->id) }}" class="btn btn-sm btn-warning mb-1">Subtask</a>
                                 </td>
