@@ -47,7 +47,7 @@
                         <th>Client Name</th>
                         <th>Assigned Managers</th>
                         <th>Audio</th>
-                        <th>owner task</th>
+                        {{-- <th>owner task</th> --}}
                         <th>Group Chats</th>
                         <th>Action</th>
                         <th>Manager Tasks</th>
@@ -89,10 +89,10 @@
                                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                 </form>
                             </td>
-                            <td>
+                            {{-- <td>
                                 <a href="{{ route('project_owner.tasks.view', $task->id) }}"
                                     class="btn btn-sm btn-info">View</a>
-                            </td>
+                            </td> --}}
                             
                             <td>
                                 <a href="{{route('project_owner.tasks.view',$task->id)}}" class="btn btn-sm btn-success"> View</a>

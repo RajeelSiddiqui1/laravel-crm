@@ -412,6 +412,12 @@
                             <span>Sub Tasks</span>
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ url('/project-owner/signed-task') }}">
+                            <i class="zmdi zmdi-city"></i>
+                            <span>Signed Tasks</span>
+                        </a>
+                    </li>
                     @php
                         $adminNotificationCount = 0;
 

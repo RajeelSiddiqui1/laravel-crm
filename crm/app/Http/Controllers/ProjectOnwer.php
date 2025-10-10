@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\EditTask;
+use App\Mail\OwnerTaskUpdatedMail;
 use App\Mail\TaskAssignedMail;
 use App\Mail\TaskDeletedMail;
 use App\Mail\TaskUpdatedMail;
@@ -408,7 +409,7 @@ class ProjectOnwer extends Controller
                 $managers = ProjectManager::whereIn('id', $managerIds)->pluck('email')->toArray();
 
                 foreach ($managers as $email) {
-                    Mail::to($email)->send(new TaskUpdatedMail($task));
+                    Mail::to($email)->send(new OwnerTaskUpdatedMail($task));
                 }
             }
         } catch (\Exception $e) {
